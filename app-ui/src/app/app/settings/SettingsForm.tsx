@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { revalidateDashboard } from "./actions";
 
 interface Coach {
   id: string;
@@ -43,6 +44,7 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
       setMessage({ type: "error", text: error.message });
     } else {
       setMessage({ type: "success", text: "Settings saved!" });
+      await revalidateDashboard();
       router.refresh();
     }
 
