@@ -106,21 +106,29 @@ export default async function DashboardPage() {
 
       <div className="bg-white shadow rounded-lg p-6">
         <h2 className="text-lg font-medium text-gray-900 mb-4">Your Public Booking Link</h2>
-        <div className="flex items-center space-x-4">
-          <code className="flex-1 bg-gray-100 px-4 py-2 rounded text-sm text-gray-800 break-all">
-            /c/{coach?.slug}
-          </code>
-          <Link
-            href={`/c/${coach?.slug}`}
-            target="_blank"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Open
-          </Link>
-        </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Share this link with students so they can request bookings.
-        </p>
+        {coach?.slug ? (
+          <>
+            <div className="flex items-center space-x-4">
+              <code className="flex-1 bg-gray-100 px-4 py-2 rounded text-sm text-gray-800 break-all">
+                {process.env.NEXT_PUBLIC_SITE_URL || "https://app.chessbooker.com"}/c/{coach.slug}
+              </code>
+              <Link
+                href={`/c/${coach.slug}`}
+                target="_blank"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                Open
+              </Link>
+            </div>
+            <p className="mt-2 text-sm text-gray-500">
+              Share this link with students so they can request bookings.
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-gray-500">
+            Setting up your profile... Please refresh the page in a moment.
+          </p>
+        )}
       </div>
     </div>
   );
