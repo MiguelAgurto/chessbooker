@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import SettingsForm from "./SettingsForm";
 import AvailabilityEditor from "./AvailabilityEditor";
+import AvatarUpload from "./AvatarUpload";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -23,6 +24,11 @@ export default async function SettingsPage() {
       <h1 className="font-display text-3xl text-cb-text mb-8">Settings</h1>
 
       <div className="space-y-6">
+        <div className="card p-6">
+          <h2 className="text-lg font-semibold text-cb-text mb-4">Profile Photo</h2>
+          <AvatarUpload coachId={user!.id} currentAvatarUrl={coach?.avatar_url || null} />
+        </div>
+
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-cb-text mb-4">Profile</h2>
           <SettingsForm coach={coach} />

@@ -12,7 +12,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
 
   const { data: coach } = await supabase
     .from("coaches")
-    .select("id, name, timezone, pricing, headline, bio, languages, tags, rating, years_coaching")
+    .select("id, name, timezone, pricing, headline, bio, languages, tags, rating, years_coaching, avatar_url")
     .eq("slug", slug)
     .single();
 
@@ -37,12 +37,25 @@ export default async function PublicBookingPage({ params }: PageProps) {
     <div className="min-h-screen bg-cb-bg py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg mx-auto">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-2.5 mb-4">
-            <div className="w-10 h-10 bg-coral rounded-lg flex items-center justify-center">
-              <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24">
-                <path d="M19 22H5v-2h14v2M17.16 8.26A4.54 4.54 0 0 0 15 3.5V2h-2v1.5c0 .55-.45 1-1 1s-1-.45-1-1V2H9v1.5A4.54 4.54 0 0 0 6.84 8.26 5.93 5.93 0 0 0 6 11.5c0 2.21 1.12 4.15 2.81 5.29l-.81.81V19h8v-1.4l-.81-.81A6.46 6.46 0 0 0 18 11.5c0-1.17-.29-2.27-.84-3.24Z"/>
-              </svg>
-            </div>
+          <div className="inline-flex items-center justify-center mb-4">
+            {coach.avatar_url ? (
+              <img
+                src={coach.avatar_url}
+                alt={coach.name}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-coral-light border-4 border-white shadow-lg flex items-center justify-center">
+                <span className="text-3xl font-semibold text-coral">
+                  {coach.name
+                    .split(" ")
+                    .map((n: string) => n[0])
+                    .join("")
+                    .toUpperCase()
+                    .slice(0, 2)}
+                </span>
+              </div>
+            )}
           </div>
           <h1 className="font-display text-3xl text-cb-text">Book a Session</h1>
           <p className="mt-2 text-lg text-cb-text-secondary">with {coach.name}</p>
