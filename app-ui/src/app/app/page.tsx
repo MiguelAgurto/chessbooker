@@ -28,9 +28,6 @@ export default async function DashboardPage() {
     .select("*")
     .eq("coach_id", user!.id);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || "";
-  const bookingLink = `${baseUrl}/c/${coach?.slug}`;
-
   return (
     <div className="px-4 sm:px-0">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
