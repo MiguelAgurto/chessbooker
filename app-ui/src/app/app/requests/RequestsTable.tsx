@@ -43,14 +43,25 @@ function formatRequestedTime(time: string | SlotData): string {
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const updateStatus = async (id: string, status: string) => {
     setLoading(id);
+    setError(null);
     const supabase = createClient();
 
-    await supabase.from("booking_requests").update({ status }).eq("id", id);
+    const { error: updateError } = await supabase
+      .from("booking_requests")
+      .update({ status })
+      .eq("id", id);
 
-    router.refresh();
+    if (updateError) {
+      console.error("Failed to update status:", updateError);
+      setError(`Failed to update: ${updateError.message}`);
+    } else {
+      router.refresh();
+    }
+
     setLoading(null);
   };
 
@@ -58,7 +69,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     switch (status) {
       case "pending":
         return "bg-yellow-100 text-yellow-800";
-      case "confirmed":
+      case "accepted":
         return "bg-green-100 text-green-800";
       case "declined":
         return "bg-red-100 text-red-800";
@@ -77,6 +88,11 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
 
   return (
     <div className="bg-white shadow rounded-lg overflow-hidden">
+      {error && (
+        <div className="p-3 bg-red-50 text-red-800 text-sm border-b border-red-100">
+          {error}
+        </div>
+      )}
       <table className="min-w-full divide-y divide-gray-200">
         <thead className="bg-gray-50">
           <tr>
@@ -130,11 +146,11 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                 {request.status === "pending" && (
                   <>
                     <button
-                      onClick={() => updateStatus(request.id, "confirmed")}
+                      onClick={() => updateStatus(request.id, "accepted")}
                       disabled={loading === request.id}
                       className="text-green-600 hover:text-green-900 disabled:opacity-50"
                     >
-                      Confirm
+                      Accept
                     </button>
                     <button
                       onClick={() => updateStatus(request.id, "declined")}
