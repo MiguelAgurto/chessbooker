@@ -26,6 +26,13 @@ export default async function PublicBookingPage({ params }: PageProps) {
     .eq("coach_id", coach.id)
     .order("day_of_week", { ascending: true });
 
+  // Fetch confirmed bookings for the next 7 days to block those slots
+  const { data: confirmedBookings } = await supabase
+    .from("booking_requests")
+    .select("requested_times")
+    .eq("coach_id", coach.id)
+    .eq("status", "confirmed");
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-lg mx-auto">
@@ -58,6 +65,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
             coachId={coach.id}
             coachTimezone={coach.timezone || "UTC"}
             availability={availability || []}
+            confirmedBookings={confirmedBookings || []}
           />
         </div>
       </div>

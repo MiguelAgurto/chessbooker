@@ -16,9 +16,61 @@ interface Slot {
   displayTime: string; // Display time like "9:00 AM"
 }
 
+interface BookedSlot {
+  datetime: string;
+  duration_minutes: number;
+}
+
+interface ConfirmedBooking {
+  requested_times: BookedSlot[] | string[];
+}
+
+// Parse a booked slot into start/end timestamps (in ms)
+function parseBookedInterval(slot: BookedSlot | string): { start: number; end: number } | null {
+  let datetime: string;
+  let durationMinutes: number;
+
+  if (typeof slot === "string") {
+    // Legacy format: just a datetime string, assume 60 minutes
+    datetime = slot;
+    durationMinutes = 60;
+  } else if (slot && typeof slot === "object" && slot.datetime) {
+    datetime = slot.datetime;
+    durationMinutes = slot.duration_minutes || 60;
+  } else {
+    return null;
+  }
+
+  const start = new Date(datetime).getTime();
+  if (isNaN(start)) return null;
+
+  const end = start + durationMinutes * 60 * 1000;
+  return { start, end };
+}
+
+// Check if a slot overlaps with any booked interval
+function isSlotBlocked(
+  slotDate: string,
+  slotTime: string,
+  slotDuration: number,
+  bookedIntervals: { start: number; end: number }[]
+): boolean {
+  const slotStart = new Date(`${slotDate}T${slotTime}:00`).getTime();
+  const slotEnd = slotStart + slotDuration * 60 * 1000;
+
+  for (const booked of bookedIntervals) {
+    // Overlap if slotStart < bookingEnd AND slotEnd > bookingStart
+    if (slotStart < booked.end && slotEnd > booked.start) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function generateSlots(
   availability: AvailabilityRule[],
-  durationMinutes: number
+  durationMinutes: number,
+  bookedIntervals: { start: number; end: number }[]
 ): Slot[] {
   const slots: Slot[] = [];
   const now = new Date();
@@ -52,6 +104,11 @@ function generateSlots(
           const slotDate = new Date(date);
           slotDate.setHours(slotHour, slotMin, 0, 0);
           if (slotDate <= now) continue;
+        }
+
+        // Skip slots that overlap with confirmed bookings
+        if (isSlotBlocked(dateStr, timeStr, durationMinutes, bookedIntervals)) {
+          continue;
         }
 
         // Format display
@@ -97,10 +154,12 @@ export default function BookingForm({
   coachId,
   coachTimezone,
   availability,
+  confirmedBookings,
 }: {
   coachId: string;
   coachTimezone: string;
   availability: AvailabilityRule[];
+  confirmedBookings: ConfirmedBooking[];
 }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -111,7 +170,26 @@ export default function BookingForm({
   const [duration, setDuration] = useState<60 | 90>(60);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
-  const slots = useMemo(() => generateSlots(availability, duration), [availability, duration]);
+  // Parse all confirmed bookings into blocked intervals
+  const bookedIntervals = useMemo(() => {
+    const intervals: { start: number; end: number }[] = [];
+    for (const booking of confirmedBookings) {
+      if (booking.requested_times && Array.isArray(booking.requested_times)) {
+        for (const slot of booking.requested_times) {
+          const interval = parseBookedInterval(slot);
+          if (interval) {
+            intervals.push(interval);
+          }
+        }
+      }
+    }
+    return intervals;
+  }, [confirmedBookings]);
+
+  const slots = useMemo(
+    () => generateSlots(availability, duration, bookedIntervals),
+    [availability, duration, bookedIntervals]
+  );
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
 
   const handleDurationChange = (newDuration: 60 | 90) => {
