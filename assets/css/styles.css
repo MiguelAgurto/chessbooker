@@ -1094,6 +1094,14 @@ header .container {
   text-align: left;
 }
 
+.pilot-message {
+  font-size: 0.85rem;
+  color: var(--color-coral);
+  text-align: center;
+  margin-bottom: 12px;
+  font-weight: 500;
+}
+
 .waitlist-form h3 {
   font-family: var(--font-display);
   font-size: 1.5rem;
