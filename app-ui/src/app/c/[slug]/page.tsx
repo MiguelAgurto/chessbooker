@@ -12,7 +12,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
 
   const { data: coach } = await supabase
     .from("coaches")
-    .select("id, name, timezone, pricing")
+    .select("id, name, timezone, pricing, headline, bio, languages, tags, rating, years_coaching")
     .eq("slug", slug)
     .single();
 
@@ -39,7 +39,39 @@ export default async function PublicBookingPage({ params }: PageProps) {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">♞ Book a Session</h1>
           <p className="mt-2 text-lg text-gray-600">with {coach.name}</p>
+          {coach.headline && (
+            <p className="mt-1 text-sm text-gray-500">{coach.headline}</p>
+          )}
         </div>
+
+        {(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching) && (
+          <div className="bg-white shadow rounded-lg p-6 mb-6">
+            {coach.bio && (
+              <p className="text-gray-700 text-sm mb-4">{coach.bio}</p>
+            )}
+            {(coach.languages || coach.tags) && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {coach.languages?.split(",").map((lang: string) => (
+                  <span key={lang.trim()} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                    {lang.trim()}
+                  </span>
+                ))}
+                {coach.tags?.split(",").map((tag: string) => (
+                  <span key={tag.trim()} className="px-2 py-1 bg-indigo-100 text-indigo-800 text-xs rounded-full">
+                    {tag.trim()}
+                  </span>
+                ))}
+              </div>
+            )}
+            {(coach.rating || coach.years_coaching) && (
+              <p className="text-xs text-gray-500">
+                {coach.rating && `Rating: ${coach.rating}`}
+                {coach.rating && coach.years_coaching && " · "}
+                {coach.years_coaching && `${coach.years_coaching} years coaching`}
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="bg-white shadow rounded-lg p-6 mb-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Pricing</h2>

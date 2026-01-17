@@ -11,6 +11,12 @@ interface Coach {
   timezone: string;
   slug: string;
   pricing: { "60min": number; "90min": number };
+  headline?: string;
+  bio?: string;
+  languages?: string;
+  tags?: string;
+  rating?: number;
+  years_coaching?: number;
 }
 
 export default function SettingsForm({ coach }: { coach: Coach | null }) {
@@ -23,6 +29,12 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
   const [slug, setSlug] = useState(coach?.slug || "");
   const [price60, setPrice60] = useState(coach?.pricing?.["60min"] || 50);
   const [price90, setPrice90] = useState(coach?.pricing?.["90min"] || 70);
+  const [headline, setHeadline] = useState(coach?.headline || "");
+  const [bio, setBio] = useState(coach?.bio || "");
+  const [languages, setLanguages] = useState(coach?.languages || "");
+  const [tags, setTags] = useState(coach?.tags || "");
+  const [rating, setRating] = useState<number | "">(coach?.rating ?? "");
+  const [yearsCoaching, setYearsCoaching] = useState<number | "">(coach?.years_coaching ?? "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,6 +49,12 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
         timezone,
         slug,
         pricing: { "60min": price60, "90min": price90 },
+        headline: headline || null,
+        bio: bio || null,
+        languages: languages || null,
+        tags: tags || null,
+        rating: rating === "" ? null : rating,
+        years_coaching: yearsCoaching === "" ? null : yearsCoaching,
       })
       .eq("id", coach!.id);
 
@@ -79,6 +97,94 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
           className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
           required
         />
+      </div>
+
+      <div>
+        <label htmlFor="headline" className="block text-sm font-medium text-gray-700">
+          Headline
+        </label>
+        <input
+          type="text"
+          id="headline"
+          value={headline}
+          onChange={(e) => setHeadline(e.target.value)}
+          placeholder="e.g., FIDE Master | 10+ years experience"
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+          Bio
+        </label>
+        <textarea
+          id="bio"
+          value={bio}
+          onChange={(e) => setBio(e.target.value)}
+          rows={3}
+          placeholder="Tell students about yourself and your coaching style..."
+          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="languages" className="block text-sm font-medium text-gray-700">
+            Languages
+          </label>
+          <input
+            type="text"
+            id="languages"
+            value={languages}
+            onChange={(e) => setLanguages(e.target.value)}
+            placeholder="e.g., English, Spanish"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+            Focus Tags
+          </label>
+          <input
+            type="text"
+            id="tags"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="e.g., Openings, Endgames"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
+            Rating (optional)
+          </label>
+          <input
+            type="number"
+            id="rating"
+            value={rating}
+            onChange={(e) => setRating(e.target.value === "" ? "" : Number(e.target.value))}
+            placeholder="e.g., 2200"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            min="0"
+          />
+        </div>
+        <div>
+          <label htmlFor="yearsCoaching" className="block text-sm font-medium text-gray-700">
+            Years Coaching (optional)
+          </label>
+          <input
+            type="number"
+            id="yearsCoaching"
+            value={yearsCoaching}
+            onChange={(e) => setYearsCoaching(e.target.value === "" ? "" : Number(e.target.value))}
+            placeholder="e.g., 5"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            min="0"
+          />
+        </div>
       </div>
 
       <div>
