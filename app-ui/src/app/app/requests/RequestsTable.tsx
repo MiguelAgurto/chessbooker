@@ -4,15 +4,40 @@ import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
+interface SlotData {
+  datetime: string;
+  duration_minutes: number;
+}
+
 interface BookingRequest {
   id: string;
   coach_id: string;
   student_name: string;
   student_email: string;
   student_timezone: string;
-  requested_times: string[];
+  requested_times: (string | SlotData)[];
   status: string;
   created_at: string;
+}
+
+function formatRequestedTime(time: string | SlotData): string {
+  if (typeof time === "string") {
+    // Legacy format or plain string
+    return time;
+  }
+  if (time && typeof time === "object" && time.datetime) {
+    const date = new Date(time.datetime);
+    const formatted = date.toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return `${formatted} (${time.duration_minutes} min)`;
+  }
+  return String(time);
 }
 
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
@@ -84,7 +109,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                 <ul className="text-sm text-gray-900 space-y-1">
                   {(request.requested_times || []).map((time, i) => (
                     <li key={i} className="truncate max-w-xs">
-                      {time}
+                      {formatRequestedTime(time)}
                     </li>
                   ))}
                 </ul>
