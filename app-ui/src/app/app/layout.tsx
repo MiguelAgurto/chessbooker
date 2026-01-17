@@ -17,46 +17,51 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cb-bg">
       <AuthUrlCleaner />
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white border-b border-cb-border-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Link href="/app" className="text-xl font-bold text-gray-900">
-                  ♞ ChessBooker
+                <Link href="/app" className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 bg-coral rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 fill-white" viewBox="0 0 24 24">
+                      <path d="M19 22H5v-2h14v2M17.16 8.26A4.54 4.54 0 0 0 15 3.5V2h-2v1.5c0 .55-.45 1-1 1s-1-.45-1-1V2H9v1.5A4.54 4.54 0 0 0 6.84 8.26 5.93 5.93 0 0 0 6 11.5c0 2.21 1.12 4.15 2.81 5.29l-.81.81V19h8v-1.4l-.81-.81A6.46 6.46 0 0 0 18 11.5c0-1.17-.29-2.27-.84-3.24Z"/>
+                    </svg>
+                  </div>
+                  <span className="text-lg font-bold text-cb-text">ChessBooker</span>
                 </Link>
               </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
+              <div className="hidden sm:ml-8 sm:flex sm:space-x-1">
                 <Link
                   href="/app"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="text-cb-text-secondary hover:text-cb-text hover:bg-cb-bg-alt inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Dashboard
                 </Link>
                 <Link
                   href="/app/requests"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="text-cb-text-secondary hover:text-cb-text hover:bg-cb-bg-alt inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Requests
                 </Link>
                 <Link
                   href="/app/settings"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  className="text-cb-text-secondary hover:text-cb-text hover:bg-cb-bg-alt inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
                   Settings
                 </Link>
               </div>
             </div>
-            <div className="flex items-center">
-              <span className="text-sm text-gray-500 mr-4">{user.email}</span>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-cb-text-muted hidden sm:block">{user.email}</span>
               <LogoutButton />
             </div>
           </div>
         </div>
       </nav>
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">{children}</main>
+      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

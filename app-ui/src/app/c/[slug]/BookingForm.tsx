@@ -237,9 +237,13 @@ export default function BookingForm({
   if (submitted) {
     return (
       <div className="text-center py-8">
-        <div className="text-4xl mb-4">✅</div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">Request Submitted!</h3>
-        <p className="text-gray-600">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 fill-green-500" viewBox="0 0 24 24">
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-cb-text mb-2">Request Submitted!</h3>
+        <p className="text-cb-text-secondary">
           The coach will review your request and get back to you at {studentEmail}.
         </p>
       </div>
@@ -247,9 +251,9 @@ export default function BookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="name" className="label">
           Your Name
         </label>
         <input
@@ -258,12 +262,12 @@ export default function BookingForm({
           value={studentName}
           onChange={(e) => setStudentName(e.target.value)}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="email" className="label">
           Your Email
         </label>
         <input
@@ -272,22 +276,22 @@ export default function BookingForm({
           value={studentEmail}
           onChange={(e) => setStudentEmail(e.target.value)}
           required
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="label">
           Session Duration
         </label>
         <div className="flex gap-3">
           <button
             type="button"
             onClick={() => handleDurationChange(60)}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md border transition-colors ${
+            className={`flex-1 py-3 px-4 text-sm font-semibold rounded-lg border-2 transition-all ${
               duration === 60
-                ? "bg-indigo-600 text-white border-indigo-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500"
+                ? "bg-coral text-white border-coral"
+                : "bg-white text-cb-text border-cb-border hover:border-coral"
             }`}
           >
             60 minutes
@@ -295,10 +299,10 @@ export default function BookingForm({
           <button
             type="button"
             onClick={() => handleDurationChange(90)}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md border transition-colors ${
+            className={`flex-1 py-3 px-4 text-sm font-semibold rounded-lg border-2 transition-all ${
               duration === 90
-                ? "bg-indigo-600 text-white border-indigo-600"
-                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500"
+                ? "bg-coral text-white border-coral"
+                : "bg-white text-cb-text border-cb-border hover:border-coral"
             }`}
           >
             90 minutes
@@ -307,20 +311,20 @@ export default function BookingForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label className="label">
           Select a Time Slot
-          <span className="text-gray-500 font-normal ml-1">({coachTimezone})</span>
+          <span className="text-cb-text-muted font-normal ml-1">({coachTimezone})</span>
         </label>
 
         {slots.length === 0 ? (
-          <div className="p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-sm">
+          <div className="p-4 bg-cb-bg rounded-lg text-center text-cb-text-secondary text-sm border border-cb-border-light">
             No available time slots in the next 7 days. Please check back later.
           </div>
         ) : (
-          <div className="space-y-4 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-3">
+          <div className="space-y-4 max-h-64 overflow-y-auto border border-cb-border-light rounded-lg p-4">
             {Array.from(groupedSlots.entries()).map(([key, daySlots]) => (
               <div key={key}>
-                <div className="text-sm font-medium text-gray-700 mb-2">
+                <div className="text-sm font-semibold text-cb-text mb-2">
                   {daySlots[0].label}
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -332,10 +336,10 @@ export default function BookingForm({
                         key={`${slot.date}-${slot.time}`}
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
-                        className={`px-3 py-1.5 text-sm rounded-md border transition-colors ${
+                        className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
                           isSelected
-                            ? "bg-indigo-600 text-white border-indigo-600"
-                            : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500"
+                            ? "bg-coral text-white border-coral"
+                            : "bg-white text-cb-text-secondary border-cb-border hover:border-coral hover:text-coral"
                         }`}
                       >
                         {slot.displayTime}
@@ -349,20 +353,20 @@ export default function BookingForm({
         )}
 
         {selectedSlot && (
-          <p className="mt-2 text-sm text-indigo-600">
+          <p className="mt-3 text-sm text-coral font-medium">
             Selected: {selectedSlot.label} at {selectedSlot.displayTime} ({duration} min)
           </p>
         )}
       </div>
 
       {error && (
-        <div className="p-3 rounded-md bg-red-50 text-red-800 text-sm">{error}</div>
+        <div className="p-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">{error}</div>
       )}
 
       <button
         type="submit"
         disabled={loading || slots.length === 0}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full"
       >
         {loading ? "Submitting..." : "Submit Request"}
       </button>

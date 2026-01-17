@@ -84,9 +84,9 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
   ];
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="name" className="label">
           Name
         </label>
         <input
@@ -94,13 +94,13 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
           id="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
           required
         />
       </div>
 
       <div>
-        <label htmlFor="headline" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="headline" className="label">
           Headline
         </label>
         <input
@@ -109,12 +109,12 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
           value={headline}
           onChange={(e) => setHeadline(e.target.value)}
           placeholder="e.g., FIDE Master | 10+ years experience"
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
         />
       </div>
 
       <div>
-        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="bio" className="label">
           Bio
         </label>
         <textarea
@@ -123,13 +123,13 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
           onChange={(e) => setBio(e.target.value)}
           rows={3}
           placeholder="Tell students about yourself and your coaching style..."
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="languages" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="languages" className="label">
             Languages
           </label>
           <input
@@ -138,11 +138,11 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             value={languages}
             onChange={(e) => setLanguages(e.target.value)}
             placeholder="e.g., English, Spanish"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
           />
         </div>
         <div>
-          <label htmlFor="tags" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="tags" className="label">
             Focus Tags
           </label>
           <input
@@ -151,14 +151,14 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             value={tags}
             onChange={(e) => setTags(e.target.value)}
             placeholder="e.g., Openings, Endgames"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="rating" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="rating" className="label">
             Rating (optional)
           </label>
           <input
@@ -167,12 +167,12 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             value={rating}
             onChange={(e) => setRating(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder="e.g., 2200"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
             min="0"
           />
         </div>
         <div>
-          <label htmlFor="yearsCoaching" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="yearsCoaching" className="label">
             Years Coaching (optional)
           </label>
           <input
@@ -181,21 +181,21 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             value={yearsCoaching}
             onChange={(e) => setYearsCoaching(e.target.value === "" ? "" : Number(e.target.value))}
             placeholder="e.g., 5"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
             min="0"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="timezone" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="timezone" className="label">
           Timezone
         </label>
         <select
           id="timezone"
           value={timezone}
           onChange={(e) => setTimezone(e.target.value)}
-          className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+          className="input-field"
         >
           {timezones.map((tz) => (
             <option key={tz} value={tz}>
@@ -206,11 +206,11 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
       </div>
 
       <div>
-        <label htmlFor="slug" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="slug" className="label">
           Booking URL Slug
         </label>
-        <div className="mt-1 flex rounded-md shadow-sm">
-          <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-500 sm:text-sm">
+        <div className="flex rounded-md">
+          <span className="inline-flex items-center px-4 rounded-l-md border border-r-0 border-cb-border bg-cb-bg text-cb-text-secondary text-sm">
             /c/
           </span>
           <input
@@ -218,7 +218,7 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             id="slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))}
-            className="flex-1 block w-full px-3 py-2 border border-gray-300 rounded-none rounded-r-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="flex-1 block w-full px-4 py-3.5 border border-cb-border rounded-none rounded-r-md text-sm transition-all duration-200 focus:outline-none focus:border-coral focus:ring-2 focus:ring-coral-light"
             required
           />
         </div>
@@ -226,7 +226,7 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
 
       <div className="grid grid-cols-2 gap-4">
         <div>
-          <label htmlFor="price60" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="price60" className="label">
             60-min Price ($)
           </label>
           <input
@@ -234,12 +234,12 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             id="price60"
             value={price60}
             onChange={(e) => setPrice60(Number(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
             min="0"
           />
         </div>
         <div>
-          <label htmlFor="price90" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="price90" className="label">
             90-min Price ($)
           </label>
           <input
@@ -247,24 +247,24 @@ export default function SettingsForm({ coach }: { coach: Coach | null }) {
             id="price90"
             value={price90}
             onChange={(e) => setPrice90(Number(e.target.value))}
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="input-field"
             min="0"
           />
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-4 pt-2">
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="btn-primary"
         >
           {loading ? "Saving..." : "Save Settings"}
         </button>
 
         {message && (
           <span
-            className={`text-sm ${
+            className={`text-sm font-medium ${
               message.type === "success" ? "text-green-600" : "text-red-600"
             }`}
           >

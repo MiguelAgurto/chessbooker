@@ -12,8 +12,8 @@ export default async function RequestsPage() {
     .order("created_at", { ascending: false });
 
   return (
-    <div className="px-4 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Booking Requests</h1>
+    <div>
+      <h1 className="font-display text-3xl text-cb-text mb-8">Booking Requests</h1>
       <RequestsTable requests={requests || []} />
     </div>
   );
