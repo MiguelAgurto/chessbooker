@@ -18,7 +18,7 @@ interface Slot {
 
 function generateSlots(
   availability: AvailabilityRule[],
-  coachTimezone: string
+  durationMinutes: number
 ): Slot[] {
   const slots: Slot[] = [];
   const now = new Date();
@@ -39,8 +39,8 @@ function generateSlots(
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
 
-      // Generate 60-minute slots
-      for (let mins = startMinutes; mins + 60 <= endMinutes; mins += 60) {
+      // Generate slots based on selected duration
+      for (let mins = startMinutes; mins + durationMinutes <= endMinutes; mins += durationMinutes) {
         const slotHour = Math.floor(mins / 60);
         const slotMin = mins % 60;
 
@@ -108,10 +108,16 @@ export default function BookingForm({
 
   const [studentName, setStudentName] = useState("");
   const [studentEmail, setStudentEmail] = useState("");
+  const [duration, setDuration] = useState<60 | 90>(60);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
-  const slots = useMemo(() => generateSlots(availability, coachTimezone), [availability, coachTimezone]);
+  const slots = useMemo(() => generateSlots(availability, duration), [availability, duration]);
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
+
+  const handleDurationChange = (newDuration: 60 | 90) => {
+    setDuration(newDuration);
+    setSelectedSlot(null); // Clear selection when duration changes
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,8 +130,11 @@ export default function BookingForm({
 
     setLoading(true);
 
-    // Store as ISO datetime string in coach's timezone context
-    const slotDateTime = `${selectedSlot.date}T${selectedSlot.time}:00`;
+    // Store as object with datetime and duration
+    const slotData = {
+      datetime: `${selectedSlot.date}T${selectedSlot.time}:00`,
+      duration_minutes: duration,
+    };
 
     const supabase = createClient();
 
@@ -133,8 +142,8 @@ export default function BookingForm({
       coach_id: coachId,
       student_name: studentName,
       student_email: studentEmail,
-      student_timezone: coachTimezone, // Using coach timezone since slots are in coach's time
-      requested_times: [slotDateTime],
+      student_timezone: coachTimezone,
+      requested_times: [slotData],
       status: "pending",
     });
 
@@ -191,6 +200,36 @@ export default function BookingForm({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
+          Session Duration
+        </label>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => handleDurationChange(60)}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md border transition-colors ${
+              duration === 60
+                ? "bg-indigo-600 text-white border-indigo-600"
+                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500"
+            }`}
+          >
+            60 minutes
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDurationChange(90)}
+            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md border transition-colors ${
+              duration === 90
+                ? "bg-indigo-600 text-white border-indigo-600"
+                : "bg-white text-gray-700 border-gray-300 hover:border-indigo-500"
+            }`}
+          >
+            90 minutes
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
           Select a Time Slot
           <span className="text-gray-500 font-normal ml-1">({coachTimezone})</span>
         </label>
@@ -233,7 +272,7 @@ export default function BookingForm({
 
         {selectedSlot && (
           <p className="mt-2 text-sm text-indigo-600">
-            Selected: {selectedSlot.label} at {selectedSlot.displayTime}
+            Selected: {selectedSlot.label} at {selectedSlot.displayTime} ({duration} min)
           </p>
         )}
       </div>
