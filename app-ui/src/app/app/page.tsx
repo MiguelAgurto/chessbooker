@@ -30,7 +30,17 @@ export default async function DashboardPage() {
 
   return (
     <div className="px-4 sm:px-0">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Dashboard</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
+        </h1>
+        <Link
+          href="/app/settings"
+          className="text-sm text-indigo-600 hover:text-indigo-900"
+        >
+          Edit profile
+        </Link>
+      </div>
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <div className="bg-white overflow-hidden shadow rounded-lg">
