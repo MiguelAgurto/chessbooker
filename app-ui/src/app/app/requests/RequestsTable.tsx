@@ -1,0 +1,139 @@
+"use client";
+
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+
+interface BookingRequest {
+  id: string;
+  coach_id: string;
+  student_name: string;
+  student_email: string;
+  student_timezone: string;
+  requested_times: string[];
+  status: string;
+  created_at: string;
+}
+
+export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
+  const router = useRouter();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const updateStatus = async (id: string, status: string) => {
+    setLoading(id);
+    const supabase = createClient();
+
+    await supabase.from("booking_requests").update({ status }).eq("id", id);
+
+    router.refresh();
+    setLoading(null);
+  };
+
+  const getStatusBadgeClass = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "confirmed":
+        return "bg-green-100 text-green-800";
+      case "declined":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  if (requests.length === 0) {
+    return (
+      <div className="bg-white shadow rounded-lg p-6 text-center text-gray-500">
+        No booking requests yet. Share your booking link with students!
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white shadow rounded-lg overflow-hidden">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Student
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Requested Times
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Date
+            </th>
+            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {requests.map((request) => (
+            <tr key={request.id}>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm font-medium text-gray-900">{request.student_name}</div>
+                <div className="text-sm text-gray-500">{request.student_email}</div>
+                <div className="text-xs text-gray-400">{request.student_timezone}</div>
+              </td>
+              <td className="px-6 py-4">
+                <ul className="text-sm text-gray-900 space-y-1">
+                  {(request.requested_times || []).map((time, i) => (
+                    <li key={i} className="truncate max-w-xs">
+                      {time}
+                    </li>
+                  ))}
+                </ul>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span
+                  className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusBadgeClass(
+                    request.status
+                  )}`}
+                >
+                  {request.status}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {new Date(request.created_at).toLocaleDateString()}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                {request.status === "pending" && (
+                  <>
+                    <button
+                      onClick={() => updateStatus(request.id, "confirmed")}
+                      disabled={loading === request.id}
+                      className="text-green-600 hover:text-green-900 disabled:opacity-50"
+                    >
+                      Confirm
+                    </button>
+                    <button
+                      onClick={() => updateStatus(request.id, "declined")}
+                      disabled={loading === request.id}
+                      className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                    >
+                      Decline
+                    </button>
+                  </>
+                )}
+                {request.status !== "pending" && (
+                  <button
+                    onClick={() => updateStatus(request.id, "pending")}
+                    disabled={loading === request.id}
+                    className="text-gray-600 hover:text-gray-900 disabled:opacity-50"
+                  >
+                    Reset
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
