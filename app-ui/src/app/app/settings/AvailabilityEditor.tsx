@@ -24,16 +24,24 @@ export default function AvailabilityEditor({
   const router = useRouter();
   const [rules, setRules] = useState(availability);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [newDay, setNewDay] = useState(1);
   const [newStart, setNewStart] = useState("09:00");
   const [newEnd, setNewEnd] = useState("17:00");
 
   const handleAdd = async () => {
+    setError(null);
+
+    if (newStart >= newEnd) {
+      setError("Start time must be before end time");
+      return;
+    }
+
     setLoading(true);
     const supabase = createClient();
 
-    const { data, error } = await supabase
+    const { data, error: insertError } = await supabase
       .from("availability_rules")
       .insert({
         coach_id: coachId,
@@ -44,7 +52,9 @@ export default function AvailabilityEditor({
       .select()
       .single();
 
-    if (!error && data) {
+    if (insertError) {
+      setError(insertError.message);
+    } else if (data) {
       setRules([...rules, data]);
       router.refresh();
     }
@@ -153,9 +163,13 @@ export default function AvailabilityEditor({
           disabled={loading}
           className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
         >
-          Add
+          {loading ? "Adding..." : "Add"}
         </button>
       </div>
+
+      {error && (
+        <div className="p-3 rounded-md bg-red-50 text-red-800 text-sm">{error}</div>
+      )}
     </div>
   );
 }
