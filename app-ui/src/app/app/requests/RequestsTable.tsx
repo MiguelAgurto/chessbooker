@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface SlotData {
   datetime: string;
@@ -40,10 +40,32 @@ function formatRequestedTime(time: string | SlotData): string {
   return String(time);
 }
 
+type StatusFilter = "pending" | "accepted" | "declined" | "all";
+
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Get initial filter from URL params, default to "pending"
+  const urlStatus = searchParams.get("status") as StatusFilter | null;
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(
+    urlStatus && ["pending", "accepted", "declined", "all"].includes(urlStatus) ? urlStatus : "pending"
+  );
+
+  // Filter requests based on selected status
+  const filteredRequests = statusFilter === "all"
+    ? requests
+    : requests.filter((r) => r.status === statusFilter);
+
+  // Count requests by status
+  const counts = {
+    pending: requests.filter((r) => r.status === "pending").length,
+    accepted: requests.filter((r) => r.status === "accepted").length,
+    declined: requests.filter((r) => r.status === "declined").length,
+    all: requests.length,
+  };
 
   const updateStatus = async (id: string, status: string) => {
     setLoading(id);
@@ -78,6 +100,13 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     }
   };
 
+  const filterTabs: { key: StatusFilter; label: string }[] = [
+    { key: "pending", label: "Pending" },
+    { key: "accepted", label: "Confirmed" },
+    { key: "declined", label: "Declined" },
+    { key: "all", label: "All" },
+  ];
+
   if (requests.length === 0) {
     return (
       <div className="card p-6 text-center text-cb-text-secondary">
@@ -87,7 +116,40 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
   }
 
   return (
-    <div className="card overflow-hidden">
+    <div>
+      {/* Status filter tabs */}
+      <div className="flex gap-2 mb-4">
+        {filterTabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setStatusFilter(tab.key)}
+            className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              statusFilter === tab.key
+                ? "bg-coral text-white"
+                : "bg-white text-cb-text-secondary border border-cb-border hover:border-coral hover:text-coral"
+            }`}
+          >
+            {tab.label}
+            <span className={`ml-2 px-1.5 py-0.5 text-xs rounded-full ${
+              statusFilter === tab.key
+                ? "bg-white/20 text-white"
+                : "bg-cb-bg text-cb-text-muted"
+            }`}>
+              {counts[tab.key]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {filteredRequests.length === 0 ? (
+        <div className="card p-6 text-center text-cb-text-secondary">
+          {statusFilter === "pending" && "No pending requests"}
+          {statusFilter === "accepted" && "No confirmed sessions"}
+          {statusFilter === "declined" && "No declined requests"}
+          {statusFilter === "all" && "No requests"}
+        </div>
+      ) : (
+      <div className="card overflow-hidden">
       {error && (
         <div className="p-4 bg-red-50 text-red-800 text-sm border-b border-red-200">
           {error}
@@ -114,7 +176,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-cb-border-light">
-          {requests.map((request) => (
+          {filteredRequests.map((request) => (
             <tr key={request.id} className="hover:bg-cb-bg transition-colors">
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-cb-text">{request.student_name}</div>
@@ -175,6 +237,8 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
           ))}
         </tbody>
       </table>
+    </div>
+      )}
     </div>
   );
 }
