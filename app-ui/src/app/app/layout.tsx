@@ -16,6 +16,12 @@ export default async function AppLayout({
     redirect("/login");
   }
 
+  const { data: coach } = await supabase
+    .from("coaches")
+    .select("name, avatar_url")
+    .eq("id", user.id)
+    .single();
+
   return (
     <div className="min-h-screen bg-cb-bg">
       <AuthUrlCleaner />
@@ -55,7 +61,27 @@ export default async function AppLayout({
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-cb-text-muted hidden sm:block">{user.email}</span>
+              {coach?.avatar_url ? (
+                <img
+                  src={coach.avatar_url}
+                  alt={coach.name || "Profile"}
+                  className="w-8 h-8 rounded-full object-cover hidden sm:block"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-coral-light hidden sm:flex items-center justify-center">
+                  <span className="text-xs font-semibold text-coral">
+                    {(coach?.name || user.email || "U")
+                      .split(" ")
+                      .map((n: string) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </span>
+                </div>
+              )}
+              <span className="text-sm font-semibold text-cb-text hidden sm:block">
+                {coach?.name || user.email}
+              </span>
               <LogoutButton />
             </div>
           </div>

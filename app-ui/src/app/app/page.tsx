@@ -31,9 +31,29 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl text-cb-text">
-          {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
-        </h1>
+        <div className="flex items-center gap-4">
+          {coach?.avatar_url ? (
+            <img
+              src={coach.avatar_url}
+              alt={coach.name || "Coach"}
+              className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-coral-light border-2 border-white shadow-md flex items-center justify-center">
+              <span className="text-xl font-semibold text-coral">
+                {(coach?.name || "C")
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .toUpperCase()
+                  .slice(0, 2)}
+              </span>
+            </div>
+          )}
+          <h1 className="font-display text-3xl text-cb-text">
+            {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
+          </h1>
+        </div>
         <Link
           href="/app/settings"
           className="text-sm font-medium text-coral hover:text-coral-dark transition-colors"
@@ -45,19 +65,17 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
         <div className="card overflow-hidden">
           <div className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-coral-light rounded-lg flex items-center justify-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-coral-light rounded-lg flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 fill-coral" viewBox="0 0 24 24">
                   <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
                 </svg>
               </div>
-              <div className="ml-5 flex-1">
-                <p className="text-sm font-medium text-cb-text-secondary">Pending Requests</p>
-                <p className="text-2xl font-semibold text-cb-text">{pendingCount || 0}</p>
-              </div>
+              <p className="text-sm font-medium text-cb-text-secondary">Pending Requests</p>
+              <p className="text-2xl font-semibold text-cb-text">{pendingCount || 0}</p>
             </div>
           </div>
-          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light">
+          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
             <Link href="/app/requests" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
               View all requests
             </Link>
@@ -66,35 +84,31 @@ export default async function DashboardPage() {
 
         <div className="card overflow-hidden">
           <div className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 fill-green-500" viewBox="0 0 24 24">
                   <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
                 </svg>
               </div>
-              <div className="ml-5 flex-1">
-                <p className="text-sm font-medium text-cb-text-secondary">Confirmed Sessions</p>
-                <p className="text-2xl font-semibold text-cb-text">{confirmedCount || 0}</p>
-              </div>
+              <p className="text-sm font-medium text-cb-text-secondary">Confirmed Sessions</p>
+              <p className="text-2xl font-semibold text-cb-text">{confirmedCount || 0}</p>
             </div>
           </div>
         </div>
 
         <div className="card overflow-hidden">
           <div className="p-6">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
                 <svg className="w-6 h-6 fill-blue-500" viewBox="0 0 24 24">
                   <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
                 </svg>
               </div>
-              <div className="ml-5 flex-1">
-                <p className="text-sm font-medium text-cb-text-secondary">Availability Rules</p>
-                <p className="text-2xl font-semibold text-cb-text">{availability?.length || 0}</p>
-              </div>
+              <p className="text-sm font-medium text-cb-text-secondary">Schedules</p>
+              <p className="text-2xl font-semibold text-cb-text">{availability?.length || 0}</p>
             </div>
           </div>
-          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light">
+          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
             <Link href="/app/settings" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
               Manage availability
             </Link>
