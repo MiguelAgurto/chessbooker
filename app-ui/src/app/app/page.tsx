@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import BookingLinkBox from "@/components/BookingLinkBox";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -31,29 +32,9 @@ export default async function DashboardPage() {
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          {coach?.avatar_url ? (
-            <img
-              src={coach.avatar_url}
-              alt={coach.name || "Coach"}
-              className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-md"
-            />
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-coral-light border-2 border-white shadow-md flex items-center justify-center">
-              <span className="text-xl font-semibold text-coral">
-                {(coach?.name || "C")
-                  .split(" ")
-                  .map((n: string) => n[0])
-                  .join("")
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </span>
-            </div>
-          )}
-          <h1 className="font-display text-3xl text-cb-text">
-            {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
-          </h1>
-        </div>
+        <h1 className="font-display text-3xl text-cb-text">
+          {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
+        </h1>
         <Link
           href="/app/settings"
           className="text-sm font-medium text-coral hover:text-coral-dark transition-colors"
@@ -94,6 +75,11 @@ export default async function DashboardPage() {
               <p className="text-2xl font-semibold text-cb-text">{confirmedCount || 0}</p>
             </div>
           </div>
+          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
+            <Link href="/app/requests?status=accepted" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
+              View sessions
+            </Link>
+          </div>
         </div>
 
         <div className="card overflow-hidden">
@@ -110,7 +96,7 @@ export default async function DashboardPage() {
           </div>
           <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
             <Link href="/app/settings" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
-              Manage availability
+              Manage schedules
             </Link>
           </div>
         </div>
@@ -119,25 +105,7 @@ export default async function DashboardPage() {
       <div className="card p-6">
         <h2 className="text-lg font-semibold text-cb-text mb-4">Your Public Booking Link</h2>
         {coach?.slug ? (
-          <>
-            <div className="flex items-center gap-4">
-              <div className="flex-1 bg-cb-bg px-4 py-3 rounded-lg border border-cb-border-light">
-                <code className="text-sm text-cb-text break-all">
-                  {process.env.NEXT_PUBLIC_SITE_URL || "https://app.chessbooker.com"}/c/{coach.slug}
-                </code>
-              </div>
-              <Link
-                href={`/c/${coach.slug}`}
-                target="_blank"
-                className="btn-primary"
-              >
-                Open
-              </Link>
-            </div>
-            <p className="mt-3 text-sm text-cb-text-secondary">
-              Share this link with students so they can request bookings.
-            </p>
-          </>
+          <BookingLinkBox slug={coach.slug} />
         ) : (
           <p className="text-sm text-cb-text-secondary">
             Setting up your profile... Please refresh the page in a moment.

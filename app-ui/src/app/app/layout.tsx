@@ -82,6 +82,7 @@ export default async function AppLayout({
               <span className="text-sm font-semibold text-cb-text hidden sm:block">
                 {coach?.name || user.email}
               </span>
+              <div className="hidden sm:block h-6 w-px bg-cb-border-light mx-1" />
               <LogoutButton />
             </div>
           </div>
