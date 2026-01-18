@@ -79,7 +79,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
             with {coach.name}{coach.title && `, ${coach.title}`}
           </p>
           {coach.headline && (
-            <p className="mt-1 text-sm text-cb-text-muted">{coach.headline}</p>
+            <p className="mt-1 text-sm text-cb-text-secondary leading-relaxed">{coach.headline}</p>
           )}
         </div>
 
@@ -87,7 +87,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
         {(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching || (achievements && achievements.length > 0)) && (
           <div className="card px-5 py-4 mb-6">
             {coach.bio && (
-              <p className="text-cb-text-muted text-xs leading-relaxed mb-3">{coach.bio}</p>
+              <p className="text-cb-text-secondary text-sm leading-relaxed mb-3">{coach.bio}</p>
             )}
             {(coach.languages || coach.tags) && (
               <div className="flex flex-wrap gap-1.5 mb-2">
@@ -104,7 +104,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
               </div>
             )}
             {(coach.rating || coach.years_coaching) && (
-              <p className="text-xs text-cb-text-muted">
+              <p className="text-sm text-cb-text-secondary">
                 {coach.rating && `Rating: ${coach.rating}`}
                 {coach.rating && coach.years_coaching && " · "}
                 {coach.years_coaching && `${coach.years_coaching} years coaching`}

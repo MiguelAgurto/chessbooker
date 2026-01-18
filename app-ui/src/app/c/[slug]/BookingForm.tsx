@@ -387,7 +387,7 @@ export default function BookingForm({
             required
             className="input-field"
           />
-          <p className="mt-1.5 text-xs text-cb-text-muted">
+          <p className="mt-1.5 text-sm text-cb-text-secondary">
             Used only to confirm your session
           </p>
         </div>
@@ -397,7 +397,7 @@ export default function BookingForm({
           <label className="label">Select a Time</label>
 
           {/* Timezone info - most prominent context */}
-          <p className="text-xs text-cb-text-muted mb-1">
+          <p className="text-sm text-cb-text-secondary mb-1">
             Times shown in your timezone: {userTimezone}
           </p>
 
@@ -464,7 +464,7 @@ export default function BookingForm({
           >
             {loading ? "Sending..." : "Request Session"}
           </button>
-          <p className="mt-3 text-xs text-cb-text-muted text-center">
+          <p className="mt-3 text-sm text-cb-text-secondary text-center">
             You&apos;ll receive a confirmation email once the coach approves.
           </p>
         </div>
