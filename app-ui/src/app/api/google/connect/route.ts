@@ -4,11 +4,14 @@ import {
   generateOAuthState,
   getAuthUrl,
   getRedirectUri,
+  getAppBaseUrl,
 } from "@/lib/google/oauth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
+  const appBaseUrl = getAppBaseUrl();
+
   try {
     // Verify coach is authenticated
     const supabase = await createClient();
@@ -18,22 +21,20 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.redirect(
-        new URL("/login?error=unauthorized", request.url)
-      );
+      return NextResponse.redirect(`${appBaseUrl}/login?error=unauthorized`);
     }
 
     // Generate secure state with coach ID
     const { state } = generateOAuthState(user.id);
 
-    // Get redirect URI based on current request origin
-    const redirectUri = getRedirectUri(request.url);
+    // Get redirect URI (uses canonical domain)
+    const redirectUri = getRedirectUri();
 
     // Generate Google OAuth URL
     const authUrl = getAuthUrl(redirectUri, state);
 
     console.log(
-      `[Google OAuth] Initiating connection for coach ${user.id}, redirect: ${redirectUri}`
+      `[Google OAuth] Initiating: redirect_uri=${redirectUri}, post_callback_base=${appBaseUrl}`
     );
 
     // Redirect to Google consent screen
@@ -41,10 +42,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("[Google OAuth] Connect error:", error);
     return NextResponse.redirect(
-      new URL(
-        "/app/settings?google=error&reason=connect_failed",
-        request.url
-      )
+      `${appBaseUrl}/app/settings?google=error&reason=connect_failed`
     );
   }
 }

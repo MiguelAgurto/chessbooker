@@ -1,28 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   validateOAuthState,
   exchangeCodeForTokens,
   getGoogleUserEmail,
   getRedirectUri,
+  getAppBaseUrl,
 } from "@/lib/google/oauth";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const code = searchParams.get("code");
-  const state = searchParams.get("state");
-  const error = searchParams.get("error");
+export async function GET(request: Request) {
+  const appBaseUrl = getAppBaseUrl();
+  const url = new URL(request.url);
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const error = url.searchParams.get("error");
 
   // Handle OAuth errors from Google
   if (error) {
     console.error("[Google OAuth] Error from Google:", error);
     return NextResponse.redirect(
-      new URL(
-        `/app/settings?google=error&reason=${encodeURIComponent(error)}`,
-        request.url
-      )
+      `${appBaseUrl}/app/settings?google=error&reason=${encodeURIComponent(error)}`
     );
   }
 
@@ -30,7 +29,7 @@ export async function GET(request: NextRequest) {
   if (!code || !state) {
     console.error("[Google OAuth] Missing code or state");
     return NextResponse.redirect(
-      new URL("/app/settings?google=error&reason=missing_params", request.url)
+      `${appBaseUrl}/app/settings?google=error&reason=missing_params`
     );
   }
 
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
   if (!stateValidation.valid || !stateValidation.coachId) {
     console.error("[Google OAuth] Invalid state parameter");
     return NextResponse.redirect(
-      new URL("/app/settings?google=error&reason=invalid_state", request.url)
+      `${appBaseUrl}/app/settings?google=error&reason=invalid_state`
     );
   }
 
@@ -55,13 +54,13 @@ export async function GET(request: NextRequest) {
   if (authError || !user || user.id !== coachId) {
     console.error("[Google OAuth] Auth mismatch or not logged in");
     return NextResponse.redirect(
-      new URL("/app/settings?google=error&reason=auth_mismatch", request.url)
+      `${appBaseUrl}/app/settings?google=error&reason=auth_mismatch`
     );
   }
 
   try {
-    // Exchange code for tokens
-    const redirectUri = getRedirectUri(request.url);
+    // Exchange code for tokens (uses canonical redirect URI)
+    const redirectUri = getRedirectUri();
     const tokens = await exchangeCodeForTokens(code, redirectUri);
 
     console.log(
@@ -74,7 +73,7 @@ export async function GET(request: NextRequest) {
     if (!googleEmail) {
       console.error("[Google OAuth] Could not get Google email");
       return NextResponse.redirect(
-        new URL("/app/settings?google=error&reason=no_email", request.url)
+        `${appBaseUrl}/app/settings?google=error&reason=no_email`
       );
     }
 
@@ -104,10 +103,7 @@ export async function GET(request: NextRequest) {
       // No new refresh token and no existing one - this is a problem
       console.error("[Google OAuth] No refresh token available");
       return NextResponse.redirect(
-        new URL(
-          "/app/settings?google=error&reason=no_refresh_token",
-          request.url
-        )
+        `${appBaseUrl}/app/settings?google=error&reason=no_refresh_token`
       );
     }
 
@@ -119,21 +115,20 @@ export async function GET(request: NextRequest) {
     if (upsertError) {
       console.error("[Google OAuth] Failed to save connection:", upsertError);
       return NextResponse.redirect(
-        new URL("/app/settings?google=error&reason=save_failed", request.url)
+        `${appBaseUrl}/app/settings?google=error&reason=save_failed`
       );
     }
 
+    const finalRedirect = `${appBaseUrl}/app/settings?google=connected`;
     console.log(
-      `[Google OAuth] Successfully connected Google account ${googleEmail} for coach ${coachId}`
+      `[Google OAuth] Success for coach ${coachId}, redirecting to: ${finalRedirect}`
     );
 
-    return NextResponse.redirect(
-      new URL("/app/settings?google=connected", request.url)
-    );
+    return NextResponse.redirect(finalRedirect);
   } catch (err) {
     console.error("[Google OAuth] Callback error:", err);
     return NextResponse.redirect(
-      new URL("/app/settings?google=error&reason=exchange_failed", request.url)
+      `${appBaseUrl}/app/settings?google=error&reason=exchange_failed`
     );
   }
 }

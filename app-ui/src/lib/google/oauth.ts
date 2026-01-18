@@ -19,17 +19,28 @@ export function getOAuth2Client(redirectUri?: string) {
 }
 
 /**
- * Generate the redirect URI based on the request origin
+ * Get the OAuth redirect URI - always use canonical domain in production
  */
-export function getRedirectUri(requestUrl: string): string {
+export function getRedirectUri(): string {
   // If explicit redirect URI is set, use it
   if (process.env.GOOGLE_OAUTH_REDIRECT_URI) {
     return process.env.GOOGLE_OAUTH_REDIRECT_URI;
   }
 
-  // Otherwise derive from request
-  const url = new URL(requestUrl);
-  return `${url.origin}/api/google/callback`;
+  // Use APP_BASE_URL to ensure canonical domain
+  if (process.env.APP_BASE_URL) {
+    return `${process.env.APP_BASE_URL}/api/google/callback`;
+  }
+
+  // Fallback for local development
+  return "http://localhost:3000/api/google/callback";
+}
+
+/**
+ * Get the base URL for post-OAuth redirects
+ */
+export function getAppBaseUrl(): string {
+  return process.env.APP_BASE_URL || "http://localhost:3000";
 }
 
 /**
