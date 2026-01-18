@@ -12,7 +12,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
 
   const { data: coach } = await supabase
     .from("coaches")
-    .select("id, name, title, timezone, pricing, headline, bio, languages, tags, rating, years_coaching, avatar_url, achievements")
+    .select("id, name, title, timezone, pricing, headline, bio, languages, tags, rating, years_coaching, avatar_url")
     .eq("slug", slug)
     .single();
 
@@ -32,6 +32,23 @@ export default async function PublicBookingPage({ params }: PageProps) {
     .select("requested_times")
     .eq("coach_id", coach.id)
     .eq("status", "accepted");
+
+  // Fetch achievements from coach_achievements table
+  const { data: achievementsRaw } = await supabase
+    .from("coach_achievements")
+    .select("id, result, event, year, sort_order")
+    .eq("coach_id", coach.id);
+
+  // Sort: by sort_order asc, then by year desc (nulls last)
+  const achievements = (achievementsRaw || []).sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    // Both have year: sort descending
+    if (a.year !== null && b.year !== null) return b.year - a.year;
+    // Null years go last
+    if (a.year === null && b.year !== null) return 1;
+    if (a.year !== null && b.year === null) return -1;
+    return 0;
+  });
 
   return (
     <div className="min-h-screen bg-cb-bg py-12 px-4 sm:px-6 lg:px-8">
@@ -59,10 +76,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
           </div>
           <h1 className="font-display text-3xl text-cb-text">Book a Session</h1>
           <p className="mt-2 text-lg text-cb-text-secondary">
-            with {coach.name}
-            {coach.title && (
-              <span className="ml-1.5 text-coral font-medium">{coach.title}</span>
-            )}
+            with {coach.name}{coach.title && `, ${coach.title}`}
           </p>
           {coach.headline && (
             <p className="mt-1 text-sm text-cb-text-muted">{coach.headline}</p>
@@ -70,7 +84,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
         </div>
 
         {/* Coach bio - visually secondary */}
-        {(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching || (coach.achievements && coach.achievements.length > 0)) && (
+        {(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching || (achievements && achievements.length > 0)) && (
           <div className="card px-5 py-4 mb-6">
             {coach.bio && (
               <p className="text-cb-text-muted text-xs leading-relaxed mb-3">{coach.bio}</p>
@@ -97,11 +111,11 @@ export default async function PublicBookingPage({ params }: PageProps) {
               </p>
             )}
             {/* Achievements */}
-            {coach.achievements && coach.achievements.length > 0 && (
+            {achievements && achievements.length > 0 && (
               <div className={`${(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching) ? "mt-3 pt-3 border-t border-cb-border-light" : ""}`}>
                 <div className="space-y-1.5">
-                  {coach.achievements.map((achievement: { result: string; event?: string; year?: number }, index: number) => (
-                    <div key={index} className="flex items-start gap-2 text-xs text-cb-text-muted">
+                  {achievements.map((achievement) => (
+                    <div key={achievement.id} className="flex items-start gap-2 text-xs text-cb-text-muted">
                       <svg className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-amber-500" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" />
                       </svg>

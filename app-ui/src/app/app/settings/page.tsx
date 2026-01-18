@@ -13,6 +13,21 @@ export default async function ProfilePage() {
     .eq("id", user!.id)
     .single();
 
+  // Fetch achievements from coach_achievements table
+  const { data: achievementsRaw } = await supabase
+    .from("coach_achievements")
+    .select("id, result, event, year, sort_order")
+    .eq("coach_id", user!.id);
+
+  // Sort: by sort_order asc, then by year desc (nulls last)
+  const achievements = (achievementsRaw || []).sort((a, b) => {
+    if (a.sort_order !== b.sort_order) return a.sort_order - b.sort_order;
+    if (a.year !== null && b.year !== null) return b.year - a.year;
+    if (a.year === null && b.year !== null) return 1;
+    if (a.year !== null && b.year === null) return -1;
+    return 0;
+  });
+
   return (
     <div>
       <h1 className="font-display text-3xl text-cb-text mb-6">Settings</h1>
@@ -26,7 +41,7 @@ export default async function ProfilePage() {
 
         <div className="card p-6">
           <h2 className="text-lg font-semibold text-cb-text mb-4">Profile Information</h2>
-          <ProfileForm coach={coach} />
+          <ProfileForm coach={coach} initialAchievements={achievements || []} />
         </div>
       </div>
     </div>

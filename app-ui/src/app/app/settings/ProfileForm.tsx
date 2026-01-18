@@ -6,9 +6,11 @@ import { useRouter } from "next/navigation";
 import { revalidateDashboard } from "./actions";
 
 interface Achievement {
+  id?: string;
   result: string;
   event?: string;
   year?: number;
+  sort_order: number;
 }
 
 interface Coach {
@@ -21,7 +23,6 @@ interface Coach {
   tags?: string;
   rating?: number;
   years_coaching?: number;
-  achievements?: Achievement[];
 }
 
 const CHESS_TITLES = [
@@ -35,7 +36,13 @@ const CHESS_TITLES = [
   { value: "WFM", label: "WFM (Woman FIDE Master)" },
 ];
 
-export default function ProfileForm({ coach }: { coach: Coach | null }) {
+export default function ProfileForm({
+  coach,
+  initialAchievements,
+}: {
+  coach: Coach | null;
+  initialAchievements: Achievement[];
+}) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -48,20 +55,20 @@ export default function ProfileForm({ coach }: { coach: Coach | null }) {
   const [tags, setTags] = useState(coach?.tags || "");
   const [rating, setRating] = useState<number | "">(coach?.rating ?? "");
   const [yearsCoaching, setYearsCoaching] = useState<number | "">(coach?.years_coaching ?? "");
-  const [achievements, setAchievements] = useState<Achievement[]>(
-    coach?.achievements || []
-  );
+  const [achievements, setAchievements] = useState<Achievement[]>(initialAchievements);
+
+  // Track which achievements to delete (by id)
+  const [deletedIds, setDeletedIds] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    // Filter out empty achievements
-    const validAchievements = achievements.filter(a => a.result.trim() !== "");
-
     const supabase = createClient();
-    const { error } = await supabase
+
+    // 1. Update coach profile (including title)
+    const { error: coachError } = await supabase
       .from("coaches")
       .update({
         name,
@@ -72,32 +79,98 @@ export default function ProfileForm({ coach }: { coach: Coach | null }) {
         tags: tags || null,
         rating: rating === "" ? null : rating,
         years_coaching: yearsCoaching === "" ? null : yearsCoaching,
-        achievements: validAchievements.length > 0 ? validAchievements : null,
       })
       .eq("id", coach!.id);
 
-    if (error) {
-      setMessage({ type: "error", text: error.message });
-    } else {
-      setMessage({ type: "success", text: "Profile saved!" });
-      await revalidateDashboard();
-      router.refresh();
+    if (coachError) {
+      setMessage({ type: "error", text: coachError.message });
+      setLoading(false);
+      return;
     }
+
+    // 2. Delete removed achievements
+    if (deletedIds.length > 0) {
+      const { error: deleteError } = await supabase
+        .from("coach_achievements")
+        .delete()
+        .in("id", deletedIds);
+
+      if (deleteError) {
+        setMessage({ type: "error", text: deleteError.message });
+        setLoading(false);
+        return;
+      }
+    }
+
+    // 3. Upsert achievements (insert new, update existing)
+    const validAchievements = achievements.filter(a => a.result.trim() !== "");
+
+    for (let i = 0; i < validAchievements.length; i++) {
+      const achievement = validAchievements[i];
+      const data = {
+        coach_id: coach!.id,
+        result: achievement.result.trim(),
+        event: achievement.event?.trim() || null,
+        year: achievement.year || null,
+        sort_order: i,
+      };
+
+      if (achievement.id) {
+        // Update existing
+        const { error } = await supabase
+          .from("coach_achievements")
+          .update(data)
+          .eq("id", achievement.id);
+
+        if (error) {
+          setMessage({ type: "error", text: error.message });
+          setLoading(false);
+          return;
+        }
+      } else {
+        // Insert new
+        const { error } = await supabase
+          .from("coach_achievements")
+          .insert(data);
+
+        if (error) {
+          setMessage({ type: "error", text: error.message });
+          setLoading(false);
+          return;
+        }
+      }
+    }
+
+    setMessage({ type: "success", text: "Profile saved!" });
+    setDeletedIds([]);
+    await revalidateDashboard();
+    router.refresh();
 
     setLoading(false);
   };
 
   const addAchievement = () => {
     if (achievements.length < 5) {
-      setAchievements([...achievements, { result: "", event: "", year: undefined }]);
+      setAchievements([
+        ...achievements,
+        { result: "", event: "", year: undefined, sort_order: achievements.length },
+      ]);
     }
   };
 
   const removeAchievement = (index: number) => {
+    const achievement = achievements[index];
+    if (achievement.id) {
+      setDeletedIds([...deletedIds, achievement.id]);
+    }
     setAchievements(achievements.filter((_, i) => i !== index));
   };
 
-  const updateAchievement = (index: number, field: keyof Achievement, value: string | number | undefined) => {
+  const updateAchievement = (
+    index: number,
+    field: keyof Omit<Achievement, "id" | "sort_order">,
+    value: string | number | undefined
+  ) => {
     const updated = [...achievements];
     updated[index] = { ...updated[index], [field]: value };
     setAchievements(updated);
@@ -251,7 +324,7 @@ export default function ProfileForm({ coach }: { coach: Coach | null }) {
         ) : (
           <div className="space-y-3">
             {achievements.map((achievement, index) => (
-              <div key={index} className="flex gap-2 items-start">
+              <div key={achievement.id || `new-${index}`} className="flex gap-2 items-start">
                 <div className="flex-1 grid grid-cols-6 gap-2">
                   <input
                     type="text"
@@ -259,7 +332,6 @@ export default function ProfileForm({ coach }: { coach: Coach | null }) {
                     onChange={(e) => updateAchievement(index, "result", e.target.value)}
                     placeholder="Result (e.g., 1st Place)"
                     className="input-field col-span-2"
-                    required
                   />
                   <input
                     type="text"
