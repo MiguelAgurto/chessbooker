@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -100,12 +99,14 @@ export default function LoginPage() {
           )}
 
           <div className="mt-6 text-center">
-            <Link
-              href="/how-it-works"
+            <a
+              href="https://www.chessbooker.com/how-it-works.html"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-sm text-cb-text-secondary hover:text-coral transition-colors"
             >
               Learn how ChessBooker works
-            </Link>
+            </a>
           </div>
         </div>
       </div>

@@ -72,6 +72,32 @@
   }
 
   /* ==========================================================================
+     FAQ Accordion (How It Works Page)
+     ========================================================================== */
+
+  function initFaqAccordion() {
+    const faqQuestions = document.querySelectorAll('.faq-question');
+    if (!faqQuestions.length) return;
+
+    faqQuestions.forEach(button => {
+      button.addEventListener('click', () => {
+        const faqItem = button.parentElement;
+        const isOpen = faqItem.classList.contains('open');
+
+        // Close all other items
+        document.querySelectorAll('.faq-item-acc').forEach(item => {
+          item.classList.remove('open');
+        });
+
+        // Toggle current item
+        if (!isOpen) {
+          faqItem.classList.add('open');
+        }
+      });
+    });
+  }
+
+  /* ==========================================================================
      Initialize All Features
      ========================================================================== */
 
@@ -79,6 +105,7 @@
     initScrollAnimations();
     initSmoothScroll();
     initHeaderShadow();
+    initFaqAccordion();
   }
 
   // Run on DOM ready

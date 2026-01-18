@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How ChessBooker Works – From Request to Google Meet</title>
+  <meta name="description" content="Learn how ChessBooker automates your chess coaching workflow — from lesson requests to Google Calendar events and Meet links. No more back-and-forth.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/styles.css">
+</head>
+<body>
+
+  <header>
+    <div class="container">
+      <a href="/" class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M19 22H5v-2h14v2M17.16 8.26A4.54 4.54 0 0 0 15 3.5V2h-2v1.5c0 .55-.45 1-1 1s-1-.45-1-1V2H9v1.5A4.54 4.54 0 0 0 6.84 8.26 5.93 5.93 0 0 0 6 11.5c0 2.21 1.12 4.15 2.81 5.29l-.81.81V19h8v-1.4l-.81-.81A6.46 6.46 0 0 0 18 11.5c0-1.17-.29-2.27-.84-3.24Z"/></svg>
+        </div>
+        <span class="logo-text">ChessBooker</span>
+      </a>
+      <nav class="nav-links">
+        <a href="/how-it-works.html" style="color: var(--color-coral);">How It Works</a>
+        <a href="/#features">Features</a>
+        <a href="/#pricing">Pricing</a>
+        <a href="/#faq">FAQ</a>
+        <a href="#pilot" class="nav-cta">
+          Join Pilot
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hiw-hero">
+    <div class="container">
+      <h1>How <span class="highlight">ChessBooker</span> Works</h1>
+      <p>From lesson request to Google Meet + Calendar — automated. No more back-and-forth messages.</p>
+      <a href="#pilot" class="btn btn-primary">Join the Pilot</a>
+    </div>
+  </section>
+
+  <!-- Lesson Lifecycle Section -->
+  <section class="lifecycle-section" id="lifecycle">
+    <div class="container">
+      <div class="section-header">
+        <h2>The Full <span class="highlight">Lesson Lifecycle</span></h2>
+        <p>Every step from request to completion, handled automatically.</p>
+      </div>
+
+      <div class="lifecycle-grid">
+        <!-- Step A -->
+        <div class="lifecycle-card">
+          <div class="lifecycle-header">
+            <div class="lifecycle-step">A</div>
+            <h3>Student sends a request</h3>
+          </div>
+          <ul>
+            <li>Student fills out your booking form with their name, email, and timezone</li>
+            <li>They pick preferred times and session length</li>
+            <li>Request goes straight to your dashboard for review</li>
+          </ul>
+        </div>
+
+        <!-- Step B -->
+        <div class="lifecycle-card">
+          <div class="lifecycle-header">
+            <div class="lifecycle-step">B</div>
+            <h3>You accept the lesson</h3>
+          </div>
+          <ul>
+            <li>One click to confirm the booking</li>
+            <li>Google Calendar event is created automatically</li>
+            <li>Google Meet link is generated and attached</li>
+            <li>Both you and the student receive confirmation emails</li>
+          </ul>
+        </div>
+
+        <!-- Step C -->
+        <div class="lifecycle-card">
+          <div class="lifecycle-header">
+            <div class="lifecycle-step">C</div>
+            <h3>Reschedule if needed</h3>
+          </div>
+          <ul>
+            <li>Pick a new date and time from your dashboard</li>
+            <li>Google Calendar event updates automatically</li>
+            <li>Meet link stays the same — no confusion</li>
+            <li>Reschedule emails sent to both parties</li>
+          </ul>
+        </div>
+
+        <!-- Step D -->
+        <div class="lifecycle-card">
+          <div class="lifecycle-header">
+            <div class="lifecycle-step">D</div>
+            <h3>Cancel when necessary</h3>
+          </div>
+          <ul>
+            <li>Cancel a session with one click</li>
+            <li>Google Calendar event is removed automatically</li>
+            <li>Cancellation emails notify the student</li>
+            <li>Your booking still updates even if Google is down</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Coach Experience Section -->
+  <section class="coach-ux-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Built for <span class="highlight">Coaches</span></h2>
+        <p>A simple, focused dashboard that helps you manage lessons efficiently.</p>
+      </div>
+
+      <div class="coach-ux-grid">
+        <div class="coach-ux-card">
+          <div class="coach-ux-icon">
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+          </div>
+          <h4>Meet link visible</h4>
+          <p>See your video call link inside each booking</p>
+        </div>
+
+        <div class="coach-ux-card">
+          <div class="coach-ux-icon">
+            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          </div>
+          <h4>Copy & Open</h4>
+          <p>Quick actions to copy or open your Meet link</p>
+        </div>
+
+        <div class="coach-ux-card">
+          <div class="coach-ux-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
+          </div>
+          <h4>Open in Calendar</h4>
+          <p>Jump to the session in Google Calendar</p>
+        </div>
+
+        <div class="coach-ux-card">
+          <div class="coach-ux-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+          </div>
+          <h4>Always works</h4>
+          <p>Booking saves even if Google is temporarily down</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Google Integration Section -->
+  <section class="integration-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Google Calendar & <span class="highlight">Meet</span></h2>
+        <p>Connect once, automate forever.</p>
+      </div>
+
+      <div class="integration-card">
+        <div class="integration-step">
+          <div class="integration-num">1</div>
+          <div>
+            <h4>Connect your Google account once</h4>
+            <p>One click from your Settings page. We only ask for calendar access — not your email or other data.</p>
+          </div>
+        </div>
+
+        <div class="integration-step">
+          <div class="integration-num">2</div>
+          <div>
+            <h4>Your data stays secure</h4>
+            <p>Your Google credentials are stored securely and never exposed. You can disconnect anytime.</p>
+          </div>
+        </div>
+
+        <div class="integration-step">
+          <div class="integration-num">3</div>
+          <div>
+            <h4>Events created automatically</h4>
+            <p>Accept a booking → calendar event with Meet link appears instantly. Reschedule or cancel → the event updates or deletes automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Reliability Section -->
+  <section class="reliability-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Reliability <span class="highlight">Promise</span></h2>
+        <p>Your bookings always go through.</p>
+      </div>
+
+      <div class="reliability-grid">
+        <div class="reliability-card">
+          <div class="reliability-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <h4>Google down? No problem.</h4>
+          <p>If Google's servers are slow or unavailable, your booking still saves. Calendar sync happens when it can.</p>
+        </div>
+
+        <div class="reliability-card">
+          <div class="reliability-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <h4>Emails always send</h4>
+          <p>Confirmation and notification emails are sent independently. You and your student stay informed.</p>
+        </div>
+
+        <div class="reliability-card">
+          <div class="reliability-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+          </div>
+          <h4>Your flow continues</h4>
+          <p>Any sync issues are handled behind the scenes. Your dashboard keeps working without interruption.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Roadmap Section -->
+  <section class="roadmap-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>What's <span class="highlight">Next</span></h2>
+        <p>Features we're building for coaches like you.</p>
+      </div>
+
+      <div class="roadmap-card">
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+          </div>
+          <div>
+            <h4>Payments (Stripe)</h4>
+            <p>Students pay when booking. You confirm after payment.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item">
+          <div class="roadmap-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+          </div>
+          <div>
+            <h4>Reminders</h4>
+            <p>Automatic 24-hour and 1-hour email reminders before sessions.</p>
+          </div>
+        </div>
+
+        <div class="roadmap-item muted">
+          <div class="roadmap-icon muted">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+          </div>
+          <div>
+            <h4>Packages & Subscriptions</h4>
+            <p>Sell bundles of lessons or recurring coaching plans. (Coming later)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section-hiw" id="faq-hiw">
+    <div class="container">
+      <div class="section-header">
+        <h2>Frequently Asked <span class="highlight">Questions</span></h2>
+        <p>Common questions from coaches.</p>
+      </div>
+
+      <div class="faq-accordion">
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Do I need to pay to use ChessBooker during the pilot?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>No. The pilot is completely free. We're looking for feedback from real coaches to improve the product before launch.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            What happens if Google Calendar fails during a booking?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Your booking still goes through. Calendar and Meet link creation are attempted, but failures never block the booking. Emails are still sent, and you can manually share a meeting link if needed.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Can students see my full calendar?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>No. Students only see the availability windows you explicitly set in your schedule. Your actual Google Calendar events remain completely private.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            How do students pay for lessons?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Payments are not yet implemented. Currently, you handle payment collection outside of ChessBooker (PayPal, bank transfer, etc.). Stripe integration for pay-before-accept is on the roadmap.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Can I use ChessBooker without connecting Google Calendar?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. Google Calendar integration is optional. Without it, bookings work normally — you just won't get automatic calendar events and Meet links.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Can I reschedule or cancel a booking after accepting it?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. You can reschedule to a new time or cancel entirely. Both actions update the Google Calendar event (if connected) and send notification emails to the student.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Is my Google account data secure?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. We only request calendar access (not email or other data). Your credentials are stored securely and used only to create events. You can disconnect anytime from Settings.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            What information do students provide when booking?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Students provide their name, email, timezone, preferred time slots, and session duration. This information is stored securely and shown to you when they submit a request.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pilot Form Section -->
+  <section class="pilot-section" id="pilot">
+    <div class="container">
+      <div class="section-header">
+        <h2>Join the <span class="highlight">Pilot</span></h2>
+        <p>We're looking for chess coaches to try ChessBooker and share feedback.</p>
+      </div>
+
+      <div class="pilot-form-container">
+        <form class="pilot-form" name="pilot-request" method="POST" data-netlify="true" data-netlify-honeypot="bot-field" action="/thanks.html">
+          <input type="hidden" name="form-name" value="pilot-request">
+          <p class="hidden">
+            <label>Don't fill this out: <input name="bot-field"></label>
+          </p>
+
+          <h3>Request Pilot Access</h3>
+
+          <div class="form-group">
+            <label for="pilot-name">Name *</label>
+            <input type="text" id="pilot-name" name="name" required placeholder="Your name">
+          </div>
+
+          <div class="form-group">
+            <label for="pilot-email">Email *</label>
+            <input type="email" id="pilot-email" name="email" required placeholder="you@example.com">
+          </div>
+
+          <div class="form-group">
+            <label for="pilot-platform">Where do you coach? *</label>
+            <select id="pilot-platform" name="platform" required>
+              <option value="">Select platform</option>
+              <option value="Lichess">Lichess</option>
+              <option value="Chess.com">Chess.com</option>
+              <option value="Both Lichess and Chess.com">Both Lichess and Chess.com</option>
+              <option value="Other / In-person">Other / In-person</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="pilot-message">Message (optional)</label>
+            <textarea id="pilot-message" name="message" placeholder="Tell us about your coaching practice, any specific needs, or questions..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary form-submit">Join the Pilot</button>
+          <p class="form-note">No spam. We'll only email you about pilot access.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <a href="/" class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24"><path d="M19 22H5v-2h14v2M17.16 8.26A4.54 4.54 0 0 0 15 3.5V2h-2v1.5c0 .55-.45 1-1 1s-1-.45-1-1V2H9v1.5A4.54 4.54 0 0 0 6.84 8.26 5.93 5.93 0 0 0 6 11.5c0 2.21 1.12 4.15 2.81 5.29l-.81.81V19h8v-1.4l-.81-.81A6.46 6.46 0 0 0 18 11.5c0-1.17-.29-2.27-.84-3.24Z"/></svg>
+          </div>
+          <span class="logo-text">ChessBooker</span>
+        </a>
+
+        <div class="footer-links">
+          <a href="#">Privacy</a>
+          <a href="#">Terms</a>
+          <a href="mailto:hello@chessbooker.com">Contact</a>
+        </div>
+
+        <p class="footer-copy">&copy; 2025 ChessBooker. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/assets/js/main.js" defer></script>
+</body>
+</html>
