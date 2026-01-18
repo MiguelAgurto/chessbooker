@@ -402,28 +402,46 @@ export async function cancelBooking(
     }
   }
 
-  // Delete Google Calendar event if it exists
-  if (booking.calendar_event_id) {
+  // Delete Google Calendar event if eligible:
+  // - calendar_provider is 'google'
+  // - calendar_event_id exists
+  // - coach has google_connections (checked inside deleteCalendarEvent)
+  const isGoogleCalendar = booking.calendar_provider === "google";
+  const hasCalendarEvent = !!booking.calendar_event_id;
+
+  if (isGoogleCalendar && hasCalendarEvent) {
     try {
+      console.log(
+        `[Cancel] Attempting Google Calendar delete: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`
+      );
+
       const deleted = await deleteCalendarEvent(
         booking.coach_id,
         booking.calendar_event_id
       );
 
       if (!deleted) {
-        console.error("[Cancel] Google Calendar delete failed");
-        // Continue anyway - we'll still cancel the booking
+        console.error(
+          `[Cancel] Google Calendar delete failed: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`
+        );
+        // Continue anyway - we'll still cancel the booking and send emails
+      } else {
+        console.log(`[Cancel] Google Calendar event deleted successfully: ${booking.calendar_event_id}`);
       }
     } catch (calendarError) {
-      console.error("[Cancel] Google Calendar error:", calendarError);
+      console.error(
+        `[Cancel] Google Calendar error: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`,
+        calendarError
+      );
+      // Continue anyway - we'll still cancel the booking and send emails
     }
   }
 
-  // Update booking status to cancelled and clear calendar data
+  // Update booking status to canceled and clear calendar data
   const { error: updateError } = await supabase
     .from("booking_requests")
     .update({
-      status: "cancelled",
+      status: "canceled",
       calendar_event_id: null,
       meeting_url: null,
     })
@@ -436,20 +454,20 @@ export async function cancelBooking(
   // Send email to student
   const studentEmailBody = `Hi ${studentName},
 
-❌ Your session has been cancelled.
+Your session has been canceled.
 
-Session that was cancelled:
+Session details:
 - Coach: ${coachName}
 - Time: ${formattedTime}
 
-If you'd like to book a new session, please visit your coach's booking page.
+If you'd like to reschedule, please reply to your coach.
 
 Thanks for using ChessBooker.`;
 
   try {
     await sendEmail({
       to: studentEmail,
-      subject: `❌ Your session with ${coachName} has been cancelled`,
+      subject: "Session canceled - ChessBooker",
       text: studentEmailBody,
     });
   } catch (emailError) {
@@ -460,9 +478,9 @@ Thanks for using ChessBooker.`;
   if (coachEmail) {
     const coachEmailBody = `Hi ${coachName},
 
-❌ A session has been cancelled.
+A session has been canceled.
 
-Session that was cancelled:
+Session details:
 - Student: ${studentName} (${studentEmail})
 - Time: ${formattedTimeCoach}
 
@@ -471,7 +489,7 @@ Thanks for using ChessBooker.`;
     try {
       await sendEmail({
         to: coachEmail,
-        subject: `❌ Session with ${studentName} cancelled`,
+        subject: "Session canceled - ChessBooker",
         text: coachEmailBody,
       });
     } catch (emailError) {

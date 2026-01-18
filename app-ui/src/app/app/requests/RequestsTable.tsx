@@ -140,7 +140,7 @@ function groupSessionsByDate(requests: BookingRequest[]): Map<string, BookingReq
   return grouped;
 }
 
-type StatusFilter = "pending" | "accepted" | "declined" | "cancelled" | "all";
+type StatusFilter = "pending" | "accepted" | "declined" | "canceled" | "all";
 
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
   // Get initial filter from URL params, default to "pending"
   const urlStatus = searchParams.get("status") as StatusFilter | null;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
-    urlStatus && ["pending", "accepted", "declined", "cancelled", "all"].includes(urlStatus) ? urlStatus : "pending"
+    urlStatus && ["pending", "accepted", "declined", "canceled", "all"].includes(urlStatus) ? urlStatus : "pending"
   );
 
   // Filter requests based on selected status
@@ -164,7 +164,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     pending: requests.filter((r) => r.status === "pending").length,
     accepted: requests.filter((r) => r.status === "accepted").length,
     declined: requests.filter((r) => r.status === "declined").length,
-    cancelled: requests.filter((r) => r.status === "cancelled").length,
+    canceled: requests.filter((r) => r.status === "canceled").length,
     all: requests.length,
   };
 
@@ -212,7 +212,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
         return "bg-green-50 text-green-700";
       case "declined":
         return "bg-red-50 text-red-700";
-      case "cancelled":
+      case "canceled":
         return "bg-gray-100 text-gray-600";
       default:
         return "bg-cb-bg text-cb-text-secondary";
@@ -223,7 +223,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     { key: "pending", label: "Pending" },
     { key: "accepted", label: "Confirmed" },
     { key: "declined", label: "Declined" },
-    { key: "cancelled", label: "Cancelled" },
+    { key: "canceled", label: "Cancelled" },
     { key: "all", label: "All" },
   ];
 
@@ -266,7 +266,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
           {statusFilter === "pending" && "No pending requests"}
           {statusFilter === "accepted" && "No confirmed sessions yet"}
           {statusFilter === "declined" && "No declined requests"}
-          {statusFilter === "cancelled" && "No cancelled sessions"}
+          {statusFilter === "canceled" && "No canceled sessions"}
           {statusFilter === "all" && "No requests"}
         </div>
       ) : statusFilter === "accepted" ? (
