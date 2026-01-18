@@ -6,6 +6,8 @@ import {
   getRedirectUri,
 } from "@/lib/google/oauth";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
     // Verify coach is authenticated
