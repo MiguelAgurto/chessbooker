@@ -93,20 +93,27 @@ function getDateLabel(date: Date): string {
   });
 }
 
-function formatDateForGoogleCalendar(date: Date): string {
-  // Format: YYYYMMDDTHHMMSSZ (UTC)
-  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+function formatDateYYYYMMDD(date: Date): string {
+  // Format: YYYYMMDD (date only, no time)
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}${month}${day}`;
 }
 
-function getGoogleCalendarUrl(startDate: Date | null, durationMinutes: number): string {
-  // Validate that startDate is a valid Date object
-  if (!startDate || isNaN(startDate.getTime())) {
+function getGoogleCalendarUrl(sessionDate: Date | null): string {
+  // Validate that sessionDate is a valid Date object
+  if (!sessionDate || isNaN(sessionDate.getTime())) {
     return "https://calendar.google.com/calendar/u/0/r";
   }
-  const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
-  const startStr = formatDateForGoogleCalendar(startDate);
-  const endStr = formatDateForGoogleCalendar(endDate);
-  return `https://calendar.google.com/calendar/u/0/r/day?sf=true&output=xml&dates=${startStr}/${endStr}`;
+  // START = session date as YYYYMMDD
+  const startStr = formatDateYYYYMMDD(sessionDate);
+  // END = next day as YYYYMMDD
+  const nextDay = new Date(sessionDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+  const endStr = formatDateYYYYMMDD(nextDay);
+  // Use mode=day with dates range to open the specific day view
+  return `https://calendar.google.com/calendar/u/0/r?tab=mc&mode=day&dates=${startStr}/${endStr}`;
 }
 
 function groupSessionsByDate(requests: BookingRequest[]): Map<string, BookingRequest[]> {
@@ -329,7 +336,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                         {session.calendar_event_id && (
                           <div className="mt-3">
                             <a
-                              href={getGoogleCalendarUrl(sessionTime, duration)}
+                              href={getGoogleCalendarUrl(sessionTime)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded border border-cb-border hover:border-coral hover:text-coral transition-colors"
