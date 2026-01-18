@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
-import { createCalendarEvent } from "@/lib/google/calendar";
+import { createCalendarEvent, updateCalendarEventTime, deleteCalendarEvent } from "@/lib/google/calendar";
 
 interface SlotData {
   datetime: string;
@@ -230,6 +230,252 @@ Thanks for using ChessBooker.`;
       });
     } catch (emailError) {
       console.error("Failed to send confirmation email to student:", emailError);
+    }
+  }
+
+  revalidatePath("/app/requests");
+  return { success: true };
+}
+
+/**
+ * Reschedule a booking to a new time slot
+ */
+export async function rescheduleBooking(
+  bookingId: string,
+  newDateTime: string,
+  newDurationMinutes: number
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch the booking with coach details
+  const { data: booking, error: fetchError } = await supabase
+    .from("booking_requests")
+    .select("*, coaches(name, email, timezone)")
+    .eq("id", bookingId)
+    .single();
+
+  if (fetchError || !booking) {
+    return { success: false, error: fetchError?.message || "Booking not found" };
+  }
+
+  const coachName = booking.coaches?.name || "your coach";
+  const coachEmail = booking.coaches?.email;
+  const coachTimezone = booking.coaches?.timezone || "UTC";
+  const studentEmail = booking.student_email;
+  const studentName = booking.student_name;
+  const studentTimezone = booking.student_timezone || "UTC";
+
+  // Update the booking with new time
+  const newSlot: SlotData = {
+    datetime: newDateTime,
+    duration_minutes: newDurationMinutes,
+  };
+
+  const { error: updateError } = await supabase
+    .from("booking_requests")
+    .update({
+      requested_times: [newSlot],
+    })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  // Update Google Calendar event if it exists
+  if (booking.calendar_event_id) {
+    try {
+      const calendarResult = await updateCalendarEventTime({
+        coachId: booking.coach_id,
+        eventId: booking.calendar_event_id,
+        startDateTime: newDateTime,
+        durationMinutes: newDurationMinutes,
+        timezone: coachTimezone,
+      });
+
+      if (!calendarResult.success) {
+        console.error("[Reschedule] Google Calendar update failed:", calendarResult.error);
+        // Continue anyway - booking is updated, calendar sync failed
+      }
+    } catch (calendarError) {
+      console.error("[Reschedule] Google Calendar error:", calendarError);
+    }
+  }
+
+  const formattedNewTime = formatDateTimeForEmail(newDateTime, studentTimezone);
+  const formattedNewTimeCoach = formatDateTimeForEmail(newDateTime, coachTimezone);
+
+  // Send email to student
+  const studentEmailBody = `Hi ${studentName},
+
+📅 Your session has been rescheduled.
+
+♟️ New session details:
+- Coach: ${coachName}
+- New time: ${formattedNewTime}
+- Duration: ${newDurationMinutes} minutes
+- Timezone: ${studentTimezone}${booking.meeting_url ? `
+- Meeting link: ${booking.meeting_url}` : ""}
+
+If this time doesn't work for you, please reach out to your coach.
+
+Thanks for using ChessBooker.`;
+
+  try {
+    await sendEmail({
+      to: studentEmail,
+      subject: `📅 Your session with ${coachName} has been rescheduled`,
+      text: studentEmailBody,
+    });
+  } catch (emailError) {
+    console.error("[Reschedule] Failed to send email to student:", emailError);
+  }
+
+  // Send email to coach
+  if (coachEmail) {
+    const coachEmailBody = `Hi ${coachName},
+
+📅 You have rescheduled a session.
+
+♟️ New session details:
+- Student: ${studentName} (${studentEmail})
+- New time: ${formattedNewTimeCoach}
+- Duration: ${newDurationMinutes} minutes
+- Timezone: ${coachTimezone}
+
+Thanks for using ChessBooker.`;
+
+    try {
+      await sendEmail({
+        to: coachEmail,
+        subject: `📅 Session with ${studentName} rescheduled`,
+        text: coachEmailBody,
+      });
+    } catch (emailError) {
+      console.error("[Reschedule] Failed to send email to coach:", emailError);
+    }
+  }
+
+  revalidatePath("/app/requests");
+  return { success: true };
+}
+
+/**
+ * Cancel a confirmed booking
+ */
+export async function cancelBooking(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch the booking with coach details
+  const { data: booking, error: fetchError } = await supabase
+    .from("booking_requests")
+    .select("*, coaches(name, email, timezone)")
+    .eq("id", bookingId)
+    .single();
+
+  if (fetchError || !booking) {
+    return { success: false, error: fetchError?.message || "Booking not found" };
+  }
+
+  const coachName = booking.coaches?.name || "your coach";
+  const coachEmail = booking.coaches?.email;
+  const coachTimezone = booking.coaches?.timezone || "UTC";
+  const studentEmail = booking.student_email;
+  const studentName = booking.student_name;
+  const studentTimezone = booking.student_timezone || "UTC";
+
+  // Get original session time for emails
+  const requestedTimes = booking.requested_times as (string | SlotData)[];
+  const slot = requestedTimes?.[0];
+  let formattedTime = "the scheduled time";
+  let formattedTimeCoach = "the scheduled time";
+
+  if (slot) {
+    if (typeof slot === "string") {
+      formattedTime = formatDateTimeForEmail(slot, studentTimezone);
+      formattedTimeCoach = formatDateTimeForEmail(slot, coachTimezone);
+    } else if (slot.datetime) {
+      formattedTime = formatDateTimeForEmail(slot.datetime, studentTimezone);
+      formattedTimeCoach = formatDateTimeForEmail(slot.datetime, coachTimezone);
+    }
+  }
+
+  // Delete Google Calendar event if it exists
+  if (booking.calendar_event_id) {
+    try {
+      const deleted = await deleteCalendarEvent(
+        booking.coach_id,
+        booking.calendar_event_id
+      );
+
+      if (!deleted) {
+        console.error("[Cancel] Google Calendar delete failed");
+        // Continue anyway - we'll still cancel the booking
+      }
+    } catch (calendarError) {
+      console.error("[Cancel] Google Calendar error:", calendarError);
+    }
+  }
+
+  // Update booking status to cancelled and clear calendar data
+  const { error: updateError } = await supabase
+    .from("booking_requests")
+    .update({
+      status: "cancelled",
+      calendar_event_id: null,
+      meeting_url: null,
+    })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  // Send email to student
+  const studentEmailBody = `Hi ${studentName},
+
+❌ Your session has been cancelled.
+
+Session that was cancelled:
+- Coach: ${coachName}
+- Time: ${formattedTime}
+
+If you'd like to book a new session, please visit your coach's booking page.
+
+Thanks for using ChessBooker.`;
+
+  try {
+    await sendEmail({
+      to: studentEmail,
+      subject: `❌ Your session with ${coachName} has been cancelled`,
+      text: studentEmailBody,
+    });
+  } catch (emailError) {
+    console.error("[Cancel] Failed to send email to student:", emailError);
+  }
+
+  // Send email to coach
+  if (coachEmail) {
+    const coachEmailBody = `Hi ${coachName},
+
+❌ A session has been cancelled.
+
+Session that was cancelled:
+- Student: ${studentName} (${studentEmail})
+- Time: ${formattedTimeCoach}
+
+Thanks for using ChessBooker.`;
+
+    try {
+      await sendEmail({
+        to: coachEmail,
+        subject: `❌ Session with ${studentName} cancelled`,
+        text: coachEmailBody,
+      });
+    } catch (emailError) {
+      console.error("[Cancel] Failed to send email to coach:", emailError);
     }
   }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { updateBookingStatus } from "./actions";
+import { updateBookingStatus, cancelBooking } from "./actions";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -140,7 +140,7 @@ function groupSessionsByDate(requests: BookingRequest[]): Map<string, BookingReq
   return grouped;
 }
 
-type StatusFilter = "pending" | "accepted" | "declined" | "all";
+type StatusFilter = "pending" | "accepted" | "declined" | "cancelled" | "all";
 
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
   const router = useRouter();
@@ -151,7 +151,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
   // Get initial filter from URL params, default to "pending"
   const urlStatus = searchParams.get("status") as StatusFilter | null;
   const [statusFilter, setStatusFilter] = useState<StatusFilter>(
-    urlStatus && ["pending", "accepted", "declined", "all"].includes(urlStatus) ? urlStatus : "pending"
+    urlStatus && ["pending", "accepted", "declined", "cancelled", "all"].includes(urlStatus) ? urlStatus : "pending"
   );
 
   // Filter requests based on selected status
@@ -164,6 +164,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     pending: requests.filter((r) => r.status === "pending").length,
     accepted: requests.filter((r) => r.status === "accepted").length,
     declined: requests.filter((r) => r.status === "declined").length,
+    cancelled: requests.filter((r) => r.status === "cancelled").length,
     all: requests.length,
   };
 
@@ -183,6 +184,26 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     setLoading(null);
   };
 
+  const handleCancel = async (id: string) => {
+    if (!confirm("Are you sure you want to cancel this session? The student will be notified.")) {
+      return;
+    }
+
+    setLoading(id);
+    setError(null);
+
+    const result = await cancelBooking(id);
+
+    if (!result.success) {
+      console.error("Failed to cancel booking:", result.error);
+      setError(`Failed to cancel: ${result.error}`);
+    } else {
+      router.refresh();
+    }
+
+    setLoading(null);
+  };
+
   const getStatusBadgeClass = (status: string) => {
     switch (status) {
       case "pending":
@@ -191,6 +212,8 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
         return "bg-green-50 text-green-700";
       case "declined":
         return "bg-red-50 text-red-700";
+      case "cancelled":
+        return "bg-gray-100 text-gray-600";
       default:
         return "bg-cb-bg text-cb-text-secondary";
     }
@@ -200,6 +223,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
     { key: "pending", label: "Pending" },
     { key: "accepted", label: "Confirmed" },
     { key: "declined", label: "Declined" },
+    { key: "cancelled", label: "Cancelled" },
     { key: "all", label: "All" },
   ];
 
@@ -242,6 +266,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
           {statusFilter === "pending" && "No pending requests"}
           {statusFilter === "accepted" && "No confirmed sessions yet"}
           {statusFilter === "declined" && "No declined requests"}
+          {statusFilter === "cancelled" && "No cancelled sessions"}
           {statusFilter === "all" && "No requests"}
         </div>
       ) : statusFilter === "accepted" ? (
@@ -294,11 +319,11 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                             {session.student_email}
                           </div>
                           <button
-                            onClick={() => updateStatus(session.id, "pending")}
+                            onClick={() => handleCancel(session.id)}
                             disabled={loading === session.id}
-                            className="text-xs text-cb-text-muted hover:text-cb-text transition-colors mt-1"
+                            className="text-xs text-red-500 hover:text-red-700 transition-colors mt-1"
                           >
-                            Cancel
+                            {loading === session.id ? "Cancelling..." : "Cancel"}
                           </button>
                         </div>
                       </div>

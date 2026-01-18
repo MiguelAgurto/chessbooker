@@ -227,6 +227,76 @@ export async function createCalendarEvent(
   }
 }
 
+interface UpdateEventParams {
+  coachId: string;
+  eventId: string;
+  startDateTime: string; // ISO string
+  durationMinutes: number;
+  timezone: string;
+}
+
+interface UpdateEventResult {
+  success: boolean;
+  error?: string;
+}
+
+/**
+ * Update a Google Calendar event's time (for rescheduling)
+ */
+export async function updateCalendarEventTime(
+  params: UpdateEventParams
+): Promise<UpdateEventResult> {
+  const { coachId, eventId, startDateTime, durationMinutes, timezone } = params;
+
+  const supabase = await createClient();
+  const { data: connection, error: connError } = await supabase
+    .from("google_connections")
+    .select("*")
+    .eq("coach_id", coachId)
+    .single();
+
+  if (connError || !connection) {
+    console.error("[Google Calendar] No connection found for coach:", coachId);
+    return { success: false, error: "Google Calendar not connected" };
+  }
+
+  const calendar = await getCalendarClient(connection as GoogleConnection);
+  if (!calendar) {
+    return { success: false, error: "Failed to authenticate with Google Calendar" };
+  }
+
+  // Calculate end time
+  const startDate = new Date(startDateTime);
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+
+  try {
+    await calendar.events.patch({
+      calendarId: "primary",
+      eventId,
+      sendUpdates: "all",
+      requestBody: {
+        start: {
+          dateTime: startDate.toISOString(),
+          timeZone: timezone,
+        },
+        end: {
+          dateTime: endDate.toISOString(),
+          timeZone: timezone,
+        },
+      },
+    });
+
+    console.log(`[Google Calendar] Event rescheduled: ${eventId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[Google Calendar] Failed to update event:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
 /**
  * Delete a Google Calendar event
  */
