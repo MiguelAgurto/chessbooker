@@ -11,6 +11,60 @@ function getBrowserTimezone(): string {
   }
 }
 
+// Get the current date in a specific timezone as YYYY-MM-DD
+function getDateInTimezone(date: Date, timezone: string): string {
+  return date.toLocaleDateString("en-CA", { timeZone: timezone }); // en-CA gives YYYY-MM-DD
+}
+
+// Get day of week (0=Sun, 6=Sat) for a date in a specific timezone
+function getDayOfWeekInTimezone(date: Date, timezone: string): number {
+  const dayStr = date.toLocaleDateString("en-US", { timeZone: timezone, weekday: "short" });
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days.indexOf(dayStr);
+}
+
+// Create a UTC timestamp from a date string and time in a specific timezone
+function createTimestampInTimezone(dateStr: string, timeStr: string, timezone: string): number {
+  // Parse the time
+  const [hour, min] = timeStr.split(":").map(Number);
+
+  // We need to find what UTC time corresponds to dateStr + timeStr in the target timezone
+  // Use an iterative approach: start with a guess and adjust
+  let guess = new Date(`${dateStr}T${timeStr}:00Z`).getTime();
+
+  for (let i = 0; i < 3; i++) {
+    const guessDate = new Date(guess);
+    const guessInTz = new Intl.DateTimeFormat("en-CA", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }).format(guessDate);
+
+    // Parse "YYYY-MM-DD, HH:MM" format
+    const [gDatePart, gTimePart] = guessInTz.split(", ");
+    const [gHour, gMin] = gTimePart.split(":").map(Number);
+
+    const targetMins = hour * 60 + min;
+    const guessMins = gHour * 60 + gMin;
+    const diffMins = targetMins - guessMins;
+
+    // Also check date
+    if (gDatePart !== dateStr) {
+      // Date is off, adjust by a day
+      const dayDiff = gDatePart < dateStr ? 1 : -1;
+      guess += dayDiff * 24 * 60 * 60 * 1000;
+    }
+
+    guess += diffMins * 60 * 1000;
+  }
+
+  return guess;
+}
+
 interface AvailabilityRule {
   day_of_week: number;
   start_time: string;
@@ -18,10 +72,10 @@ interface AvailabilityRule {
 }
 
 interface Slot {
-  date: string; // ISO date string YYYY-MM-DD
-  time: string; // HH:MM
-  label: string; // Display label like "Mon Jan 20"
-  displayTime: string; // Display time like "9:00 AM"
+  startUtc: number;    // UTC timestamp in ms - used for comparisons and storage
+  durationMins: number;
+  label: string;       // Display label like "Mon Jan 20" in student timezone
+  displayTime: string; // Display time like "9:00 AM" in student timezone
 }
 
 interface BookedSlot {
@@ -33,13 +87,12 @@ interface ConfirmedBooking {
   requested_times: BookedSlot[] | string[];
 }
 
-// Parse a booked slot into start/end timestamps (in ms)
+// Parse a booked slot into start/end timestamps (in ms) - treats datetime as UTC or ISO
 function parseBookedInterval(slot: BookedSlot | string): { start: number; end: number } | null {
   let datetime: string;
   let durationMinutes: number;
 
   if (typeof slot === "string") {
-    // Legacy format: just a datetime string, assume 60 minutes
     datetime = slot;
     durationMinutes = 60;
   } else if (slot && typeof slot === "object" && slot.datetime) {
@@ -49,26 +102,25 @@ function parseBookedInterval(slot: BookedSlot | string): { start: number; end: n
     return null;
   }
 
-  const start = new Date(datetime).getTime();
+  // If datetime doesn't have timezone info, treat as UTC
+  const isoDatetime = datetime.includes("Z") || datetime.includes("+") ? datetime : datetime + "Z";
+  const start = new Date(isoDatetime).getTime();
   if (isNaN(start)) return null;
 
   const end = start + durationMinutes * 60 * 1000;
   return { start, end };
 }
 
-// Check if a slot overlaps with any booked interval
+// Check if a slot overlaps with any booked interval (all in UTC ms)
 function isSlotBlocked(
-  slotDate: string,
-  slotTime: string,
-  slotDuration: number,
+  slotStartUtc: number,
+  slotDurationMins: number,
   bookedIntervals: { start: number; end: number }[]
 ): boolean {
-  const slotStart = new Date(`${slotDate}T${slotTime}:00`).getTime();
-  const slotEnd = slotStart + slotDuration * 60 * 1000;
+  const slotEnd = slotStartUtc + slotDurationMins * 60 * 1000;
 
   for (const booked of bookedIntervals) {
-    // Overlap if slotStart < bookingEnd AND slotEnd > bookingStart
-    if (slotStart < booked.end && slotEnd > booked.start) {
+    if (slotStartUtc < booked.end && slotEnd > booked.start) {
       return true;
     }
   }
@@ -78,63 +130,61 @@ function isSlotBlocked(
 function generateSlots(
   availability: AvailabilityRule[],
   durationMinutes: number,
-  bookedIntervals: { start: number; end: number }[]
+  bookedIntervals: { start: number; end: number }[],
+  coachTimezone: string,
+  studentTimezone: string
 ): Slot[] {
   const slots: Slot[] = [];
-  const now = new Date();
+  const nowUtc = Date.now();
 
-  // Generate slots for next 7 days
+  // Generate slots for next 7 days (in coach timezone)
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
-    const date = new Date(now);
-    date.setDate(date.getDate() + dayOffset);
+    // Get the date in coach timezone
+    const refDate = new Date(nowUtc + dayOffset * 24 * 60 * 60 * 1000);
+    const dateStrInCoachTz = getDateInTimezone(refDate, coachTimezone);
+    const dayOfWeek = getDayOfWeekInTimezone(refDate, coachTimezone);
 
-    const dayOfWeek = date.getDay(); // 0 = Sunday, 6 = Saturday
     const rulesForDay = availability.filter((r) => r.day_of_week === dayOfWeek);
 
     for (const rule of rulesForDay) {
-      // Parse start and end times
       const [startHour, startMin] = rule.start_time.split(":").map(Number);
       const [endHour, endMin] = rule.end_time.split(":").map(Number);
 
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
 
-      // Generate slots based on selected duration
       for (let mins = startMinutes; mins + durationMinutes <= endMinutes; mins += durationMinutes) {
         const slotHour = Math.floor(mins / 60);
         const slotMin = mins % 60;
-
         const timeStr = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
-        const dateStr = date.toISOString().split("T")[0];
 
-        // Skip slots that are in the past (for today)
-        if (dayOffset === 0) {
-          const slotDate = new Date(date);
-          slotDate.setHours(slotHour, slotMin, 0, 0);
-          if (slotDate <= now) continue;
-        }
+        // Convert coach date+time to UTC timestamp
+        const slotStartUtc = createTimestampInTimezone(dateStrInCoachTz, timeStr, coachTimezone);
 
-        // Skip slots that overlap with confirmed bookings
-        if (isSlotBlocked(dateStr, timeStr, durationMinutes, bookedIntervals)) {
-          continue;
-        }
+        // Skip past slots (compare in UTC)
+        if (slotStartUtc <= nowUtc) continue;
 
-        // Format display
-        const dayLabel = date.toLocaleDateString("en-US", {
+        // Skip blocked slots
+        if (isSlotBlocked(slotStartUtc, durationMinutes, bookedIntervals)) continue;
+
+        // Format display in student timezone
+        const slotDate = new Date(slotStartUtc);
+        const dayLabel = slotDate.toLocaleDateString("en-US", {
+          timeZone: studentTimezone,
           weekday: "short",
           month: "short",
           day: "numeric",
         });
-
-        const displayTime = new Date(2000, 0, 1, slotHour, slotMin).toLocaleTimeString("en-US", {
+        const displayTime = slotDate.toLocaleTimeString("en-US", {
+          timeZone: studentTimezone,
           hour: "numeric",
           minute: "2-digit",
           hour12: true,
         });
 
         slots.push({
-          date: dateStr,
-          time: timeStr,
+          startUtc: slotStartUtc,
+          durationMins: durationMinutes,
           label: dayLabel,
           displayTime,
         });
@@ -142,18 +192,19 @@ function generateSlots(
     }
   }
 
+  // Sort by UTC time and remove duplicates
+  slots.sort((a, b) => a.startUtc - b.startUtc);
   return slots;
 }
 
-// Group slots by date
+// Group slots by display date label
 function groupSlotsByDate(slots: Slot[]): Map<string, Slot[]> {
   const grouped = new Map<string, Slot[]>();
   for (const slot of slots) {
-    const key = `${slot.date}|${slot.label}`;
-    if (!grouped.has(key)) {
-      grouped.set(key, []);
+    if (!grouped.has(slot.label)) {
+      grouped.set(slot.label, []);
     }
-    grouped.get(key)!.push(slot);
+    grouped.get(slot.label)!.push(slot);
   }
   return grouped;
 }
@@ -195,8 +246,8 @@ export default function BookingForm({
   }, [confirmedBookings]);
 
   const slots = useMemo(
-    () => generateSlots(availability, duration, bookedIntervals),
-    [availability, duration, bookedIntervals]
+    () => generateSlots(availability, duration, bookedIntervals, coachTimezone, userTimezone),
+    [availability, duration, bookedIntervals, coachTimezone, userTimezone]
   );
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
 
@@ -216,10 +267,10 @@ export default function BookingForm({
 
     setLoading(true);
 
-    // Store as object with datetime and duration
+    // Store as ISO datetime in UTC
     const slotData = {
-      datetime: `${selectedSlot.date}T${selectedSlot.time}:00`,
-      duration_minutes: duration,
+      datetime: new Date(selectedSlot.startUtc).toISOString(),
+      duration_minutes: selectedSlot.durationMins,
     };
 
     const supabase = createClient();
@@ -342,11 +393,10 @@ export default function BookingForm({
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {daySlots.map((slot) => {
-                    const isSelected =
-                      selectedSlot?.date === slot.date && selectedSlot?.time === slot.time;
+                    const isSelected = selectedSlot?.startUtc === slot.startUtc;
                     return (
                       <button
-                        key={`${slot.date}-${slot.time}`}
+                        key={slot.startUtc}
                         type="button"
                         onClick={() => setSelectedSlot(slot)}
                         className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
