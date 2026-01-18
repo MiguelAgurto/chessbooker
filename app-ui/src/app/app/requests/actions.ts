@@ -402,6 +402,11 @@ export async function cancelBooking(
     }
   }
 
+  const oldStatus = booking.status;
+  const newStatus = "declined";
+
+  console.log(`[Cancel] Canceling booking: booking_id=${bookingId}, old_status=${oldStatus}, new_status=${newStatus}`);
+
   // Delete Google Calendar event if eligible:
   // - calendar_provider is 'google'
   // - calendar_event_id exists
@@ -437,19 +442,24 @@ export async function cancelBooking(
     }
   }
 
-  // Update booking status to canceled and clear calendar data
+  // Update booking status to declined and clear calendar data
   const { error: updateError } = await supabase
     .from("booking_requests")
     .update({
-      status: "canceled",
+      status: newStatus,
       calendar_event_id: null,
       meeting_url: null,
     })
     .eq("id", bookingId);
 
   if (updateError) {
+    console.error(
+      `[Cancel] Supabase update failed: booking_id=${bookingId}, error.code=${updateError.code}, error.message=${updateError.message}`
+    );
     return { success: false, error: updateError.message };
   }
+
+  console.log(`[Cancel] Booking status updated: booking_id=${bookingId}, ${oldStatus} -> ${newStatus}`);
 
   // Send email to student
   const studentEmailBody = `Hi ${studentName},
