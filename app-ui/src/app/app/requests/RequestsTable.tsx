@@ -40,6 +40,62 @@ function formatRequestedTime(time: string | SlotData): string {
   return String(time);
 }
 
+function getSessionDateTime(request: BookingRequest): Date | null {
+  const time = request.requested_times?.[0];
+  if (!time) return null;
+  if (typeof time === "string") {
+    return new Date(time);
+  }
+  if (time && typeof time === "object" && time.datetime) {
+    return new Date(time.datetime);
+  }
+  return null;
+}
+
+function getDateLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const sessionDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+  if (sessionDate.getTime() === today.getTime()) {
+    return "Today";
+  }
+  if (sessionDate.getTime() === tomorrow.getTime()) {
+    return "Tomorrow";
+  }
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function groupSessionsByDate(requests: BookingRequest[]): Map<string, BookingRequest[]> {
+  const grouped = new Map<string, BookingRequest[]>();
+
+  // Sort by session datetime first
+  const sorted = [...requests].sort((a, b) => {
+    const dateA = getSessionDateTime(a);
+    const dateB = getSessionDateTime(b);
+    if (!dateA || !dateB) return 0;
+    return dateA.getTime() - dateB.getTime();
+  });
+
+  for (const request of sorted) {
+    const sessionDate = getSessionDateTime(request);
+    if (!sessionDate) continue;
+    const label = getDateLabel(sessionDate);
+    if (!grouped.has(label)) {
+      grouped.set(label, []);
+    }
+    grouped.get(label)!.push(request);
+  }
+
+  return grouped;
+}
+
 type StatusFilter = "pending" | "accepted" | "declined" | "all";
 
 export default function RequestsTable({ requests }: { requests: BookingRequest[] }) {
@@ -144,9 +200,68 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
       {filteredRequests.length === 0 ? (
         <div className="card p-6 text-center text-cb-text-secondary">
           {statusFilter === "pending" && "No pending requests"}
-          {statusFilter === "accepted" && "No confirmed sessions"}
+          {statusFilter === "accepted" && "No confirmed sessions yet"}
           {statusFilter === "declined" && "No declined requests"}
           {statusFilter === "all" && "No requests"}
+        </div>
+      ) : statusFilter === "accepted" ? (
+        // Grouped sessions view for confirmed sessions
+        <div className="space-y-6">
+          {Array.from(groupSessionsByDate(filteredRequests).entries()).map(([dateLabel, sessions]) => (
+            <div key={dateLabel}>
+              <h3 className="text-sm font-semibold text-cb-text-secondary uppercase tracking-wider mb-3">
+                {dateLabel}
+              </h3>
+              <div className="space-y-3">
+                {sessions.map((session) => {
+                  const sessionTime = getSessionDateTime(session);
+                  const timeSlot = session.requested_times?.[0];
+                  const duration = typeof timeSlot === "object" && timeSlot?.duration_minutes
+                    ? timeSlot.duration_minutes
+                    : 60;
+
+                  return (
+                    <div
+                      key={session.id}
+                      className="card p-4 flex items-center justify-between"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                          <span className="text-green-600 font-semibold text-sm">
+                            {sessionTime?.toLocaleTimeString("en-US", {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-cb-text">
+                            {session.student_name}
+                          </div>
+                          <div className="text-sm text-cb-text-secondary">
+                            {duration} min session
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-cb-text-muted">
+                          {session.student_email}
+                        </div>
+                        <button
+                          onClick={() => updateStatus(session.id, "pending")}
+                          disabled={loading === session.id}
+                          className="text-xs text-cb-text-muted hover:text-cb-text transition-colors mt-1"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
       <div className="card overflow-hidden">
