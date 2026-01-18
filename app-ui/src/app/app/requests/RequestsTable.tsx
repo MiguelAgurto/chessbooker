@@ -99,7 +99,8 @@ function formatDateForGoogleCalendar(date: Date): string {
 }
 
 function getGoogleCalendarUrl(startDate: Date | null, durationMinutes: number): string {
-  if (!startDate) {
+  // Validate that startDate is a valid Date object
+  if (!startDate || isNaN(startDate.getTime())) {
     return "https://calendar.google.com/calendar/u/0/r";
   }
   const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
@@ -246,11 +247,15 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
               </h3>
               <div className="space-y-3">
                 {sessions.map((session) => {
-                  const sessionTime = getSessionDateTime(session);
                   const timeSlot = session.requested_times?.[0];
                   const duration = typeof timeSlot === "object" && timeSlot?.duration_minutes
                     ? timeSlot.duration_minutes
                     : 60;
+                  // Extract confirmed session datetime from the first requested slot
+                  const sessionDatetimeStr = typeof timeSlot === "string"
+                    ? timeSlot
+                    : (timeSlot?.datetime || null);
+                  const sessionTime = sessionDatetimeStr ? new Date(sessionDatetimeStr) : null;
 
                   return (
                     <div
