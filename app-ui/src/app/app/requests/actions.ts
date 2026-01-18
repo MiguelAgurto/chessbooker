@@ -407,42 +407,12 @@ export async function cancelBooking(
 
   console.log(`[Cancel] Canceling booking: booking_id=${bookingId}, old_status=${oldStatus}, new_status=${newStatus}`);
 
-  // Delete Google Calendar event if eligible:
-  // - calendar_provider is 'google'
-  // - calendar_event_id exists
-  // - coach has google_connections (checked inside deleteCalendarEvent)
+  // Store calendar info before clearing
+  const calendarEventId = booking.calendar_event_id;
   const isGoogleCalendar = booking.calendar_provider === "google";
-  const hasCalendarEvent = !!booking.calendar_event_id;
+  const hasCalendarEvent = !!calendarEventId;
 
-  if (isGoogleCalendar && hasCalendarEvent) {
-    try {
-      console.log(
-        `[Cancel] Attempting Google Calendar delete: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`
-      );
-
-      const deleted = await deleteCalendarEvent(
-        booking.coach_id,
-        booking.calendar_event_id
-      );
-
-      if (!deleted) {
-        console.error(
-          `[Cancel] Google Calendar delete failed: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`
-        );
-        // Continue anyway - we'll still cancel the booking and send emails
-      } else {
-        console.log(`[Cancel] Google Calendar event deleted successfully: ${booking.calendar_event_id}`);
-      }
-    } catch (calendarError) {
-      console.error(
-        `[Cancel] Google Calendar error: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`,
-        calendarError
-      );
-      // Continue anyway - we'll still cancel the booking and send emails
-    }
-  }
-
-  // Update booking status to declined and clear calendar data
+  // Update booking status to declined and clear calendar data FIRST
   const { error: updateError } = await supabase
     .from("booking_requests")
     .update({
@@ -460,6 +430,36 @@ export async function cancelBooking(
   }
 
   console.log(`[Cancel] Booking status updated: booking_id=${bookingId}, ${oldStatus} -> ${newStatus}`);
+
+  // Delete Google Calendar event AFTER DB update succeeds
+  // Conditions: calendar_provider === 'google' AND calendar_event_id exists
+  if (isGoogleCalendar && hasCalendarEvent) {
+    try {
+      console.log(
+        `[Cancel] Attempting Google Calendar delete: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${calendarEventId}`
+      );
+
+      const deleted = await deleteCalendarEvent(
+        booking.coach_id,
+        calendarEventId
+      );
+
+      if (!deleted) {
+        console.error(
+          `[Cancel] Google Calendar delete failed: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${calendarEventId}`
+        );
+        // Do not rollback - booking is already declined
+      } else {
+        console.log(`[Cancel] Google Calendar event deleted successfully: ${calendarEventId}`);
+      }
+    } catch (calendarError) {
+      console.error(
+        `[Cancel] Google Calendar error: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${calendarEventId}`,
+        calendarError
+      );
+      // Do not rollback - booking is already declined
+    }
+  }
 
   // Send email to student
   const studentEmailBody = `Hi ${studentName},
