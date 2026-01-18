@@ -64,20 +64,21 @@ export default async function PublicBookingPage({ params }: PageProps) {
           )}
         </div>
 
+        {/* Coach bio - visually secondary */}
         {(coach.bio || coach.languages || coach.tags || coach.rating || coach.years_coaching) && (
-          <div className="card p-6 mb-6">
+          <div className="card px-5 py-4 mb-6">
             {coach.bio && (
-              <p className="text-cb-text-secondary text-sm mb-4">{coach.bio}</p>
+              <p className="text-cb-text-muted text-xs leading-relaxed mb-3">{coach.bio}</p>
             )}
             {(coach.languages || coach.tags) && (
-              <div className="flex flex-wrap gap-2 mb-3">
+              <div className="flex flex-wrap gap-1.5 mb-2">
                 {coach.languages?.split(",").map((lang: string) => (
-                  <span key={lang.trim()} className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                  <span key={lang.trim()} className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full">
                     {lang.trim()}
                   </span>
                 ))}
                 {coach.tags?.split(",").map((tag: string) => (
-                  <span key={tag.trim()} className="px-3 py-1 bg-coral-light text-coral text-xs font-medium rounded-full">
+                  <span key={tag.trim()} className="px-2 py-0.5 bg-coral-light/50 text-coral text-xs rounded-full">
                     {tag.trim()}
                   </span>
                 ))}
@@ -93,33 +94,13 @@ export default async function PublicBookingPage({ params }: PageProps) {
           </div>
         )}
 
-        <div className="card p-6 mb-6">
-          <h2 className="text-lg font-semibold text-cb-text mb-4">Pricing</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-cb-bg p-4 rounded-lg text-center border border-cb-border-light">
-              <div className="text-2xl font-bold text-cb-text">
-                ${coach.pricing?.["60min"] || 50}
-              </div>
-              <div className="text-sm text-cb-text-secondary">60 minutes</div>
-            </div>
-            <div className="bg-cb-bg p-4 rounded-lg text-center border border-cb-border-light">
-              <div className="text-2xl font-bold text-cb-text">
-                ${coach.pricing?.["90min"] || 70}
-              </div>
-              <div className="text-sm text-cb-text-secondary">90 minutes</div>
-            </div>
-          </div>
-        </div>
-
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-cb-text mb-4">Request a Session</h2>
-          <BookingForm
-            coachId={coach.id}
-            coachTimezone={coach.timezone || "UTC"}
-            availability={availability || []}
-            confirmedBookings={confirmedBookings || []}
-          />
-        </div>
+        <BookingForm
+          coachId={coach.id}
+          coachTimezone={coach.timezone || "UTC"}
+          availability={availability || []}
+          confirmedBookings={confirmedBookings || []}
+          pricing={coach.pricing || { "60min": 50, "90min": 70 }}
+        />
       </div>
     </div>
   );

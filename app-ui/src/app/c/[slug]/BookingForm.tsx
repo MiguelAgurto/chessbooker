@@ -214,11 +214,13 @@ export default function BookingForm({
   coachTimezone,
   availability,
   confirmedBookings,
+  pricing,
 }: {
   coachId: string;
   coachTimezone: string;
   availability: AvailabilityRule[];
   confirmedBookings: ConfirmedBooking[];
+  pricing: { "60min": number; "90min": number };
 }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -255,6 +257,9 @@ export default function BookingForm({
     setDuration(newDuration);
     setSelectedSlot(null); // Clear selection when duration changes
   };
+
+  // Form validation - check if all required fields are filled
+  const isFormValid = studentName.trim() !== "" && studentEmail.trim() !== "" && selectedSlot !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -295,144 +300,175 @@ export default function BookingForm({
 
   if (submitted) {
     return (
-      <div className="text-center py-8">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg className="w-8 h-8 fill-green-500" viewBox="0 0 24 24">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-          </svg>
+      <div className="card p-6">
+        <div className="text-center py-4">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 fill-green-500" viewBox="0 0 24 24">
+              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-cb-text mb-2">Request Submitted!</h3>
+          <p className="text-cb-text-secondary text-sm">
+            The coach will review your request and get back to you at {studentEmail}.
+          </p>
         </div>
-        <h3 className="text-lg font-semibold text-cb-text mb-2">Request Submitted!</h3>
-        <p className="text-cb-text-secondary">
-          The coach will review your request and get back to you at {studentEmail}.
-        </p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div>
-        <label htmlFor="name" className="label">
-          Your Name
-        </label>
-        <input
-          type="text"
-          id="name"
-          value={studentName}
-          onChange={(e) => setStudentName(e.target.value)}
-          required
-          className="input-field"
-        />
-      </div>
-
-      <div>
-        <label htmlFor="email" className="label">
-          Your Email
-        </label>
-        <input
-          type="email"
-          id="email"
-          value={studentEmail}
-          onChange={(e) => setStudentEmail(e.target.value)}
-          required
-          className="input-field"
-        />
-      </div>
-
-      <div>
-        <label className="label">
-          Session Duration
-        </label>
-        <div className="flex gap-3">
+    <div className="space-y-6">
+      {/* Pricing Section - Selectable cards */}
+      <div className="card p-6">
+        <h2 className="text-lg font-semibold text-cb-text mb-4">Select a Session</h2>
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => handleDurationChange(60)}
-            className={`flex-1 py-3 px-4 text-sm font-semibold rounded-lg border-2 transition-all ${
+            className={`p-4 rounded-lg text-center border-2 transition-all ${
               duration === 60
-                ? "bg-coral text-white border-coral"
-                : "bg-white text-cb-text border-cb-border hover:border-coral"
+                ? "border-coral bg-coral/5"
+                : "border-cb-border-light bg-cb-bg hover:border-cb-border"
             }`}
           >
-            60 minutes
+            <div className={`text-2xl font-bold ${duration === 60 ? "text-coral" : "text-cb-text"}`}>
+              ${pricing["60min"]}
+            </div>
+            <div className={`text-sm ${duration === 60 ? "text-coral" : "text-cb-text-secondary"}`}>
+              60 minutes
+            </div>
           </button>
           <button
             type="button"
             onClick={() => handleDurationChange(90)}
-            className={`flex-1 py-3 px-4 text-sm font-semibold rounded-lg border-2 transition-all ${
+            className={`p-4 rounded-lg text-center border-2 transition-all ${
               duration === 90
-                ? "bg-coral text-white border-coral"
-                : "bg-white text-cb-text border-cb-border hover:border-coral"
+                ? "border-coral bg-coral/5"
+                : "border-cb-border-light bg-cb-bg hover:border-cb-border"
             }`}
           >
-            90 minutes
+            <div className={`text-2xl font-bold ${duration === 90 ? "text-coral" : "text-cb-text"}`}>
+              ${pricing["90min"]}
+            </div>
+            <div className={`text-sm ${duration === 90 ? "text-coral" : "text-cb-text-secondary"}`}>
+              90 minutes
+            </div>
           </button>
         </div>
       </div>
 
-      <div>
-        <label className="label">Select a Time Slot</label>
-        <p className="text-xs text-cb-text-muted mb-2">
-          Times shown in your timezone: {userTimezone}
-        </p>
-        <p className="text-sm text-cb-text-secondary mb-3">
-          {slots.length > 0
-            ? `Next available: ${slots[0].label} ${slots[0].displayTime}`
-            : "No availability in the next 7 days"}
-        </p>
+      {/* Booking Form */}
+      <form onSubmit={handleSubmit} className="card p-6 space-y-5">
+        <h2 className="text-lg font-semibold text-cb-text">Your Details</h2>
 
-        {slots.length === 0 ? (
-          <div className="p-4 bg-cb-bg rounded-lg text-center text-cb-text-secondary text-sm border border-cb-border-light">
-            Please check back later.
-          </div>
-        ) : (
-          <div className="space-y-4 max-h-64 overflow-y-auto border border-cb-border-light rounded-lg p-4">
-            {Array.from(groupedSlots.entries()).map(([key, daySlots]) => (
-              <div key={key}>
-                <div className="text-sm font-semibold text-cb-text mb-2">
-                  {daySlots[0].label}
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {daySlots.map((slot) => {
-                    const isSelected = selectedSlot?.startUtc === slot.startUtc;
-                    return (
-                      <button
-                        key={slot.startUtc}
-                        type="button"
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
-                          isSelected
-                            ? "bg-coral text-white border-coral"
-                            : "bg-white text-cb-text-secondary border-cb-border hover:border-coral hover:text-coral"
-                        }`}
-                      >
-                        {slot.displayTime}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <div>
+          <label htmlFor="name" className="label">
+            Your Name
+          </label>
+          <input
+            type="text"
+            id="name"
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            required
+            className="input-field"
+          />
+        </div>
 
-        {selectedSlot && (
-          <p className="mt-3 text-sm text-coral font-medium">
-            Selected: {selectedSlot.label} at {selectedSlot.displayTime} ({duration} min)
+        <div>
+          <label htmlFor="email" className="label">
+            Your Email
+          </label>
+          <input
+            type="email"
+            id="email"
+            value={studentEmail}
+            onChange={(e) => setStudentEmail(e.target.value)}
+            required
+            className="input-field"
+          />
+          <p className="mt-1.5 text-xs text-cb-text-muted">
+            Used only to confirm your session
           </p>
+        </div>
+
+        {/* Time Selection with improved hierarchy */}
+        <div>
+          <label className="label">Select a Time</label>
+
+          {/* Timezone info - most prominent context */}
+          <p className="text-xs text-cb-text-muted mb-1">
+            Times shown in your timezone: {userTimezone}
+          </p>
+
+          {/* Next available - secondary context */}
+          {slots.length > 0 && (
+            <p className="text-sm text-cb-text-secondary mb-4">
+              Next available: {slots[0].label} at {slots[0].displayTime}
+            </p>
+          )}
+
+          {slots.length === 0 ? (
+            <div className="p-4 bg-cb-bg rounded-lg text-center text-cb-text-secondary text-sm border border-cb-border-light">
+              No availability in the next 7 days. Please check back later.
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-64 overflow-y-auto border border-cb-border-light rounded-lg p-4">
+              {Array.from(groupedSlots.entries()).map(([key, daySlots]) => (
+                <div key={key}>
+                  {/* Date - prominent */}
+                  <div className="text-sm font-semibold text-cb-text mb-2 pb-1 border-b border-cb-border-light">
+                    {daySlots[0].label}
+                  </div>
+                  {/* Time slots - secondary */}
+                  <div className="flex flex-wrap gap-2">
+                    {daySlots.map((slot) => {
+                      const isSelected = selectedSlot?.startUtc === slot.startUtc;
+                      return (
+                        <button
+                          key={slot.startUtc}
+                          type="button"
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`px-4 py-2 text-sm font-medium rounded-full border transition-all ${
+                            isSelected
+                              ? "bg-coral text-white border-coral shadow-sm"
+                              : "bg-white text-cb-text-muted border-cb-border-light hover:border-coral hover:text-coral"
+                          }`}
+                        >
+                          {slot.displayTime}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {selectedSlot && (
+            <p className="mt-3 text-sm text-coral font-medium">
+              Selected: {selectedSlot.label} at {selectedSlot.displayTime} ({duration} min)
+            </p>
+          )}
+        </div>
+
+        {error && (
+          <div className="p-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">{error}</div>
         )}
-      </div>
 
-      {error && (
-        <div className="p-4 rounded-lg bg-red-50 text-red-800 text-sm border border-red-200">{error}</div>
-      )}
-
-      <button
-        type="submit"
-        disabled={loading || slots.length === 0}
-        className="btn-primary w-full"
-      >
-        {loading ? "Submitting..." : "Submit Request"}
-      </button>
-    </form>
+        <div>
+          <button
+            type="submit"
+            disabled={loading || !isFormValid}
+            className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Sending..." : "Request Session"}
+          </button>
+          <p className="mt-3 text-xs text-cb-text-muted text-center">
+            You&apos;ll receive a confirmation email once the coach approves.
+          </p>
+        </div>
+      </form>
+    </div>
   );
 }
