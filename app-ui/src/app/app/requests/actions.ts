@@ -85,15 +85,24 @@ export async function updateBookingStatus(
     if (startDateTime) {
       try {
         // Check if coach has Google connected
-        const { data: googleConnection } = await supabase
+        console.log(
+          `[Booking ${bookingId}] Checking Google connection for coach_id=${booking.coach_id}`
+        );
+
+        const { data: googleConnection, error: connError } = await supabase
           .from("google_connections")
           .select("google_email")
           .eq("coach_id", booking.coach_id)
           .single();
 
-        if (googleConnection) {
+        if (connError || !googleConnection) {
           console.log(
-            `[Booking ${bookingId}] Creating Google Calendar event for coach ${booking.coach_id}`
+            `[Booking ${bookingId}] No Google connection for coach_id=${booking.coach_id}` +
+              (connError ? ` (error: ${connError.message})` : "")
+          );
+        } else {
+          console.log(
+            `[Booking ${bookingId}] Google connected as ${googleConnection.google_email}, creating calendar event...`
           );
 
           const calendarResult = await createCalendarEvent({
@@ -108,12 +117,20 @@ export async function updateBookingStatus(
             coachGoogleEmail: googleConnection.google_email,
           });
 
+          console.log(
+            `[Booking ${bookingId}] Calendar API response: success=${calendarResult.success}, eventId=${calendarResult.eventId}, meetUrl=${calendarResult.meetUrl}, error=${calendarResult.error}`
+          );
+
           if (calendarResult.success) {
             meetUrl = calendarResult.meetUrl || null;
             calendarEventId = calendarResult.eventId || null;
 
-            // Update booking with calendar event info
-            await supabase
+            // Update booking with calendar event info using server-side Supabase client
+            console.log(
+              `[Booking ${bookingId}] Updating booking_requests with meeting_url=${meetUrl}, calendar_event_id=${calendarEventId}`
+            );
+
+            const { error: calendarUpdateError } = await supabase
               .from("booking_requests")
               .update({
                 meeting_url: meetUrl,
@@ -122,9 +139,16 @@ export async function updateBookingStatus(
               })
               .eq("id", bookingId);
 
-            console.log(
-              `[Booking ${bookingId}] Calendar event created: ${calendarEventId}, Meet URL: ${meetUrl}`
-            );
+            if (calendarUpdateError) {
+              console.error(
+                `[Booking ${bookingId}] Failed to update booking with calendar info: ${calendarUpdateError.message}`,
+                calendarUpdateError
+              );
+            } else {
+              console.log(
+                `[Booking ${bookingId}] Successfully saved calendar event to booking: eventId=${calendarEventId}, meetUrl=${meetUrl}`
+              );
+            }
           } else {
             console.error(
               `[Booking ${bookingId}] Failed to create calendar event: ${calendarResult.error}`

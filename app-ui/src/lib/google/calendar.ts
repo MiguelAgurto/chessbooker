@@ -100,6 +100,8 @@ export async function createCalendarEvent(
   } = params;
 
   // Fetch Google connection
+  console.log(`[Google Calendar] Fetching connection for coach_id=${coachId}`);
+
   const supabase = await createClient();
   const { data: connection, error: connError } = await supabase
     .from("google_connections")
@@ -108,19 +110,30 @@ export async function createCalendarEvent(
     .single();
 
   if (connError || !connection) {
+    console.error(
+      `[Google Calendar] No connection found for coach_id=${coachId}`,
+      connError
+    );
     return {
       success: false,
-      error: "Google Calendar not connected",
+      error: `Google Calendar not connected: ${connError?.message || "no row"}`,
     };
   }
 
+  console.log(
+    `[Google Calendar] Connection found: google_email=${connection.google_email}, has_refresh_token=${!!connection.refresh_token}`
+  );
+
   const calendar = await getCalendarClient(connection as GoogleConnection);
   if (!calendar) {
+    console.error(`[Google Calendar] Failed to get authenticated client for coach_id=${coachId}`);
     return {
       success: false,
       error: "Failed to authenticate with Google Calendar",
     };
   }
+
+  console.log(`[Google Calendar] Authenticated client ready for coach_id=${coachId}`);
 
   // Calculate end time
   const startDate = new Date(startDateTime);
@@ -138,6 +151,10 @@ export async function createCalendarEvent(
   const requestId = `chessbooker-${bookingId}-${Date.now()}`;
 
   try {
+    console.log(
+      `[Google Calendar] Creating event: summary="${summary}", start=${startDate.toISOString()}, timezone=${coachTimezone}, requestId=${requestId}`
+    );
+
     const event = await calendar.events.insert({
       calendarId: "primary",
       conferenceDataVersion: 1,
@@ -165,6 +182,10 @@ export async function createCalendarEvent(
       },
     });
 
+    console.log(
+      `[Google Calendar] Event insert response: id=${event.data.id}, status=${event.data.status}, hangoutLink=${event.data.hangoutLink}`
+    );
+
     // Extract Meet URL
     let meetUrl: string | undefined;
 
@@ -174,13 +195,17 @@ export async function createCalendarEvent(
     );
     if (videoEntryPoint?.uri) {
       meetUrl = videoEntryPoint.uri;
+      console.log(`[Google Calendar] Got Meet URL from entryPoints: ${meetUrl}`);
     } else if (event.data.hangoutLink) {
       // Fallback to hangoutLink
       meetUrl = event.data.hangoutLink;
+      console.log(`[Google Calendar] Got Meet URL from hangoutLink: ${meetUrl}`);
+    } else {
+      console.warn(`[Google Calendar] No Meet URL found in response for event ${event.data.id}`);
     }
 
     console.log(
-      `[Google Calendar] Event created successfully: ${event.data.id}, Meet URL: ${meetUrl}`
+      `[Google Calendar] Event created successfully: eventId=${event.data.id}, meetUrl=${meetUrl}`
     );
 
     return {
@@ -190,6 +215,11 @@ export async function createCalendarEvent(
     };
   } catch (error) {
     console.error("[Google Calendar] Failed to create event:", error);
+    // Log more details if available
+    if (error && typeof error === "object" && "response" in error) {
+      const errWithResponse = error as { response?: { data?: unknown } };
+      console.error("[Google Calendar] API error response:", errWithResponse.response?.data);
+    }
     return {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error",
