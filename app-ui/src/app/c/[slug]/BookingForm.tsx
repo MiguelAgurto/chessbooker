@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createBookingRequest } from "./actions";
 
 function getBrowserTimezone(): string {
   try {
@@ -278,19 +278,16 @@ export default function BookingForm({
       duration_minutes: selectedSlot.durationMins,
     };
 
-    const supabase = createClient();
-
-    const { error: insertError } = await supabase.from("booking_requests").insert({
-      coach_id: coachId,
-      student_name: studentName,
-      student_email: studentEmail,
-      student_timezone: coachTimezone,
-      requested_times: [slotData],
-      status: "pending",
+    const result = await createBookingRequest({
+      coachId,
+      studentName,
+      studentEmail,
+      studentTimezone: userTimezone,
+      requestedTimes: [slotData],
     });
 
-    if (insertError) {
-      setError(insertError.message);
+    if (!result.success) {
+      setError(result.error || "Failed to submit request");
     } else {
       setSubmitted(true);
     }

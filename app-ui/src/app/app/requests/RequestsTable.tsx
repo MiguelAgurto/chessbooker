@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
+import { updateBookingStatus } from "./actions";
 
 interface SlotData {
   datetime: string;
@@ -126,16 +126,12 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
   const updateStatus = async (id: string, status: string) => {
     setLoading(id);
     setError(null);
-    const supabase = createClient();
 
-    const { error: updateError } = await supabase
-      .from("booking_requests")
-      .update({ status })
-      .eq("id", id);
+    const result = await updateBookingStatus(id, status);
 
-    if (updateError) {
-      console.error("Failed to update status:", updateError);
-      setError(`Failed to update: ${updateError.message}`);
+    if (!result.success) {
+      console.error("Failed to update status:", result.error);
+      setError(`Failed to update: ${result.error}`);
     } else {
       router.refresh();
     }
