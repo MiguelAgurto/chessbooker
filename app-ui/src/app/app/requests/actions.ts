@@ -50,10 +50,39 @@ export async function updateBookingStatus(
     return { success: false, error: fetchError?.message || "Booking not found" };
   }
 
-  // Update the status
+  // Get slot data for accepted bookings
+  const coachTimezone = booking.coaches?.timezone || "UTC";
+  const requestedTimes = booking.requested_times as (string | SlotData)[];
+  const slot = requestedTimes?.[0];
+
+  let startDateTime = "";
+  let duration = 60;
+
+  if (slot) {
+    if (typeof slot === "string") {
+      startDateTime = slot;
+    } else if (slot.datetime) {
+      startDateTime = slot.datetime;
+      duration = slot.duration_minutes || 60;
+    }
+  }
+
+  // Build update payload
+  const updatePayload: Record<string, unknown> = { status: newStatus };
+
+  // When accepting, also set scheduled_start and scheduled_end
+  if (newStatus === "accepted" && startDateTime) {
+    const scheduledStart = new Date(startDateTime);
+    const scheduledEnd = new Date(scheduledStart.getTime() + duration * 60 * 1000);
+    updatePayload.scheduled_start = scheduledStart.toISOString();
+    updatePayload.scheduled_end = scheduledEnd.toISOString();
+    console.log(`[Accept] Setting scheduled times: start=${updatePayload.scheduled_start}, end=${updatePayload.scheduled_end}`);
+  }
+
+  // Update the status (and scheduled times if accepting)
   const { error: updateError } = await supabase
     .from("booking_requests")
-    .update({ status: newStatus })
+    .update(updatePayload)
     .eq("id", bookingId);
 
   if (updateError) {
@@ -63,29 +92,14 @@ export async function updateBookingStatus(
   // Send confirmation email to student when status changes to "accepted"
   if (newStatus === "accepted") {
     const coachName = booking.coaches?.name || "your coach";
-    const coachTimezone = booking.coaches?.timezone || "UTC";
     const studentEmail = booking.student_email;
     const studentName = booking.student_name;
     const studentTimezone = booking.student_timezone || "UTC";
 
-    // Get the requested time slot
-    const requestedTimes = booking.requested_times as (string | SlotData)[];
-    const slot = requestedTimes?.[0];
-
-    let formattedTime = "the scheduled time";
-    let duration = 60;
-    let startDateTime = "";
-
-    if (slot) {
-      if (typeof slot === "string") {
-        formattedTime = formatDateTimeForEmail(slot, studentTimezone);
-        startDateTime = slot;
-      } else if (slot.datetime) {
-        formattedTime = formatDateTimeForEmail(slot.datetime, studentTimezone);
-        duration = slot.duration_minutes || 60;
-        startDateTime = slot.datetime;
-      }
-    }
+    // Format time for email (startDateTime and duration already extracted above)
+    const formattedTime = startDateTime
+      ? formatDateTimeForEmail(startDateTime, studentTimezone)
+      : "the scheduled time";
 
     // DIAGNOSTIC: Step 3 - Calendar event execution path check
     console.log(`[DIAGNOSTIC] Step 3: Checking calendar event execution path`);
@@ -265,26 +279,42 @@ export async function rescheduleBooking(
   const studentName = booking.student_name;
   const studentTimezone = booking.student_timezone || "UTC";
 
+  // Calculate new scheduled times
+  const scheduledStart = new Date(newDateTime);
+  const scheduledEnd = new Date(scheduledStart.getTime() + newDurationMinutes * 60 * 1000);
+
   // Update the booking with new time
   const newSlot: SlotData = {
     datetime: newDateTime,
     duration_minutes: newDurationMinutes,
   };
 
+  console.log(`[Reschedule] Updating booking: booking_id=${bookingId}, new_start=${scheduledStart.toISOString()}, new_end=${scheduledEnd.toISOString()}`);
+
   const { error: updateError } = await supabase
     .from("booking_requests")
     .update({
       requested_times: [newSlot],
+      scheduled_start: scheduledStart.toISOString(),
+      scheduled_end: scheduledEnd.toISOString(),
     })
     .eq("id", bookingId);
 
   if (updateError) {
+    console.error(`[Reschedule] Supabase update failed: booking_id=${bookingId}, error.code=${updateError.code}, error.message=${updateError.message}`);
     return { success: false, error: updateError.message };
   }
 
-  // Update Google Calendar event if it exists
-  if (booking.calendar_event_id) {
+  console.log(`[Reschedule] Booking updated successfully: booking_id=${bookingId}`);
+
+  // Update Google Calendar event if eligible
+  const isGoogleCalendar = booking.calendar_provider === "google";
+  const hasCalendarEvent = !!booking.calendar_event_id;
+
+  if (isGoogleCalendar && hasCalendarEvent) {
     try {
+      console.log(`[Reschedule] Attempting Google Calendar update: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`);
+
       const calendarResult = await updateCalendarEventTime({
         coachId: booking.coach_id,
         eventId: booking.calendar_event_id,
@@ -294,11 +324,14 @@ export async function rescheduleBooking(
       });
 
       if (!calendarResult.success) {
-        console.error("[Reschedule] Google Calendar update failed:", calendarResult.error);
+        console.error(`[Reschedule] Google Calendar update failed: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}, error=${calendarResult.error}`);
         // Continue anyway - booking is updated, calendar sync failed
+      } else {
+        console.log(`[Reschedule] Google Calendar event updated successfully: ${booking.calendar_event_id}`);
       }
     } catch (calendarError) {
-      console.error("[Reschedule] Google Calendar error:", calendarError);
+      console.error(`[Reschedule] Google Calendar error: booking_id=${bookingId}, coach_id=${booking.coach_id}, calendar_event_id=${booking.calendar_event_id}`, calendarError);
+      // Continue anyway - booking is updated, calendar sync failed
     }
   }
 

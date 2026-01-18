@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { updateBookingStatus, cancelBooking } from "./actions";
+import { updateBookingStatus, cancelBooking, rescheduleBooking } from "./actions";
 
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
@@ -39,6 +39,114 @@ interface BookingRequest {
   created_at: string;
   meeting_url?: string | null;
   calendar_event_id?: string | null;
+  scheduled_start?: string | null;
+  scheduled_end?: string | null;
+}
+
+interface RescheduleModalProps {
+  booking: BookingRequest;
+  onClose: () => void;
+  onReschedule: (bookingId: string, newDateTime: string, durationMinutes: number) => Promise<void>;
+  isLoading: boolean;
+}
+
+function RescheduleModal({ booking, onClose, onReschedule, isLoading }: RescheduleModalProps) {
+  const timeSlot = booking.requested_times?.[0];
+  const currentDuration = typeof timeSlot === "object" && timeSlot?.duration_minutes
+    ? timeSlot.duration_minutes
+    : 60;
+
+  // Get current datetime for default value
+  const currentDatetime = typeof timeSlot === "string"
+    ? timeSlot
+    : (timeSlot?.datetime || null);
+
+  // Format for datetime-local input (YYYY-MM-DDTHH:MM)
+  const formatForInput = (isoString: string | null): string => {
+    if (!isoString) return "";
+    const date = new Date(isoString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  const [newDateTime, setNewDateTime] = useState(formatForInput(currentDatetime));
+  const [duration, setDuration] = useState(currentDuration);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDateTime) return;
+
+    // Convert local datetime to ISO string
+    const dateObj = new Date(newDateTime);
+    await onReschedule(booking.id, dateObj.toISOString(), duration);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
+        <h3 className="text-lg font-semibold text-cb-text mb-4">
+          Reschedule Session
+        </h3>
+        <p className="text-sm text-cb-text-secondary mb-4">
+          Reschedule session with <strong>{booking.student_name}</strong>
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-cb-text mb-1">
+              New Date & Time
+            </label>
+            <input
+              type="datetime-local"
+              value={newDateTime}
+              onChange={(e) => setNewDateTime(e.target.value)}
+              className="w-full px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-cb-text mb-1">
+              Duration (minutes)
+            </label>
+            <select
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-full px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
+            >
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+              <option value={90}>90 minutes</option>
+              <option value={120}>120 minutes</option>
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-2 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !newDateTime}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral-dark transition-colors disabled:opacity-50"
+            >
+              {isLoading ? "Rescheduling..." : "Reschedule"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function formatRequestedTime(time: string | SlotData): string {
@@ -147,6 +255,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [rescheduleBookingData, setRescheduleBookingData] = useState<BookingRequest | null>(null);
 
   // Get initial filter from URL params, default to "pending"
   const urlStatus = searchParams.get("status") as StatusFilter | null;
@@ -197,6 +306,23 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
       console.error("Failed to cancel booking:", result.error);
       setError(`Failed to cancel: ${result.error}`);
     } else {
+      router.refresh();
+    }
+
+    setLoading(null);
+  };
+
+  const handleReschedule = async (bookingId: string, newDateTime: string, durationMinutes: number) => {
+    setLoading(bookingId);
+    setError(null);
+
+    const result = await rescheduleBooking(bookingId, newDateTime, durationMinutes);
+
+    if (!result.success) {
+      console.error("Failed to reschedule booking:", result.error);
+      setError(`Failed to reschedule: ${result.error}`);
+    } else {
+      setRescheduleBookingData(null);
       router.refresh();
     }
 
@@ -313,13 +439,22 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                           <div className="text-xs text-cb-text-muted">
                             {session.student_email}
                           </div>
-                          <button
-                            onClick={() => handleCancel(session.id)}
-                            disabled={loading === session.id}
-                            className="text-xs text-red-500 hover:text-red-700 transition-colors mt-1"
-                          >
-                            {loading === session.id ? "Cancelling..." : "Cancel"}
-                          </button>
+                          <div className="flex gap-2 justify-end mt-1">
+                            <button
+                              onClick={() => setRescheduleBookingData(session)}
+                              disabled={loading === session.id}
+                              className="text-xs text-coral hover:text-coral-dark transition-colors"
+                            >
+                              Reschedule
+                            </button>
+                            <button
+                              onClick={() => handleCancel(session.id)}
+                              disabled={loading === session.id}
+                              className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                            >
+                              {loading === session.id ? "..." : "Cancel"}
+                            </button>
+                          </div>
                         </div>
                       </div>
 
@@ -469,6 +604,16 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
         </tbody>
       </table>
     </div>
+      )}
+
+      {/* Reschedule Modal */}
+      {rescheduleBookingData && (
+        <RescheduleModal
+          booking={rescheduleBookingData}
+          onClose={() => setRescheduleBookingData(null)}
+          onReschedule={handleReschedule}
+          isLoading={loading === rescheduleBookingData.id}
+        />
       )}
     </div>
   );
