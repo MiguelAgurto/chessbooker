@@ -79,17 +79,17 @@ export async function updateBookingStatus(
         subject: `✅ Your session with ${coachName} is confirmed`,
         text: `Hi ${studentName},
 
-Great news! Your session has been confirmed.
+✅ Great news! Your session has been confirmed.
 
-Session details:
+♟️ Session details:
 - Coach: ${coachName}
 - Time: ${formattedTime}
 - Duration: ${duration} minutes
-- Your timezone: ${studentTimezone}
+- Timezone: ${studentTimezone}
 
-We look forward to your session!
+See you at the board!
 
-Thanks for using ChessBooker!`,
+Thanks for using ChessBooker.`,
       });
     } catch (emailError) {
       console.error("Failed to send confirmation email to student:", emailError);

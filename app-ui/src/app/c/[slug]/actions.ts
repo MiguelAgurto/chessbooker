@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, getAppUrl } from "@/lib/email";
 
 interface SlotData {
   datetime: string;
@@ -77,15 +77,15 @@ export async function createBookingRequest({
       subject: "♟️ Your session request has been sent",
       text: `Hi ${studentName},
 
-Your session request has been sent to ${coach.name}.
+✅ Your session request has been sent to ${coach.name}.
 
 Request details:
 - Coach: ${coach.name}
 - Time: ${formattedTime}
 - Duration: ${duration} minutes
-- Your timezone: ${studentTimezone}
+- Timezone: ${studentTimezone}
 
-The coach will review your request and confirm or decline. You'll receive an email once they respond.
+⏳ The coach will review and confirm your request shortly. You'll receive an email once they respond.
 
 Thanks for using ChessBooker!`,
     });
@@ -96,22 +96,22 @@ Thanks for using ChessBooker!`,
   // Send email to coach: New Booking Request
   if (coach.email) {
     try {
+      const dashboardLink = getAppUrl("/app/requests");
       await sendEmail({
         to: coach.email,
         subject: `📥 New session request from ${studentName}`,
         text: `Hi ${coach.name},
 
-You have a new session request!
+📥 You have a new session request!
 
-Student details:
-- Name: ${studentName}
-- Email: ${studentEmail}
-- Requested time: ${formattedTime}
-- Duration: ${duration} minutes
-- Student timezone: ${studentTimezone}
+👤 Student: ${studentName}
+📧 Email: ${studentEmail}
+⏰ Requested time: ${formattedTime}
+⏱ Duration: ${duration} minutes
+🌍 Timezone: ${studentTimezone}
 
-Log in to your dashboard to accept or decline:
-https://chessbooker.com/app/requests
+👉 Review and respond here:
+${dashboardLink}
 
 Reply directly to this email to contact the student.`,
         replyTo: studentEmail,
