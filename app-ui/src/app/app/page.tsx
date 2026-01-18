@@ -95,7 +95,7 @@ export default async function DashboardPage() {
             </div>
           </div>
           <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
-            <Link href="/app/settings" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
+            <Link href="/app/schedules" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
               Manage schedules
             </Link>
           </div>

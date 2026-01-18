@@ -53,6 +53,12 @@ export default async function AppLayout({
                   Requests
                 </Link>
                 <Link
+                  href="/app/schedules"
+                  className="text-cb-text-secondary hover:text-cb-text hover:bg-cb-bg-alt inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Schedules
+                </Link>
+                <Link
                   href="/app/settings"
                   className="text-cb-text-secondary hover:text-cb-text hover:bg-cb-bg-alt inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-colors"
                 >
