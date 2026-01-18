@@ -4,6 +4,25 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { updateBookingStatus } from "./actions";
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="text-xs px-2 py-1 rounded border border-cb-border hover:border-coral hover:text-coral transition-colors"
+    >
+      {copied ? "Copied!" : "Copy"}
+    </button>
+  );
+}
+
 interface SlotData {
   datetime: string;
   duration_minutes: number;
@@ -18,6 +37,8 @@ interface BookingRequest {
   requested_times: (string | SlotData)[];
   status: string;
   created_at: string;
+  meeting_url?: string | null;
+  calendar_event_id?: string | null;
 }
 
 function formatRequestedTime(time: string | SlotData): string {
@@ -219,38 +240,90 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                   return (
                     <div
                       key={session.id}
-                      className="card p-4 flex items-center justify-between"
+                      className="card p-4"
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
-                          <span className="text-green-600 font-semibold text-sm">
-                            {sessionTime?.toLocaleTimeString("en-US", {
-                              hour: "numeric",
-                              minute: "2-digit",
-                              hour12: true,
-                            })}
-                          </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center">
+                            <span className="text-green-600 font-semibold text-sm">
+                              {sessionTime?.toLocaleTimeString("en-US", {
+                                hour: "numeric",
+                                minute: "2-digit",
+                                hour12: true,
+                              })}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-cb-text">
+                              {session.student_name}
+                            </div>
+                            <div className="text-sm text-cb-text-secondary">
+                              {duration} min session
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <div className="text-sm font-medium text-cb-text">
-                            {session.student_name}
+                        <div className="text-right">
+                          <div className="text-xs text-cb-text-muted">
+                            {session.student_email}
                           </div>
-                          <div className="text-sm text-cb-text-secondary">
-                            {duration} min session
-                          </div>
+                          <button
+                            onClick={() => updateStatus(session.id, "pending")}
+                            disabled={loading === session.id}
+                            className="text-xs text-cb-text-muted hover:text-cb-text transition-colors mt-1"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-xs text-cb-text-muted">
-                          {session.student_email}
+
+                      {/* Session link section */}
+                      <div className="mt-4 pt-4 border-t border-cb-border-light">
+                        <div className="text-xs font-semibold text-cb-text-secondary uppercase tracking-wider mb-2">
+                          Session Link
                         </div>
-                        <button
-                          onClick={() => updateStatus(session.id, "pending")}
-                          disabled={loading === session.id}
-                          className="text-xs text-cb-text-muted hover:text-cb-text transition-colors mt-1"
-                        >
-                          Cancel
-                        </button>
+                        {session.meeting_url ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 text-sm">
+                              <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                              </svg>
+                              <span className="text-cb-text-secondary">Google Meet</span>
+                            </div>
+                            <a
+                              href={session.meeting_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs px-2 py-1 rounded bg-coral text-white hover:bg-coral-dark transition-colors"
+                            >
+                              Open
+                            </a>
+                            <CopyButton text={session.meeting_url} />
+                          </div>
+                        ) : (
+                          <div className="text-sm text-cb-text-muted">
+                            Meeting link will appear here once created.
+                          </div>
+                        )}
+
+                        {/* Calendar button */}
+                        {session.calendar_event_id && (
+                          <div className="mt-3">
+                            <a
+                              href={`https://calendar.google.com/calendar/u/0/r/eventedit/${session.calendar_event_id}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded border border-cb-border hover:border-coral hover:text-coral transition-colors"
+                            >
+                              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                              </svg>
+                              Open in Google Calendar
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
