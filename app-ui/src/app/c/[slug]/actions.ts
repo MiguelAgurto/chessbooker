@@ -53,10 +53,10 @@ export async function createBookingRequest({
     return { success: false, error: insertError.message };
   }
 
-  // Fetch coach details for the emails
+  // Fetch coach details for the emails (including timezone for coach email)
   const { data: coach } = await supabase
     .from("coaches")
-    .select("name, email")
+    .select("name, email, timezone")
     .eq("id", coachId)
     .single();
 
@@ -97,6 +97,10 @@ Thanks for using ChessBooker!`,
   if (coach.email) {
     try {
       const dashboardLink = getAppUrl("/app/requests");
+      // Format time in coach's timezone (fallback to UTC if not set)
+      const coachTimezone = coach.timezone || "UTC";
+      const coachFormattedTime = formatDateTimeForEmail(slot.datetime, coachTimezone);
+
       await sendEmail({
         to: coach.email,
         subject: `📥 New session request from ${studentName}`,
@@ -106,9 +110,8 @@ Thanks for using ChessBooker!`,
 
 👤 Student: ${studentName}
 📧 Email: ${studentEmail}
-⏰ Requested time: ${formattedTime}
+⏰ Requested time (your timezone): ${coachFormattedTime}
 ⏱ Duration: ${duration} minutes
-🌍 Timezone: ${studentTimezone}
 
 👉 Review and respond here:
 ${dashboardLink}
