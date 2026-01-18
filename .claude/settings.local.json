@@ -4,7 +4,13 @@
       "Skill(frontend-design)",
       "Bash(npx tsc:*)",
       "Bash(npx next lint)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npx next lint:*)",
+      "Bash(npx next build:*)",
+      "Bash(node -e:*)",
+      "Bash(npx eslint:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install:*)"
     ]
   }
 }

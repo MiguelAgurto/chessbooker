@@ -3,6 +3,14 @@
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+function getBrowserTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  } catch {
+    return "UTC";
+  }
+}
+
 interface AvailabilityRule {
   day_of_week: number;
   start_time: string;
@@ -170,16 +178,16 @@ export default function BookingForm({
   const [duration, setDuration] = useState<60 | 90>(60);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
-  // Parse all confirmed bookings into blocked intervals
+  const userTimezone = useMemo(() => getBrowserTimezone(), []);
+
+  // Parse accepted bookings into blocked intervals (only first slot = chosen time)
   const bookedIntervals = useMemo(() => {
     const intervals: { start: number; end: number }[] = [];
     for (const booking of confirmedBookings) {
-      if (booking.requested_times && Array.isArray(booking.requested_times)) {
-        for (const slot of booking.requested_times) {
-          const interval = parseBookedInterval(slot);
-          if (interval) {
-            intervals.push(interval);
-          }
+      if (booking.requested_times && Array.isArray(booking.requested_times) && booking.requested_times.length > 0) {
+        const interval = parseBookedInterval(booking.requested_times[0]);
+        if (interval) {
+          intervals.push(interval);
         }
       }
     }
@@ -311,14 +319,19 @@ export default function BookingForm({
       </div>
 
       <div>
-        <label className="label">
-          Select a Time Slot
-          <span className="text-cb-text-muted font-normal ml-1">({coachTimezone})</span>
-        </label>
+        <label className="label">Select a Time Slot</label>
+        <p className="text-xs text-cb-text-muted mb-2">
+          Times shown in your timezone: {userTimezone}
+        </p>
+        <p className="text-sm text-cb-text-secondary mb-3">
+          {slots.length > 0
+            ? `Next available: ${slots[0].label} ${slots[0].displayTime}`
+            : "No availability in the next 7 days"}
+        </p>
 
         {slots.length === 0 ? (
           <div className="p-4 bg-cb-bg rounded-lg text-center text-cb-text-secondary text-sm border border-cb-border-light">
-            No available time slots in the next 7 days. Please check back later.
+            Please check back later.
           </div>
         ) : (
           <div className="space-y-4 max-h-64 overflow-y-auto border border-cb-border-light rounded-lg p-4">
