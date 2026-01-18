@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { createCalendarEvent } from "@/lib/google/calendar";
 
 interface SlotData {
   datetime: string;
@@ -32,7 +33,7 @@ export async function updateBookingStatus(
   // Fetch the booking request first to get student details
   const { data: booking, error: fetchError } = await supabase
     .from("booking_requests")
-    .select("*, coaches(name, email)")
+    .select("*, coaches(name, email, timezone)")
     .eq("id", bookingId)
     .single();
 
@@ -53,6 +54,7 @@ export async function updateBookingStatus(
   // Send confirmation email to student when status changes to "accepted"
   if (newStatus === "accepted") {
     const coachName = booking.coaches?.name || "your coach";
+    const coachTimezone = booking.coaches?.timezone || "UTC";
     const studentEmail = booking.student_email;
     const studentName = booking.student_name;
     const studentTimezone = booking.student_timezone || "UTC";
@@ -63,21 +65,83 @@ export async function updateBookingStatus(
 
     let formattedTime = "the scheduled time";
     let duration = 60;
+    let startDateTime = "";
 
     if (slot) {
       if (typeof slot === "string") {
         formattedTime = formatDateTimeForEmail(slot, studentTimezone);
+        startDateTime = slot;
       } else if (slot.datetime) {
         formattedTime = formatDateTimeForEmail(slot.datetime, studentTimezone);
         duration = slot.duration_minutes || 60;
+        startDateTime = slot.datetime;
       }
     }
 
-    try {
-      await sendEmail({
-        to: studentEmail,
-        subject: `✅ Your session with ${coachName} is confirmed`,
-        text: `Hi ${studentName},
+    // Try to create Google Calendar event with Meet link
+    let meetUrl: string | null = booking.meeting_url || null;
+    let calendarEventId: string | null = booking.calendar_event_id || null;
+
+    if (startDateTime) {
+      try {
+        // Check if coach has Google connected
+        const { data: googleConnection } = await supabase
+          .from("google_connections")
+          .select("google_email")
+          .eq("coach_id", booking.coach_id)
+          .single();
+
+        if (googleConnection) {
+          console.log(
+            `[Booking ${bookingId}] Creating Google Calendar event for coach ${booking.coach_id}`
+          );
+
+          const calendarResult = await createCalendarEvent({
+            coachId: booking.coach_id,
+            bookingId,
+            summary: `Chess lesson - ${studentName}`,
+            description: `ChessBooker session with ${studentName}\n\nStudent email: ${studentEmail}\nBooking ID: ${bookingId}`,
+            startDateTime,
+            durationMinutes: duration,
+            coachTimezone,
+            studentEmail,
+            coachGoogleEmail: googleConnection.google_email,
+          });
+
+          if (calendarResult.success) {
+            meetUrl = calendarResult.meetUrl || null;
+            calendarEventId = calendarResult.eventId || null;
+
+            // Update booking with calendar event info
+            await supabase
+              .from("booking_requests")
+              .update({
+                meeting_url: meetUrl,
+                calendar_event_id: calendarEventId,
+                calendar_provider: "google",
+              })
+              .eq("id", bookingId);
+
+            console.log(
+              `[Booking ${bookingId}] Calendar event created: ${calendarEventId}, Meet URL: ${meetUrl}`
+            );
+          } else {
+            console.error(
+              `[Booking ${bookingId}] Failed to create calendar event: ${calendarResult.error}`
+            );
+          }
+        }
+      } catch (calendarError) {
+        // Don't fail the confirmation if calendar creation fails
+        console.error(
+          `[Booking ${bookingId}] Calendar event creation error:`,
+          calendarError
+        );
+      }
+    }
+
+    // Build email body with optional meeting link
+    let emailBody = `Hi ${studentName},
 
 ✅ Great news! Your session has been confirmed.
 
@@ -85,11 +149,24 @@ export async function updateBookingStatus(
 - Coach: ${coachName}
 - Time: ${formattedTime}
 - Duration: ${duration} minutes
-- Timezone: ${studentTimezone}
+- Timezone: ${studentTimezone}`;
+
+    if (meetUrl) {
+      emailBody += `
+- Meeting link: ${meetUrl}`;
+    }
+
+    emailBody += `
 
 See you at the board!
 
-Thanks for using ChessBooker.`,
+Thanks for using ChessBooker.`;
+
+    try {
+      await sendEmail({
+        to: studentEmail,
+        subject: `✅ Your session with ${coachName} is confirmed`,
+        text: emailBody,
       });
     } catch (emailError) {
       console.error("Failed to send confirmation email to student:", emailError);
