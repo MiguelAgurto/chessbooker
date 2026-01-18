@@ -93,6 +93,21 @@ function getDateLabel(date: Date): string {
   });
 }
 
+function formatDateForGoogleCalendar(date: Date): string {
+  // Format: YYYYMMDDTHHMMSSZ (UTC)
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+function getGoogleCalendarUrl(startDate: Date | null, durationMinutes: number): string {
+  if (!startDate) {
+    return "https://calendar.google.com/calendar/u/0/r";
+  }
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
+  const startStr = formatDateForGoogleCalendar(startDate);
+  const endStr = formatDateForGoogleCalendar(endDate);
+  return `https://calendar.google.com/calendar/u/0/r/day?sf=true&output=xml&dates=${startStr}/${endStr}`;
+}
+
 function groupSessionsByDate(requests: BookingRequest[]): Map<string, BookingRequest[]> {
   const grouped = new Map<string, BookingRequest[]>();
 
@@ -309,7 +324,7 @@ export default function RequestsTable({ requests }: { requests: BookingRequest[]
                         {session.calendar_event_id && (
                           <div className="mt-3">
                             <a
-                              href={`https://calendar.google.com/calendar/u/0/r/eventedit/${session.calendar_event_id}`}
+                              href={getGoogleCalendarUrl(sessionTime, duration)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded border border-cb-border hover:border-coral hover:text-coral transition-colors"
