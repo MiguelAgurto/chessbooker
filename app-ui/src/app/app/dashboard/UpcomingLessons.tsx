@@ -48,12 +48,12 @@ export default function UpcomingLessons({
   );
 
   return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold text-cb-text mb-4">
+    <div className="card p-6 flex flex-col" style={{ maxHeight: "400px" }}>
+      <h2 className="text-lg font-semibold text-cb-text mb-4 flex-shrink-0">
         Upcoming Lessons
       </h2>
 
-      <div className="space-y-6">
+      <div className="space-y-6 overflow-y-auto flex-1 pr-1">
         {Object.entries(groupedLessons).map(([dateLabel, dateLessons]) => (
           <div key={dateLabel}>
             <h3 className="text-xs font-semibold text-cb-text-secondary uppercase tracking-wider mb-3">

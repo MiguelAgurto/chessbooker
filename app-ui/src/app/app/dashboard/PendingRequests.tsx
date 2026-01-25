@@ -292,18 +292,18 @@ export default function PendingRequests({
   }
 
   return (
-    <div className="card p-6">
-      <h2 className="text-lg font-semibold text-cb-text mb-4">
+    <div className="card p-6 flex flex-col" style={{ maxHeight: "400px" }}>
+      <h2 className="text-lg font-semibold text-cb-text mb-4 flex-shrink-0">
         Pending Requests
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex-shrink-0">
           {error}
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-4 overflow-y-auto flex-1 pr-1">
         {requests.map((request) => {
           const times = getAvailableTimes(request);
 
