@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTimeForCoach, getRelativeDateLabel } from "@/lib/timezone";
 import {
@@ -27,77 +27,137 @@ interface UpcomingLessonsProps {
   timezone: string;
 }
 
-// Actions dropdown menu with labeled button
-function ActionsDropdown({
+// Actions Modal - renders as overlay, not clipped by scroll container
+function ActionsModal({
   lesson,
+  timezone,
+  onClose,
   onOpenNotes,
   onOpenRecap,
+  onMarkCompleted,
+  isMarkingComplete,
 }: {
   lesson: UpcomingLesson;
+  timezone: string;
+  onClose: () => void;
   onOpenNotes: () => void;
   onOpenRecap: () => void;
+  onMarkCompleted: () => void;
+  isMarkingComplete: boolean;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const isPast = new Date(lesson.scheduled_start) < new Date();
+  const time = new Date(lesson.scheduled_start).toLocaleString("en-US", {
+    timeZone: timezone,
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 
   return (
-    <div className="relative" ref={menuRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="text-xs px-2.5 py-1.5 rounded-lg border border-cb-border text-cb-text-secondary hover:border-coral hover:text-coral transition-colors flex items-center gap-1"
+    <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50">
+      <div
+        className="bg-white w-full sm:w-auto sm:min-w-[320px] sm:max-w-md sm:mx-4 sm:rounded-lg rounded-t-xl shadow-xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-        </svg>
-        More
-      </button>
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-cb-border-light">
+          <div>
+            <h3 className="text-base font-semibold text-cb-text">
+              Lesson Actions
+            </h3>
+            <p className="text-xs text-cb-text-muted mt-0.5">
+              {lesson.student_name} · {time}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-cb-bg transition-colors text-cb-text-muted"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-cb-border-light z-10">
-          <div className="py-1">
+        {/* Action buttons */}
+        <div className="p-2">
+          {/* Mark completed - only for past lessons */}
+          {isPast && (
             <button
               onClick={() => {
-                setIsOpen(false);
-                onOpenNotes();
+                onClose();
+                onMarkCompleted();
               }}
-              className="w-full text-left px-4 py-2 text-sm text-cb-text hover:bg-cb-bg transition-colors flex items-center gap-2"
+              disabled={isMarkingComplete}
+              className="w-full text-left px-4 py-3 rounded-lg hover:bg-cb-bg transition-colors flex items-center gap-3 disabled:opacity-50"
             >
+              <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-cb-text">Mark completed</p>
+                <p className="text-xs text-cb-text-muted">Remove from upcoming list</p>
+              </div>
+            </button>
+          )}
+
+          {/* Coach notes */}
+          <button
+            onClick={() => {
+              onClose();
+              onOpenNotes();
+            }}
+            className="w-full text-left px-4 py-3 rounded-lg hover:bg-cb-bg transition-colors flex items-center gap-3"
+          >
+            <div className="w-8 h-8 bg-cb-bg rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Notes
-              {lesson.coach_notes && (
-                <span className="ml-auto w-2 h-2 bg-coral rounded-full" />
-              )}
-            </button>
-            <button
-              onClick={() => {
-                setIsOpen(false);
-                onOpenRecap();
-              }}
-              className="w-full text-left px-4 py-2 text-sm text-cb-text hover:bg-cb-bg transition-colors flex items-center gap-2"
-            >
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-cb-text">Coach notes</p>
+              <p className="text-xs text-cb-text-muted">Private notes for this session</p>
+            </div>
+            {lesson.coach_notes && (
+              <span className="w-2 h-2 bg-coral rounded-full" />
+            )}
+          </button>
+
+          {/* Send recap */}
+          <button
+            onClick={() => {
+              onClose();
+              onOpenRecap();
+            }}
+            className="w-full text-left px-4 py-3 rounded-lg hover:bg-cb-bg transition-colors flex items-center gap-3"
+          >
+            <div className="w-8 h-8 bg-cb-bg rounded-lg flex items-center justify-center flex-shrink-0">
               <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Recap
-              {lesson.recap_sent_at && (
-                <span className="ml-auto text-xs text-green-600">Sent</span>
-              )}
-            </button>
-          </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-cb-text">Send recap</p>
+              <p className="text-xs text-cb-text-muted">Email lesson summary to student</p>
+            </div>
+            {lesson.recap_sent_at && (
+              <span className="text-xs text-green-600 font-medium px-2 py-0.5 bg-green-50 rounded">Sent</span>
+            )}
+          </button>
         </div>
-      )}
+
+        {/* Cancel button for mobile */}
+        <div className="p-2 pt-0 sm:hidden">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-3 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -307,6 +367,7 @@ export default function UpcomingLessons({
   timezone,
 }: UpcomingLessonsProps) {
   const router = useRouter();
+  const [actionsModal, setActionsModal] = useState<UpcomingLesson | null>(null);
   const [notesModal, setNotesModal] = useState<UpcomingLesson | null>(null);
   const [recapModal, setRecapModal] = useState<UpcomingLesson | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
@@ -401,7 +462,6 @@ export default function UpcomingLessons({
                     hour12: true,
                   }
                 );
-                const isPast = new Date(lesson.scheduled_start) < new Date();
 
                 return (
                   <div
@@ -439,26 +499,16 @@ export default function UpcomingLessons({
                         </a>
                       )}
 
-                      {/* Mark completed - only for past lessons */}
-                      {isPast && (
-                        <button
-                          onClick={() => handleMarkCompleted(lesson)}
-                          disabled={loading === lesson.id}
-                          className="text-xs px-2.5 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                          {loading === lesson.id ? "..." : "Complete"}
-                        </button>
-                      )}
-
-                      {/* More actions dropdown */}
-                      <ActionsDropdown
-                        lesson={lesson}
-                        onOpenNotes={() => setNotesModal(lesson)}
-                        onOpenRecap={() => setRecapModal(lesson)}
-                      />
+                      {/* Lesson actions button - opens modal */}
+                      <button
+                        onClick={() => setActionsModal(lesson)}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-cb-border text-cb-text-secondary hover:border-coral hover:text-coral transition-colors flex items-center gap-1"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                        </svg>
+                        Actions
+                      </button>
                     </div>
                   </div>
                 );
@@ -467,6 +517,19 @@ export default function UpcomingLessons({
           </div>
         ))}
       </div>
+
+      {/* Actions Modal */}
+      {actionsModal && (
+        <ActionsModal
+          lesson={actionsModal}
+          timezone={timezone}
+          onClose={() => setActionsModal(null)}
+          onOpenNotes={() => setNotesModal(actionsModal)}
+          onOpenRecap={() => setRecapModal(actionsModal)}
+          onMarkCompleted={() => handleMarkCompleted(actionsModal)}
+          isMarkingComplete={loading === actionsModal.id}
+        />
+      )}
 
       {/* Coach Notes Modal */}
       {notesModal && (
