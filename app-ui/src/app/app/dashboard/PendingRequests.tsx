@@ -14,6 +14,7 @@ interface PendingRequest {
   id: string;
   student_name: string;
   student_email: string;
+  student_timezone?: string | null;
   duration_minutes: number;
   requested_times: (string | SlotData)[];
   preferred_time_1?: string | null;
@@ -52,6 +53,38 @@ function getAvailableTimes(request: PendingRequest): (string | SlotData)[] {
   if (request.preferred_time_3) legacyTimes.push(request.preferred_time_3);
 
   return legacyTimes;
+}
+
+/**
+ * Check if request is using legacy free-text times only (no valid ISO timestamps)
+ */
+function isLegacyOnlyRequest(request: PendingRequest): boolean {
+  // If requested_times has data, it's not legacy-only
+  if (request.requested_times && request.requested_times.length > 0) {
+    return false;
+  }
+
+  // Check if we have any legacy times
+  const hasLegacyTimes =
+    !!request.preferred_time_1 ||
+    !!request.preferred_time_2 ||
+    !!request.preferred_time_3;
+
+  if (!hasLegacyTimes) {
+    return false; // No times at all
+  }
+
+  // Check if any legacy time is a valid ISO timestamp
+  const legacyTimes = [
+    request.preferred_time_1,
+    request.preferred_time_2,
+    request.preferred_time_3,
+  ].filter(Boolean) as string[];
+
+  const hasValidISOTime = legacyTimes.some(isValidISOTimestamp);
+
+  // It's legacy-only if we have legacy times but none are valid ISO
+  return !hasValidISOTime;
 }
 
 interface AcceptModalProps {
@@ -284,9 +317,19 @@ export default function PendingRequests({
         <h2 className="text-lg font-semibold text-cb-text mb-4">
           Pending Requests
         </h2>
-        <p className="text-sm text-cb-text-secondary text-center py-4">
-          No pending requests
-        </p>
+        <div className="text-center py-8">
+          <div className="w-12 h-12 bg-cb-bg rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-cb-text-secondary">
+            No pending requests
+          </p>
+          <p className="text-xs text-cb-text-muted mt-1">
+            New booking requests will appear here
+          </p>
+        </div>
       </div>
     );
   }
@@ -306,6 +349,7 @@ export default function PendingRequests({
       <div className="space-y-4 overflow-y-auto flex-1 pr-1">
         {requests.map((request) => {
           const times = getAvailableTimes(request);
+          const isLegacyOnly = isLegacyOnlyRequest(request);
 
           return (
             <div
@@ -319,6 +363,11 @@ export default function PendingRequests({
                   </p>
                   <p className="text-xs text-cb-text-muted truncate">
                     {request.student_email}
+                    {request.student_timezone && (
+                      <span className="ml-2 text-cb-text-muted">
+                        ({request.student_timezone})
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-cb-text-secondary mt-1">
                     {request.duration_minutes} min session
@@ -345,13 +394,22 @@ export default function PendingRequests({
                 </div>
 
                 <div className="flex gap-2 sm:flex-col">
-                  <button
-                    onClick={() => setAcceptModalRequest(request)}
-                    disabled={loading === request.id}
-                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                  >
-                    Accept
-                  </button>
+                  {isLegacyOnly ? (
+                    <div
+                      className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg cursor-not-allowed text-center"
+                      title="This request uses free-text times. Please confirm manually."
+                    >
+                      Manual scheduling
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setAcceptModalRequest(request)}
+                      disabled={loading === request.id}
+                      className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                    >
+                      Accept
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDecline(request.id)}
                     disabled={loading === request.id}

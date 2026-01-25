@@ -27,9 +27,19 @@ export default function UpcomingLessons({
         <h2 className="text-lg font-semibold text-cb-text mb-4">
           Upcoming Lessons
         </h2>
-        <p className="text-sm text-cb-text-secondary text-center py-4">
-          No upcoming lessons scheduled
-        </p>
+        <div className="text-center py-8">
+          <div className="w-12 h-12 bg-cb-bg rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg className="w-6 h-6 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-cb-text-secondary">
+            No upcoming lessons
+          </p>
+          <p className="text-xs text-cb-text-muted mt-1">
+            Confirmed sessions will appear here
+          </p>
+        </div>
       </div>
     );
   }
