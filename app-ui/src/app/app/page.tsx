@@ -1,109 +1,127 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import BookingLinkBox from "@/components/BookingLinkBox";
+import CoachHeader from "./dashboard/CoachHeader";
+import UpcomingLessons from "./dashboard/UpcomingLessons";
+import PendingRequests from "./dashboard/PendingRequests";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
+  // Fetch coach data
   const { data: coach } = await supabase
     .from("coaches")
     .select("*")
     .eq("id", user!.id)
     .single();
 
+  const timezone = coach?.timezone || "UTC";
+
+  // Fetch upcoming lessons from view
+  const { data: upcomingLessons } = await supabase
+    .from("upcoming_lessons")
+    .select("*")
+    .eq("coach_id", user!.id)
+    .limit(20);
+
+  // Fetch pending requests
+  const { data: pendingRequests } = await supabase
+    .from("booking_requests")
+    .select("*")
+    .eq("coach_id", user!.id)
+    .eq("status", "pending")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  // Count stats
   const { count: pendingCount } = await supabase
     .from("booking_requests")
     .select("*", { count: "exact", head: true })
     .eq("coach_id", user!.id)
     .eq("status", "pending");
 
-  const { count: confirmedCount } = await supabase
+  // Get first day of current month for confirmed count
+  const now = new Date();
+  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const { count: confirmedThisMonth } = await supabase
     .from("booking_requests")
     .select("*", { count: "exact", head: true })
     .eq("coach_id", user!.id)
-    .eq("status", "accepted");
+    .eq("status", "confirmed")
+    .gte("scheduled_start", firstDayOfMonth.toISOString());
 
-  const { data: availability } = await supabase
-    .from("availability_rules")
-    .select("*")
-    .eq("coach_id", user!.id);
+  const nextLesson = upcomingLessons?.[0] || null;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="font-display text-3xl text-cb-text">
-          {coach?.name ? `Welcome, ${coach.name}` : "Dashboard"}
-        </h1>
-        <Link
-          href="/app/settings"
-          className="text-sm font-medium text-coral hover:text-coral-dark transition-colors"
-        >
-          Edit profile
-        </Link>
-      </div>
+      {/* Header Card */}
+      <CoachHeader
+        coachName={coach?.name || "Coach"}
+        timezone={timezone}
+        nextLesson={nextLesson}
+      />
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div className="card overflow-hidden">
-          <div className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-coral-light rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-6 h-6 fill-coral" viewBox="0 0 24 24">
-                  <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-cb-text-secondary">Pending Requests</p>
-              <p className="text-2xl font-semibold text-cb-text">{pendingCount || 0}</p>
+      {/* Quick Stats */}
+      <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-coral-light rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 fill-coral" viewBox="0 0 24 24">
+                <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+              </svg>
             </div>
-          </div>
-          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
-            <Link href="/app/requests" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
-              View all requests
-            </Link>
+            <div>
+              <p className="text-2xl font-semibold text-cb-text">
+                {pendingCount || 0}
+              </p>
+              <p className="text-xs text-cb-text-secondary">Pending</p>
+            </div>
           </div>
         </div>
 
-        <div className="card overflow-hidden">
-          <div className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-green-50 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-6 h-6 fill-green-500" viewBox="0 0 24 24">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-cb-text-secondary">Confirmed Sessions</p>
-              <p className="text-2xl font-semibold text-cb-text">{confirmedCount || 0}</p>
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 fill-green-500" viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
+              </svg>
             </div>
-          </div>
-          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
-            <Link href="/app/requests?status=accepted" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
-              View sessions
-            </Link>
-          </div>
-        </div>
-
-        <div className="card overflow-hidden">
-          <div className="p-6">
-            <div className="flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
-                <svg className="w-6 h-6 fill-blue-500" viewBox="0 0 24 24">
-                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
-                </svg>
-              </div>
-              <p className="text-sm font-medium text-cb-text-secondary">Schedules</p>
-              <p className="text-2xl font-semibold text-cb-text">{availability?.length || 0}</p>
+            <div>
+              <p className="text-2xl font-semibold text-cb-text">
+                {confirmedThisMonth || 0}
+              </p>
+              <p className="text-xs text-cb-text-secondary">This month</p>
             </div>
-          </div>
-          <div className="bg-cb-bg px-6 py-4 border-t border-cb-border-light text-center">
-            <Link href="/app/schedules" className="text-sm font-medium text-coral hover:text-coral-dark transition-colors">
-              Manage schedules
-            </Link>
           </div>
         </div>
       </div>
 
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        {/* Upcoming Lessons */}
+        <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} />
+
+        {/* Pending Requests */}
+        <PendingRequests requests={pendingRequests || []} timezone={timezone} />
+      </div>
+
+      {/* Booking Link */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-cb-text mb-4">Your Public Booking Link</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-cb-text">
+            Your Public Booking Link
+          </h2>
+          <Link
+            href="/app/settings"
+            className="text-sm font-medium text-coral hover:text-coral-dark transition-colors"
+          >
+            Edit profile
+          </Link>
+        </div>
         {coach?.slug ? (
           <BookingLinkBox slug={coach.slug} />
         ) : (
