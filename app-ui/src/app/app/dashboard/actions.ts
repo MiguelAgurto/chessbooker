@@ -225,3 +225,147 @@ Thanks for using ChessBooker.`;
 
   return { success: true };
 }
+
+/**
+ * Update coach notes for a booking (private notes visible only to coach)
+ */
+export async function updateCoachNotes(
+  bookingId: string,
+  notes: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const { error: updateError } = await supabase
+    .from("booking_requests")
+    .update({ coach_notes: notes })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  revalidatePath("/app");
+  return { success: true };
+}
+
+/**
+ * Mark a lesson as completed (only valid if scheduled_start is in the past)
+ */
+export async function markLessonCompleted(
+  bookingId: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch booking to validate
+  const { data: booking, error: fetchError } = await supabase
+    .from("booking_requests")
+    .select("scheduled_start, status")
+    .eq("id", bookingId)
+    .single();
+
+  if (fetchError || !booking) {
+    return { success: false, error: fetchError?.message || "Booking not found" };
+  }
+
+  // Verify the lesson is in the past
+  if (booking.scheduled_start) {
+    const scheduledStart = new Date(booking.scheduled_start);
+    if (scheduledStart > new Date()) {
+      return { success: false, error: "Cannot mark a future lesson as completed" };
+    }
+  }
+
+  // Verify it's currently confirmed
+  if (booking.status !== "confirmed") {
+    return { success: false, error: "Only confirmed lessons can be marked as completed" };
+  }
+
+  const { error: updateError } = await supabase
+    .from("booking_requests")
+    .update({ status: "completed" })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  revalidatePath("/app");
+  revalidatePath("/app/requests");
+
+  return { success: true };
+}
+
+/**
+ * Send lesson recap to student via email
+ */
+export async function sendLessonRecap(
+  bookingId: string,
+  recapText: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  // Fetch booking with coach details
+  const { data: booking, error: fetchError } = await supabase
+    .from("booking_requests")
+    .select("*, coaches(name, timezone)")
+    .eq("id", bookingId)
+    .single();
+
+  if (fetchError || !booking) {
+    return { success: false, error: fetchError?.message || "Booking not found" };
+  }
+
+  const coachName = booking.coaches?.name || "Your coach";
+  const coachTimezone = booking.coaches?.timezone || "UTC";
+  const studentEmail = booking.student_email;
+  const studentName = booking.student_name;
+
+  // Format lesson date/time
+  const lessonDate = booking.scheduled_start
+    ? formatDateTimeForEmail(booking.scheduled_start, coachTimezone)
+    : "your recent lesson";
+
+  // Update recap in database first
+  const { error: updateError } = await supabase
+    .from("booking_requests")
+    .update({
+      student_recap: recapText,
+      recap_sent_at: new Date().toISOString(),
+    })
+    .eq("id", bookingId);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
+  }
+
+  // Send recap email
+  const emailBody = `Hi ${studentName},
+
+Here's your lesson recap from ${coachName}:
+
+Lesson date: ${lessonDate}
+
+---
+
+${recapText}
+
+---
+
+Keep up the great work!
+
+Thanks for using ChessBooker.`;
+
+  try {
+    await sendEmail({
+      to: studentEmail,
+      subject: `Lesson recap from ${coachName}`,
+      text: emailBody,
+    });
+  } catch (emailError) {
+    console.error("Failed to send recap email:", emailError);
+    return { success: false, error: "Failed to send email. Recap was saved." };
+  }
+
+  revalidatePath("/app");
+  return { success: true };
+}
