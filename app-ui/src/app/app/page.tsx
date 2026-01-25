@@ -3,6 +3,7 @@ import Link from "next/link";
 import BookingLinkBox from "@/components/BookingLinkBox";
 import CoachHeader from "./dashboard/CoachHeader";
 import UpcomingLessons from "./dashboard/UpcomingLessons";
+import PastLessons from "./dashboard/PastLessons";
 import PendingRequests from "./dashboard/PendingRequests";
 
 export default async function DashboardPage() {
@@ -34,6 +35,16 @@ export default async function DashboardPage() {
     .eq("coach_id", user!.id)
     .eq("status", "pending")
     .order("created_at", { ascending: false })
+    .limit(20);
+
+  // Fetch past lessons (scheduled_start in the past, status confirmed or completed)
+  const { data: pastLessons } = await supabase
+    .from("booking_requests")
+    .select("*")
+    .eq("coach_id", user!.id)
+    .in("status", ["confirmed", "completed"])
+    .lt("scheduled_start", new Date().toISOString())
+    .order("scheduled_start", { ascending: false })
     .limit(20);
 
   // Count stats
@@ -107,6 +118,11 @@ export default async function DashboardPage() {
 
         {/* Pending Requests */}
         <PendingRequests requests={pendingRequests || []} timezone={timezone} />
+      </div>
+
+      {/* Past Lessons */}
+      <div className="mb-6">
+        <PastLessons lessons={pastLessons || []} timezone={timezone} />
       </div>
 
       {/* Booking Link */}
