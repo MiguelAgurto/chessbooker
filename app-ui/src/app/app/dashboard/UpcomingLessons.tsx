@@ -27,24 +27,18 @@ interface UpcomingLessonsProps {
   timezone: string;
 }
 
-// Actions dropdown menu
-function ActionsMenu({
+// Actions dropdown menu with labeled button
+function ActionsDropdown({
   lesson,
-  timezone,
   onOpenNotes,
   onOpenRecap,
-  onMarkCompleted,
 }: {
   lesson: UpcomingLesson;
-  timezone: string;
   onOpenNotes: () => void;
   onOpenRecap: () => void;
-  onMarkCompleted: () => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-
-  const isPast = new Date(lesson.scheduled_start) < new Date();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -60,31 +54,17 @@ function ActionsMenu({
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-1.5 rounded-lg hover:bg-white transition-colors text-cb-text-muted hover:text-cb-text"
-        title="Actions"
+        className="text-xs px-2.5 py-1.5 rounded-lg border border-cb-border text-cb-text-secondary hover:border-coral hover:text-coral transition-colors flex items-center gap-1"
       >
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
         </svg>
+        More
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-cb-border-light z-10">
+        <div className="absolute right-0 mt-1 w-40 bg-white rounded-lg shadow-lg border border-cb-border-light z-10">
           <div className="py-1">
-            {isPast && (
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  onMarkCompleted();
-                }}
-                className="w-full text-left px-4 py-2 text-sm text-cb-text hover:bg-cb-bg transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Mark completed
-              </button>
-            )}
             <button
               onClick={() => {
                 setIsOpen(false);
@@ -95,7 +75,7 @@ function ActionsMenu({
               <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
-              Coach notes
+              Notes
               {lesson.coach_notes && (
                 <span className="ml-auto w-2 h-2 bg-coral rounded-full" />
               )}
@@ -110,7 +90,7 @@ function ActionsMenu({
               <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Send recap
+              Recap
               {lesson.recap_sent_at && (
                 <span className="ml-auto text-xs text-green-600">Sent</span>
               )}
@@ -421,19 +401,21 @@ export default function UpcomingLessons({
                     hour12: true,
                   }
                 );
+                const isPast = new Date(lesson.scheduled_start) < new Date();
 
                 return (
                   <div
                     key={lesson.id}
-                    className="flex items-center justify-between p-3 bg-cb-bg rounded-lg"
+                    className="p-3 bg-cb-bg rounded-lg"
                   >
-                    <div className="flex items-center gap-3">
+                    {/* Top row: Time, Name, Duration */}
+                    <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center flex-shrink-0">
                         <span className="text-green-600 font-semibold text-xs">
                           {time}
                         </span>
                       </div>
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-cb-text">
                           {lesson.student_name}
                         </p>
@@ -443,23 +425,39 @@ export default function UpcomingLessons({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Bottom row: Action buttons */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {/* Primary: Join button */}
                       {lesson.meeting_url && (
                         <a
                           href={lesson.meeting_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-xs px-3 py-1.5 rounded bg-coral text-white hover:bg-coral-dark transition-colors"
+                          className="text-xs px-3 py-1.5 rounded-lg bg-coral text-white hover:bg-coral-dark transition-colors font-medium"
                         >
-                          Join
+                          Join meeting
                         </a>
                       )}
-                      <ActionsMenu
+
+                      {/* Mark completed - only for past lessons */}
+                      {isPast && (
+                        <button
+                          onClick={() => handleMarkCompleted(lesson)}
+                          disabled={loading === lesson.id}
+                          className="text-xs px-2.5 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors font-medium disabled:opacity-50 flex items-center gap-1"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          {loading === lesson.id ? "..." : "Complete"}
+                        </button>
+                      )}
+
+                      {/* More actions dropdown */}
+                      <ActionsDropdown
                         lesson={lesson}
-                        timezone={timezone}
                         onOpenNotes={() => setNotesModal(lesson)}
                         onOpenRecap={() => setRecapModal(lesson)}
-                        onMarkCompleted={() => handleMarkCompleted(lesson)}
                       />
                     </div>
                   </div>
