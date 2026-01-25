@@ -166,11 +166,13 @@ function AcceptModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
         <h3 className="text-lg font-semibold text-cb-text mb-2">
-          Accept Booking
+          Review & confirm session time
         </h3>
-        <p className="text-sm text-cb-text-secondary mb-4">
-          Select a time for the session with{" "}
-          <strong>{request.student_name}</strong>
+        <p className="text-sm text-cb-text-secondary mb-1">
+          Session with <strong>{request.student_name}</strong>
+        </p>
+        <p className="text-xs text-cb-text-muted mb-4">
+          Once confirmed, this lesson will be added to your calendar.
         </p>
 
         <div className="space-y-2 mb-4">
