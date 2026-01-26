@@ -29,13 +29,13 @@ export default async function DashboardPage() {
     .eq("coach_id", user!.id)
     .limit(20);
 
-  // Fetch pending and recently expired requests
+  // Fetch only actionable pending requests (not expired)
   const { data: pendingRequests } = await supabase
     .from("booking_requests")
     .select("id, student_name, student_email, student_timezone, duration_minutes, requested_times, preferred_time_1, preferred_time_2, preferred_time_3, created_at, status, expires_at, reschedule_of")
     .eq("coach_id", user!.id)
-    .in("status", ["pending", "expired"])
-    .order("status", { ascending: true }) // pending first, then expired
+    .eq("status", "pending")
+    .or("expires_at.is.null,expires_at.gt.now()")
     .order("created_at", { ascending: false })
     .limit(20);
 
