@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail, getAppUrl } from "@/lib/email";
+import { revalidatePath } from "next/cache";
 
 interface SlotData {
   datetime: string;
@@ -39,24 +40,39 @@ export async function createBookingRequest({
 }: CreateBookingParams): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
-  // Insert the booking request
+  // Calculate scheduled times from the first (selected) slot
+  const selectedSlot = requestedTimes[0];
+  const scheduledStart = new Date(selectedSlot.datetime);
+  const scheduledEnd = new Date(scheduledStart.getTime() + selectedSlot.duration_minutes * 60 * 1000);
+
+  // Insert the booking request with scheduled_start/end to immediately hold the slot
   const { error: insertError } = await supabase.from("booking_requests").insert({
     coach_id: coachId,
     student_name: studentName,
     student_email: studentEmail,
     student_timezone: studentTimezone,
     requested_times: requestedTimes,
+    scheduled_start: scheduledStart.toISOString(),
+    scheduled_end: scheduledEnd.toISOString(),
+    duration_minutes: selectedSlot.duration_minutes,
     status: "pending",
   });
 
   if (insertError) {
+    // Check for exclusion constraint violation (slot already taken)
+    if (insertError.code === "23P01" || insertError.message?.includes("exclusion")) {
+      return {
+        success: false,
+        error: "That time was just taken. Please pick another slot.",
+      };
+    }
     return { success: false, error: insertError.message };
   }
 
-  // Fetch coach details for the emails (including timezone for coach email)
+  // Fetch coach details for the emails and path revalidation
   const { data: coach } = await supabase
     .from("coaches")
-    .select("name, email, timezone")
+    .select("name, email, timezone, slug")
     .eq("id", coachId)
     .single();
 
@@ -123,6 +139,13 @@ Reply directly to this email to contact the student.`,
       console.error("Failed to send coach notification email:", emailError);
     }
   }
+
+  // Revalidate the booking page so the held slot disappears from availability
+  if (coach?.slug) {
+    revalidatePath(`/c/${coach.slug}`);
+  }
+  // Also revalidate the coach dashboard
+  revalidatePath("/app");
 
   return { success: true };
 }

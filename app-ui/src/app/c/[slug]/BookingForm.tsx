@@ -78,37 +78,11 @@ interface Slot {
   displayTime: string; // Display time like "9:00 AM" in student timezone
 }
 
-interface BookedSlot {
-  datetime: string;
-  duration_minutes: number;
-}
-
-interface ConfirmedBooking {
-  requested_times: BookedSlot[] | string[];
-}
-
-// Parse a booked slot into start/end timestamps (in ms) - treats datetime as UTC or ISO
-function parseBookedInterval(slot: BookedSlot | string): { start: number; end: number } | null {
-  let datetime: string;
-  let durationMinutes: number;
-
-  if (typeof slot === "string") {
-    datetime = slot;
-    durationMinutes = 60;
-  } else if (slot && typeof slot === "object" && slot.datetime) {
-    datetime = slot.datetime;
-    durationMinutes = slot.duration_minutes || 60;
-  } else {
-    return null;
-  }
-
-  // If datetime doesn't have timezone info, treat as UTC
-  const isoDatetime = datetime.includes("Z") || datetime.includes("+") ? datetime : datetime + "Z";
-  const start = new Date(isoDatetime).getTime();
-  if (isNaN(start)) return null;
-
-  const end = start + durationMinutes * 60 * 1000;
-  return { start, end };
+// Blocked booking from DB (pending or confirmed with scheduled times)
+interface BlockedBooking {
+  scheduled_start: string;
+  scheduled_end: string;
+  duration_minutes: number | null;
 }
 
 // Check if a slot overlaps with any booked interval (all in UTC ms)
@@ -228,7 +202,7 @@ export default function BookingForm({
   coachId,
   coachTimezone,
   availability,
-  confirmedBookings,
+  blockedBookings,
   pricing,
   minNoticeMinutes = 0,
   bufferMinutes = 0,
@@ -236,7 +210,7 @@ export default function BookingForm({
   coachId: string;
   coachTimezone: string;
   availability: AvailabilityRule[];
-  confirmedBookings: ConfirmedBooking[];
+  blockedBookings: BlockedBooking[];
   pricing: { "60min": number; "90min": number };
   minNoticeMinutes?: number;
   bufferMinutes?: number;
@@ -252,19 +226,20 @@ export default function BookingForm({
 
   const userTimezone = useMemo(() => getBrowserTimezone(), []);
 
-  // Parse accepted bookings into blocked intervals (only first slot = chosen time)
+  // Parse blocked bookings (pending + confirmed) into intervals for slot blocking
   const bookedIntervals = useMemo(() => {
     const intervals: { start: number; end: number }[] = [];
-    for (const booking of confirmedBookings) {
-      if (booking.requested_times && Array.isArray(booking.requested_times) && booking.requested_times.length > 0) {
-        const interval = parseBookedInterval(booking.requested_times[0]);
-        if (interval) {
-          intervals.push(interval);
+    for (const booking of blockedBookings) {
+      if (booking.scheduled_start && booking.scheduled_end) {
+        const start = new Date(booking.scheduled_start).getTime();
+        const end = new Date(booking.scheduled_end).getTime();
+        if (!isNaN(start) && !isNaN(end)) {
+          intervals.push({ start, end });
         }
       }
     }
     return intervals;
-  }, [confirmedBookings]);
+  }, [blockedBookings]);
 
   const slots = useMemo(
     () => generateSlots(availability, duration, bookedIntervals, coachTimezone, userTimezone, minNoticeMinutes, bufferMinutes),

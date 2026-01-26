@@ -26,12 +26,15 @@ export default async function PublicBookingPage({ params }: PageProps) {
     .eq("coach_id", coach.id)
     .order("day_of_week", { ascending: true });
 
-  // Fetch accepted bookings for the next 7 days to block those slots
-  const { data: confirmedBookings } = await supabase
+  // Fetch bookings that should block availability (pending holds + confirmed)
+  // Only include bookings with scheduled_start/end set
+  const { data: blockedBookings } = await supabase
     .from("booking_requests")
-    .select("requested_times")
+    .select("scheduled_start, scheduled_end, duration_minutes")
     .eq("coach_id", coach.id)
-    .eq("status", "accepted");
+    .in("status", ["pending", "confirmed"])
+    .not("scheduled_start", "is", null)
+    .not("scheduled_end", "is", null);
 
   // Fetch achievements from coach_achievements table
   const { data: achievementsRaw } = await supabase
@@ -136,7 +139,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
           coachId={coach.id}
           coachTimezone={coach.timezone || "UTC"}
           availability={availability || []}
-          confirmedBookings={confirmedBookings || []}
+          blockedBookings={blockedBookings || []}
           pricing={coach.pricing || { "60min": 50, "90min": 70 }}
           minNoticeMinutes={coach.min_notice_minutes ?? 0}
           bufferMinutes={coach.buffer_minutes ?? 0}
