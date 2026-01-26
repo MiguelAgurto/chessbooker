@@ -453,9 +453,9 @@ export default function PastLessons({
               (Date.now() - new Date(lastLessonDate).getTime()) / (1000 * 60 * 60 * 24)
             );
             if (daysSinceLastLesson >= 30) {
-              retentionSignal = { label: "Inactive · 30+ days", level: "danger" };
+              retentionSignal = { label: "No lesson in 30+ days", level: "danger" };
             } else if (daysSinceLastLesson >= 14) {
-              retentionSignal = { label: "Inactive · 14+ days", level: "warning" };
+              retentionSignal = { label: "No lesson in 14+ days", level: "warning" };
             }
           }
 
