@@ -405,24 +405,18 @@ export async function sendLessonRecap(
   // Send recap email
   const emailBody = `Hi ${studentName},
 
-Here's your lesson recap from ${coachName}:
-
-Lesson date: ${lessonDate}
-
----
+Here's your recap from our lesson on ${lessonDate}:
 
 ${recapText}
 
----
+See you at the board!
 
-Keep up the great work!
-
-Thanks for using ChessBooker.`;
+${coachName}`;
 
   try {
     await sendEmail({
       to: studentEmail,
-      subject: `Lesson recap from ${coachName}`,
+      subject: `Your lesson recap with ${coachName}`,
       text: emailBody,
     });
   } catch (emailError) {

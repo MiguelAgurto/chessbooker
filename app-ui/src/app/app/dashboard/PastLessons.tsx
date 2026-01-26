@@ -76,95 +76,64 @@ interface PastLessonsProps {
   allLessons?: PastLesson[]; // All lessons for student history view
 }
 
-// Coach Notes Modal
-function CoachNotesModal({
-  lesson,
-  onClose,
-}: {
-  lesson: PastLesson;
-  onClose: () => void;
-}) {
-  const [notes, setNotes] = useState(lesson.coach_notes || "");
-  const [loading, setLoading] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/**
+ * Generate a student-friendly recap from coach notes
+ * Transforms private notes into a warm, encouraging summary
+ */
+function generateRecapFromNotes(notes: string): string {
+  if (!notes.trim()) return "";
 
-  const handleSave = async () => {
-    setLoading(true);
-    setError(null);
-    setSaved(false);
+  // Clean up the notes and make them student-friendly
+  let recap = notes.trim();
 
-    const result = await updateCoachNotes(lesson.id, notes);
+  // Replace negative framing with constructive framing
+  const replacements: [RegExp, string][] = [
+    [/\bneed to work on\b/gi, "focus area:"],
+    [/\bstruggling with\b/gi, "practicing"],
+    [/\bweak at\b/gi, "developing"],
+  ];
 
-    if (result.success) {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
-    } else {
-      setError(result.error || "Failed to save notes");
-    }
+  for (const [pattern, replacement] of replacements) {
+    recap = recap.replace(pattern, replacement);
+  }
 
-    setLoading(false);
-  };
+  // Split into sentences/points and clean up
+  const lines = recap
+    .split(/[.\n]+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
 
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-cb-text mb-2">
-          Coach Notes
-        </h3>
-        <p className="text-sm text-cb-text-secondary mb-4">
-          Private notes for session with <strong>{lesson.student_name}</strong>
-        </p>
+  if (lines.length === 0) return "";
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg">
-            {error}
-          </div>
-        )}
+  // Build a friendly recap structure
+  const recapParts: string[] = [];
 
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Add your notes here... (only visible to you)"
-          className="w-full h-32 px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none text-sm"
-        />
+  // Add what was covered
+  if (lines.length > 0) {
+    recapParts.push("What we covered:");
+    lines.slice(0, 3).forEach((line) => {
+      recapParts.push(`• ${line.charAt(0).toUpperCase() + line.slice(1)}`);
+    });
+  }
 
-        <div className="flex items-center justify-between mt-4">
-          {saved && (
-            <span className="text-sm text-green-600 flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Saved
-            </span>
-          )}
-          {!saved && <span />}
+  // Add practice suggestions if there are more points
+  if (lines.length > 3) {
+    recapParts.push("");
+    recapParts.push("To practice before next time:");
+    lines.slice(3, 5).forEach((line) => {
+      recapParts.push(`• ${line.charAt(0).toUpperCase() + line.slice(1)}`);
+    });
+  }
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors"
-            >
-              Close
-            </button>
-            <button
-              type="button"
-              onClick={handleSave}
-              disabled={loading}
-              className="px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral-dark transition-colors disabled:opacity-50"
-            >
-              {loading ? "Saving..." : "Save"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  // Add encouraging closing
+  recapParts.push("");
+  recapParts.push("Keep up the great work!");
+
+  return recapParts.join("\n");
 }
 
-// Send Recap Modal
-function RecapModal({
+// Combined Lesson Notes & Recap Modal
+function LessonNotesRecapModal({
   lesson,
   timezone,
   onClose,
@@ -177,96 +146,209 @@ function RecapModal({
   onSuccess: () => void;
   onError: (message: string) => void;
 }) {
+  const [notes, setNotes] = useState(lesson.coach_notes || "");
   const [recap, setRecap] = useState(lesson.student_recap || "");
-  const [loading, setLoading] = useState(false);
+  const [notesSaving, setNotesSaving] = useState(false);
+  const [notesSaved, setNotesSaved] = useState(false);
+  const [recapSending, setRecapSending] = useState(false);
+  const [recapSent, setRecapSent] = useState(!!lesson.recap_sent_at);
   const [error, setError] = useState<string | null>(null);
 
-  const alreadySent = !!lesson.recap_sent_at;
+  const lessonDate = formatDateTimeForCoach(lesson.scheduled_start, timezone);
 
-  const handleSend = async () => {
+  // Auto-save notes when they change (debounced)
+  const handleNotesChange = (value: string) => {
+    setNotes(value);
+    setNotesSaved(false);
+  };
+
+  const handleSaveNotes = async () => {
+    if (notesSaving) return;
+
+    setNotesSaving(true);
+    setError(null);
+
+    const result = await updateCoachNotes(lesson.id, notes);
+
+    if (result.success) {
+      setNotesSaved(true);
+      setTimeout(() => setNotesSaved(false), 2000);
+    } else {
+      setError(result.error || "Failed to save notes");
+    }
+
+    setNotesSaving(false);
+  };
+
+  const handleGenerateRecap = () => {
+    if (!notes.trim()) {
+      setError("Add some coach notes first to generate a recap");
+      return;
+    }
+    setError(null);
+    const generated = generateRecapFromNotes(notes);
+    setRecap(generated);
+  };
+
+  const handleSendRecap = async () => {
     if (!recap.trim()) {
       setError("Please enter a recap message");
       return;
     }
 
-    setLoading(true);
+    setRecapSending(true);
     setError(null);
 
     const result = await sendLessonRecap(lesson.id, recap);
 
     if (result.success) {
+      setRecapSent(true);
       onSuccess();
-      onClose();
     } else {
       const errorMessage = result.error || "Failed to send recap";
       setError(errorMessage);
       onError(errorMessage);
     }
 
-    setLoading(false);
+    setRecapSending(false);
   };
-
-  const lessonDate = formatDateTimeForCoach(lesson.scheduled_start, timezone);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-cb-text mb-2">
-          Send Lesson Recap
-        </h3>
-        <p className="text-sm text-cb-text-secondary mb-1">
-          Session with <strong>{lesson.student_name}</strong>
-        </p>
-        <p className="text-xs text-cb-text-muted mb-4">
-          {lessonDate}
-        </p>
+      <div className="bg-white rounded-lg w-full max-w-lg mx-4 shadow-xl max-h-[90vh] flex flex-col">
+        {/* Header */}
+        <div className="p-5 border-b border-cb-border-light flex-shrink-0">
+          <h3 className="text-lg font-semibold text-cb-text">
+            Lesson notes & recap
+          </h3>
+          <p className="text-sm text-cb-text-secondary mt-1">
+            {lesson.student_name} · {lessonDate}
+          </p>
+        </div>
 
-        {alreadySent && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-xs text-green-700 flex items-center gap-1">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Last sent{" "}
-              {new Date(lesson.recap_sent_at!).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-              })}
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-5 space-y-5">
+          {error && (
+            <div className="p-3 bg-red-50 text-red-700 text-sm rounded-lg">
+              {error}
+              <button
+                onClick={() => setError(null)}
+                className="ml-2 text-red-500 hover:text-red-700"
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {/* Coach Notes Section */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium text-cb-text">
+                Coach notes <span className="text-cb-text-muted font-normal">(private)</span>
+              </label>
+              <div className="flex items-center gap-2">
+                {notesSaved && (
+                  <span className="text-xs text-green-600 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Saved
+                  </span>
+                )}
+                <button
+                  onClick={handleSaveNotes}
+                  disabled={notesSaving}
+                  className="text-xs px-2 py-1 text-coral hover:text-coral-dark transition-colors disabled:opacity-50"
+                >
+                  {notesSaving ? "Saving..." : "Save notes"}
+                </button>
+              </div>
+            </div>
+            <textarea
+              value={notes}
+              onChange={(e) => handleNotesChange(e.target.value)}
+              placeholder="Covered opening principles, practiced knight forks, needs work on endgame technique..."
+              className="w-full h-28 px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none text-sm"
+            />
+            <p className="text-xs text-cb-text-muted mt-1">
+              Only you can see these notes. Use them to track progress and prepare for future lessons.
             </p>
           </div>
-        )}
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg">
-            {error}
+          {/* Divider with Generate button */}
+          <div className="flex items-center gap-3">
+            <div className="flex-1 border-t border-cb-border-light" />
+            <button
+              onClick={handleGenerateRecap}
+              disabled={!notes.trim()}
+              className="text-xs px-3 py-1.5 rounded-full border border-cb-border text-cb-text-secondary hover:bg-cb-bg hover:text-cb-text transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+              </svg>
+              Generate student recap
+            </button>
+            <div className="flex-1 border-t border-cb-border-light" />
           </div>
-        )}
 
-        <textarea
-          value={recap}
-          onChange={(e) => setRecap(e.target.value)}
-          placeholder="Write your lesson recap for the student..."
-          className="w-full h-40 px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none text-sm"
-        />
+          {/* Student Recap Section */}
+          <div>
+            <label className="text-sm font-medium text-cb-text mb-2 block">
+              Student recap
+            </label>
+            <textarea
+              value={recap}
+              onChange={(e) => setRecap(e.target.value)}
+              placeholder="Write a friendly summary of the lesson for your student..."
+              className="w-full h-36 px-3 py-2 border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none text-sm"
+            />
+            <p className="text-xs text-cb-text-muted mt-1">
+              This will be emailed to {lesson.student_email}
+            </p>
+          </div>
 
-        <div className="flex gap-3 mt-4">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 px-4 py-2 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={loading || !recap.trim()}
-            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral-dark transition-colors disabled:opacity-50"
-          >
-            {loading ? "Sending..." : alreadySent ? "Resend recap" : "Send recap"}
-          </button>
+          {/* Recap sent confirmation */}
+          {recapSent && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-700 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Recap sent to student
+              </p>
+              {lesson.recap_sent_at && (
+                <p className="text-xs text-green-600 mt-1 ml-6">
+                  {new Date(lesson.recap_sent_at).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-5 border-t border-cb-border-light flex-shrink-0">
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors"
+            >
+              Close
+            </button>
+            <button
+              type="button"
+              onClick={handleSendRecap}
+              disabled={recapSending || !recap.trim()}
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-coral rounded-lg hover:bg-coral-dark transition-colors disabled:opacity-50"
+            >
+              {recapSending ? "Sending..." : recapSent ? "Resend recap" : "Send recap to student"}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -514,8 +596,7 @@ export default function PastLessons({
   allLessons = [],
 }: PastLessonsProps) {
   const router = useRouter();
-  const [notesModal, setNotesModal] = useState<PastLesson | null>(null);
-  const [recapModal, setRecapModal] = useState<PastLesson | null>(null);
+  const [lessonModal, setLessonModal] = useState<PastLesson | null>(null);
   const [historyModal, setHistoryModal] = useState<{ name: string; email: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -681,29 +762,17 @@ export default function PastLessons({
                     >
                       📚 History
                     </button>
-                    {/* Notes button */}
+                    {/* Notes & Recap button */}
                     <button
-                      onClick={() => setNotesModal(lesson)}
+                      onClick={() => setLessonModal(lesson)}
                       className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                        lesson.coach_notes
+                        lesson.coach_notes || lesson.recap_sent_at
                           ? "bg-coral-light text-coral hover:bg-coral/20"
-                          : "bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg"
-                      }`}
-                      title="Coach notes"
-                    >
-                      📝 Notes
-                    </button>
-                    {/* Recap button */}
-                    <button
-                      onClick={() => setRecapModal(lesson)}
-                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                        lesson.recap_sent_at
-                          ? "bg-green-50 text-green-700 hover:bg-green-100"
                           : "bg-coral text-white hover:bg-coral-dark"
                       }`}
-                      title={lesson.recap_sent_at ? "Resend recap" : "Send recap"}
+                      title="Lesson notes & recap"
                     >
-                      ✉️ Recap
+                      📝 Notes & recap
                     </button>
                   </div>
                   {/* Last sent indicator */}
@@ -722,25 +791,17 @@ export default function PastLessons({
         })}
       </div>
 
-      {/* Coach Notes Modal */}
-      {notesModal && (
-        <CoachNotesModal
-          lesson={notesModal}
-          onClose={() => setNotesModal(null)}
-        />
-      )}
-
-      {/* Recap Modal */}
-      {recapModal && (
-        <RecapModal
-          lesson={recapModal}
+      {/* Lesson Notes & Recap Modal */}
+      {lessonModal && (
+        <LessonNotesRecapModal
+          lesson={lessonModal}
           timezone={timezone}
-          onClose={() => setRecapModal(null)}
+          onClose={() => setLessonModal(null)}
           onSuccess={() => {
-            showToast("Recap sent", "success");
+            showToast("Recap sent to student", "success");
             router.refresh();
           }}
-          onError={(message) => showToast(message, "error")}
+          onError={(message: string) => showToast(message, "error")}
         />
       )}
 
