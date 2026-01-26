@@ -429,9 +429,9 @@ export default function PastLessons({
               (Date.now() - new Date(lastLessonDate).getTime()) / (1000 * 60 * 60 * 24)
             );
             if (daysSinceLastLesson >= 30) {
-              retentionSignal = { label: "No lesson in 30+ days", level: "danger" };
+              retentionSignal = { label: "⏳ No lesson in 30+ days", level: "danger" };
             } else if (daysSinceLastLesson >= 14) {
-              retentionSignal = { label: "No lesson in 14+ days", level: "warning" };
+              retentionSignal = { label: "⏳ No lesson in 14+ days", level: "warning" };
             }
           }
 
@@ -455,15 +455,9 @@ export default function PastLessons({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <button
-                    onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
-                    className="text-sm font-medium text-cb-text hover:text-coral hover:underline transition-colors text-left cursor-pointer inline-flex items-center gap-1 group"
-                  >
+                  <p className="text-sm font-medium text-cb-text">
                     {lesson.student_name}
-                    <svg className="w-3 h-3 text-cb-text-muted group-hover:text-coral transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                  </p>
                   <p className="text-xs text-cb-text-muted">
                     {dateTime} · {lesson.duration_minutes} min
                   </p>
@@ -473,7 +467,7 @@ export default function PastLessons({
                         ? "bg-green-100 text-green-700"
                         : "bg-amber-100 text-amber-700"
                     }`}>
-                      {isCompleted ? "Completed" : "Needs review"}
+                      {isCompleted ? "✅ Completed" : "Needs review"}
                     </span>
                     {retentionSignal && (
                       <span className={`text-xs px-1.5 py-0.5 rounded ${
@@ -485,7 +479,7 @@ export default function PastLessons({
                       </span>
                     )}
                     {lesson.recap_sent_at && (
-                      <span className="text-xs text-green-600">Recap sent</span>
+                      <span className="text-xs text-green-600">📩 Recap sent</span>
                     )}
                     {lesson.coach_notes && (
                       <span className="w-1.5 h-1.5 bg-coral rounded-full" title="Has notes" />
@@ -507,9 +501,17 @@ export default function PastLessons({
                       className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
                       title="Mark as completed"
                     >
-                      Complete
+                      ✓ Complete
                     </button>
                   )}
+                  {/* History button */}
+                  <button
+                    onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
+                    className="text-xs px-2 py-1 rounded-md bg-cb-bg text-cb-text-secondary hover:bg-cb-border-light transition-colors"
+                    title="View student history"
+                  >
+                    📚 History
+                  </button>
                   {/* Notes button */}
                   <button
                     onClick={() => setNotesModal(lesson)}
@@ -520,7 +522,7 @@ export default function PastLessons({
                     }`}
                     title="Coach notes"
                   >
-                    Notes
+                    📝 Notes
                   </button>
                   {/* Recap button */}
                   <button
@@ -528,11 +530,11 @@ export default function PastLessons({
                     className={`text-xs px-2 py-1 rounded-md transition-colors ${
                       lesson.recap_sent_at
                         ? "bg-green-50 text-green-700 hover:bg-green-100"
-                        : "bg-cb-bg text-cb-text-secondary hover:bg-cb-border-light"
+                        : "bg-coral text-white hover:bg-coral-dark"
                     }`}
                     title="Send recap"
                   >
-                    Recap
+                    ✉️ Recap
                   </button>
                 </div>
               </div>
