@@ -250,25 +250,25 @@ export async function declineBookingRequest(
 
   let emailBody = `Hi ${studentName},
 
-Unfortunately, ${coachName} is unable to accept your booking request at this time.`;
+Thank you for your lesson request. Unfortunately, the time you requested isn't available right now.`;
 
   if (declineMessage && declineMessage.trim()) {
     emailBody += `
 
-Message from ${coachName}:
+A note from me:
 "${declineMessage.trim()}"`;
   }
 
   emailBody += `
 
-Please feel free to submit a new request with different times.
+I'd love to work with you — feel free to pick another time that works for you. 🙂
 
-Thanks for using ChessBooker.`;
+${coachName}`;
 
   try {
     await sendEmail({
       to: studentEmail,
-      subject: `Booking request update from ${coachName}`,
+      subject: `Lesson request update`,
       text: emailBody,
     });
   } catch (emailError) {
