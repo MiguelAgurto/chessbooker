@@ -273,27 +273,18 @@ function RecapModal({
   );
 }
 
-// Timeline item types
+// Timeline item types - only coach actions (notes, recap sends)
 type TimelineItem = {
-  type: "lesson" | "notes" | "recap";
+  type: "notes" | "recap";
   timestamp: Date;
   lesson: PastLesson;
 };
 
-// Build timeline items for a lesson, ordered oldest → newest
+// Build timeline items for a lesson (coach actions only), ordered oldest → newest
 function buildLessonTimeline(lesson: PastLesson): TimelineItem[] {
   const items: TimelineItem[] = [];
 
-  // 1. Lesson completed/confirmed (anchor)
-  if (lesson.status === "completed" || lesson.status === "confirmed") {
-    items.push({
-      type: "lesson",
-      timestamp: new Date(lesson.scheduled_start),
-      lesson,
-    });
-  }
-
-  // 2. Coach notes (if any) - use lesson end time as proxy since we don't track edit time
+  // Coach notes (if any) - use lesson end time as proxy since we don't track edit time
   if (lesson.coach_notes) {
     items.push({
       type: "notes",
@@ -302,7 +293,7 @@ function buildLessonTimeline(lesson: PastLesson): TimelineItem[] {
     });
   }
 
-  // 3. Recap sent (if any)
+  // Recap sent (if any)
   if (lesson.recap_sent_at) {
     items.push({
       type: "recap",
@@ -315,7 +306,7 @@ function buildLessonTimeline(lesson: PastLesson): TimelineItem[] {
   return items.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 }
 
-// Timeline item component
+// Timeline item component - for coach actions only (notes, recap)
 function TimelineItemView({
   item,
   timezone,
@@ -340,11 +331,7 @@ function TimelineItemView({
       {/* Timeline dot and line */}
       <div className="flex flex-col items-center">
         <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${
-          item.type === "lesson"
-            ? "bg-green-500"
-            : item.type === "notes"
-            ? "bg-coral"
-            : "bg-blue-500"
+          item.type === "notes" ? "bg-coral" : "bg-blue-500"
         }`} />
         {!isLast && (
           <div className="w-px flex-1 bg-cb-border-light min-h-[16px]" />
@@ -353,17 +340,6 @@ function TimelineItemView({
 
       {/* Content */}
       <div className="flex-1 pb-4">
-        {item.type === "lesson" && (
-          <>
-            <p className="text-sm font-medium text-cb-text">
-              Lesson {item.lesson.status === "completed" ? "completed" : "scheduled"}
-            </p>
-            <p className="text-xs text-cb-text-muted mt-0.5">
-              {formatTimestamp(item.timestamp)} · {item.lesson.duration_minutes} min
-            </p>
-          </>
-        )}
-
         {item.type === "notes" && (
           <>
             <p className="text-sm font-medium text-cb-text">Coach notes</p>
@@ -377,7 +353,7 @@ function TimelineItemView({
           <>
             <p className="text-sm font-medium text-cb-text">Recap sent</p>
             <p className="text-xs text-cb-text-muted mt-0.5">
-              {formatTimestamp(item.timestamp)}
+              {formatTimestamp(item.timestamp)} · Sent to {item.lesson.student_email}
             </p>
           </>
         )}
@@ -452,7 +428,7 @@ function StudentHistoryModal({
               No sessions found for this student.
             </p>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-5">
               {allTimelineItems.map(({ lesson, items }) => {
                 const lessonDate = new Date(lesson.scheduled_start).toLocaleDateString("en-US", {
                   timeZone: timezone,
@@ -466,27 +442,53 @@ function StudentHistoryModal({
                     : undefined,
                 });
 
+                const lessonTime = new Date(lesson.scheduled_start).toLocaleString("en-US", {
+                  timeZone: timezone,
+                  hour: "numeric",
+                  minute: "2-digit",
+                  hour12: true,
+                });
+
+                const isCompleted = lesson.status === "completed";
+
                 return (
-                  <div key={lesson.id}>
-                    {/* Session date header */}
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-medium text-cb-text-secondary uppercase tracking-wide">
-                        {lessonDate}
+                  <div key={lesson.id} className="bg-cb-bg/50 rounded-lg p-3">
+                    {/* Session header with context */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <div>
+                        <p className="text-sm font-medium text-cb-text">
+                          {lessonDate}
+                        </p>
+                        <p className="text-xs text-cb-text-muted mt-0.5">
+                          {lessonTime} · {lesson.duration_minutes} min
+                        </p>
+                      </div>
+                      <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${
+                        isCompleted
+                          ? "bg-green-100 text-green-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {isCompleted ? "Completed" : "Confirmed"}
                       </span>
-                      <div className="flex-1 h-px bg-cb-border-light" />
                     </div>
 
-                    {/* Timeline items for this lesson */}
-                    <div className="ml-1">
-                      {items.map((item, itemIndex) => (
-                        <TimelineItemView
-                          key={`${item.type}-${item.timestamp.getTime()}`}
-                          item={item}
-                          timezone={timezone}
-                          isLast={itemIndex === items.length - 1}
-                        />
-                      ))}
-                    </div>
+                    {/* Coach actions timeline */}
+                    {items.length > 0 ? (
+                      <div className="ml-1 border-l-2 border-cb-border-light pl-3">
+                        {items.map((item, itemIndex) => (
+                          <TimelineItemView
+                            key={`${item.type}-${item.timestamp.getTime()}`}
+                            item={item}
+                            timezone={timezone}
+                            isLast={itemIndex === items.length - 1}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-cb-text-muted italic ml-1">
+                        No notes yet
+                      </p>
+                    )}
                   </div>
                 );
               })}
