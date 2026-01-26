@@ -17,7 +17,8 @@
       --mock-bg: #f8fafc;
       --mock-border: #e2e8f0;
       --mock-card-bg: #ffffff;
-      --mock-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      --mock-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+      --mock-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
       --mock-text: #1e293b;
       --mock-text-muted: #64748b;
       --mock-text-light: #94a3b8;
@@ -26,38 +27,111 @@
       --mock-success: #10b981;
       --mock-warning: #f59e0b;
       --mock-info: #3b82f6;
+
+      /* Layout */
+      --content-max-width: 1040px;
+      --section-padding: 6rem;
+      --section-padding-sm: 4rem;
+    }
+
+    /* ============================================
+       PAGE LAYOUT SYSTEM
+       ============================================ */
+    .hiw-container {
+      max-width: var(--content-max-width);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ============================================
+       TYPOGRAPHY HIERARCHY
+       ============================================ */
+    .hiw-h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.25rem, 5vw, 3.25rem);
+      font-weight: 600;
+      color: var(--mock-text);
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .hiw-h2 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.875rem, 4vw, 2.5rem);
+      font-weight: 600;
+      color: var(--mock-text);
+      line-height: 1.2;
+      letter-spacing: -0.015em;
+    }
+
+    .hiw-h3 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(1.25rem, 3vw, 1.5rem);
+      font-weight: 600;
+      color: var(--mock-text);
+      line-height: 1.3;
+    }
+
+    .hiw-body {
+      font-size: 1.0625rem;
+      color: var(--mock-text-muted);
+      line-height: 1.7;
+    }
+
+    .hiw-body-lg {
+      font-size: 1.125rem;
+      color: var(--mock-text-muted);
+      line-height: 1.75;
+    }
+
+    .hiw-caption {
+      font-size: 0.875rem;
+      color: var(--mock-text-light);
+      line-height: 1.5;
     }
 
     /* ============================================
        HERO SECTION
        ============================================ */
     .hiw-hero-new {
-      padding: 6rem 0 4rem;
+      padding: 7rem 0 5rem;
       text-align: center;
-      background: linear-gradient(180deg, #fefefe 0%, #f9fafb 100%);
+      background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
+      position: relative;
+    }
+
+    .hiw-hero-new::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--mock-border), transparent);
     }
 
     .hiw-hero-new h1 {
       font-family: 'Fraunces', serif;
-      font-size: clamp(2rem, 5vw, 3rem);
+      font-size: clamp(2.25rem, 5vw, 3.25rem);
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 1.25rem;
-      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
     }
 
     .hiw-hero-new .hero-subtitle {
-      font-size: 1.125rem;
+      font-size: 1.1875rem;
       color: var(--mock-text-muted);
-      max-width: 600px;
-      margin: 0 auto 1.5rem;
+      max-width: 580px;
+      margin: 0 auto 1.25rem;
       line-height: 1.7;
     }
 
     .hiw-hero-new .hero-trust {
-      font-size: 0.875rem;
+      font-size: 0.9375rem;
       color: var(--mock-text-light);
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
     }
 
     .hero-ctas {
@@ -71,127 +145,152 @@
       background: transparent;
       color: var(--mock-text-muted);
       border: 1px solid var(--mock-border);
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
+      padding: 0.8125rem 1.625rem;
+      border-radius: 10px;
       font-weight: 500;
       text-decoration: none;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      font-size: 0.9375rem;
     }
 
     .btn-secondary-outline:hover {
       border-color: var(--mock-text-muted);
       color: var(--mock-text);
+      background: rgba(0, 0, 0, 0.02);
     }
 
     /* ============================================
        SECTION STYLES
        ============================================ */
     .hiw-section {
-      padding: 5rem 0;
+      padding: var(--section-padding) 0;
     }
 
     .hiw-section.alt-bg {
       background: #f9fafb;
+      border-top: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f1f5f9;
     }
 
     .hiw-section-header {
       text-align: center;
-      max-width: 600px;
-      margin: 0 auto 3.5rem;
+      max-width: 580px;
+      margin: 0 auto 4rem;
     }
 
     .hiw-section-header h2 {
       font-family: 'Fraunces', serif;
-      font-size: clamp(1.75rem, 4vw, 2.25rem);
+      font-size: clamp(1.875rem, 4vw, 2.5rem);
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      letter-spacing: -0.015em;
     }
 
     .hiw-section-header p {
       color: var(--mock-text-muted);
-      font-size: 1.0625rem;
-      line-height: 1.6;
+      font-size: 1.125rem;
+      line-height: 1.7;
     }
 
     /* ============================================
-       MOCK SCREENSHOT CONTAINER
+       MOCK SCREENSHOT CONTAINER - Premium Frame
        ============================================ */
     .mock-container {
-      background: var(--mock-bg);
+      background: var(--mock-card-bg);
       border: 1px solid var(--mock-border);
       border-radius: 16px;
       box-shadow: var(--mock-shadow);
       overflow: hidden;
       max-width: 100%;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+
+    .mock-container:hover {
+      box-shadow: var(--mock-shadow-lg);
+      transform: translateY(-2px);
     }
 
     .mock-browser-bar {
-      background: linear-gradient(to bottom, #f1f5f9, #e2e8f0);
-      padding: 0.75rem 1rem;
+      background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
+      padding: 0.875rem 1.125rem;
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.875rem;
       border-bottom: 1px solid var(--mock-border);
     }
 
     .mock-browser-dots {
       display: flex;
-      gap: 6px;
+      gap: 7px;
     }
 
     .mock-browser-dots span {
       width: 12px;
       height: 12px;
       border-radius: 50%;
+      box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.1);
     }
 
-    .mock-browser-dots span:nth-child(1) { background: #f87171; }
-    .mock-browser-dots span:nth-child(2) { background: #fbbf24; }
-    .mock-browser-dots span:nth-child(3) { background: #4ade80; }
+    .mock-browser-dots span:nth-child(1) { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
+    .mock-browser-dots span:nth-child(2) { background: linear-gradient(135deg, #feca57, #f9bf3b); }
+    .mock-browser-dots span:nth-child(3) { background: linear-gradient(135deg, #5cd859, #48c946); }
 
     .mock-browser-url {
       flex: 1;
       background: #ffffff;
       border: 1px solid var(--mock-border);
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 0.5rem 1rem;
       font-size: 0.75rem;
-      color: var(--mock-text-muted);
-      font-family: 'Manrope', sans-serif;
+      color: var(--mock-text-light);
+      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .mock-browser-url::before {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'/%3E%3C/svg%3E") center/contain no-repeat;
+      opacity: 0.6;
     }
 
     .mock-content {
-      padding: 1.5rem;
+      padding: 1.75rem;
       background: var(--mock-bg);
     }
 
     .mock-caption {
       text-align: center;
-      font-size: 0.8125rem;
+      font-size: 0.875rem;
       color: var(--mock-text-light);
-      margin-top: 1rem;
-      font-style: italic;
+      margin-top: 1.25rem;
+      font-style: normal;
+      font-weight: 500;
     }
 
     /* ============================================
-       MOCK UI COMPONENTS
+       MOCK UI COMPONENTS - Refined
        ============================================ */
     .mock-card {
       background: var(--mock-card-bg);
       border: 1px solid var(--mock-border);
-      border-radius: 12px;
-      padding: 1.25rem;
+      border-radius: 14px;
+      padding: 1.375rem;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      transition: box-shadow 0.2s ease;
     }
 
     .mock-card + .mock-card {
-      margin-top: 1rem;
+      margin-top: 0.875rem;
     }
 
     .mock-avatar {
-      width: 56px;
-      height: 56px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
       display: flex;
@@ -199,14 +298,15 @@
       justify-content: center;
       color: #ffffff;
       font-weight: 600;
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .mock-avatar-sm {
       width: 40px;
       height: 40px;
-      font-size: 1rem;
+      font-size: 0.9375rem;
     }
 
     .mock-avatar-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
@@ -218,23 +318,26 @@
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border-radius: 8px;
+      padding: 0.6875rem 1.25rem;
+      border-radius: 10px;
       font-size: 0.875rem;
-      font-weight: 500;
+      font-weight: 600;
       cursor: default;
       border: none;
       font-family: 'Manrope', sans-serif;
+      transition: all 0.15s ease;
     }
 
     .mock-btn-primary {
-      background: var(--mock-primary);
+      background: linear-gradient(135deg, var(--mock-primary) 0%, #d16a4f 100%);
       color: #ffffff;
+      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
     }
 
     .mock-btn-success {
-      background: var(--mock-success);
+      background: linear-gradient(135deg, var(--mock-success) 0%, #059669 100%);
       color: #ffffff;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
     }
 
     .mock-btn-outline {
@@ -250,7 +353,7 @@
     }
 
     .mock-btn-sm {
-      padding: 0.5rem 0.875rem;
+      padding: 0.5rem 1rem;
       font-size: 0.8125rem;
     }
 
@@ -262,78 +365,79 @@
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
-      padding: 0.25rem 0.625rem;
+      padding: 0.3125rem 0.75rem;
       border-radius: 9999px;
       font-size: 0.6875rem;
       font-weight: 600;
       text-transform: uppercase;
-      letter-spacing: 0.025em;
+      letter-spacing: 0.04em;
     }
 
     .mock-badge-pending {
-      background: #fef3c7;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
       color: #92400e;
     }
 
     .mock-badge-confirmed {
-      background: #d1fae5;
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
       color: #065f46;
     }
 
     .mock-badge-completed {
-      background: #e0e7ff;
+      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
       color: #3730a3;
     }
 
     .mock-badge-sent {
-      background: #dbeafe;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
       color: #1e40af;
     }
 
     .mock-badge-gm {
-      background: #fef3c7;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
       color: #92400e;
       font-size: 0.625rem;
-      padding: 0.125rem 0.5rem;
+      padding: 0.1875rem 0.5rem;
     }
 
     .mock-label {
-      font-size: 0.75rem;
+      font-size: 0.6875rem;
       font-weight: 600;
       color: var(--mock-text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       margin-bottom: 0.5rem;
     }
 
     .mock-input {
       width: 100%;
-      padding: 0.625rem 0.875rem;
+      padding: 0.6875rem 0.9375rem;
       border: 1px solid var(--mock-border);
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 0.875rem;
       background: #ffffff;
       color: var(--mock-text);
       font-family: 'Manrope', sans-serif;
+      transition: border-color 0.15s ease;
     }
 
     .mock-textarea {
       width: 100%;
-      padding: 0.75rem;
+      padding: 0.75rem 0.9375rem;
       border: 1px solid var(--mock-border);
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 0.8125rem;
       background: #ffffff;
       color: var(--mock-text);
       font-family: 'Manrope', sans-serif;
       resize: none;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .mock-divider {
       height: 1px;
-      background: var(--mock-border);
-      margin: 1rem 0;
+      background: linear-gradient(90deg, transparent, var(--mock-border), transparent);
+      margin: 1.25rem 0;
     }
 
     .mock-icon {
@@ -403,22 +507,22 @@
     .mock-mt-md { margin-top: 0.75rem; }
 
     /* ============================================
-       STEP CARDS
+       STEP CARDS - Modern Grid Layout
        ============================================ */
     .steps-grid {
       display: grid;
-      gap: 3rem;
+      gap: 5rem;
     }
 
     .step-row {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 3rem;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 4rem;
       align-items: center;
     }
 
     .step-row.reverse {
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: 1.25fr 1fr;
     }
 
     .step-row.reverse .step-content {
@@ -429,51 +533,57 @@
       order: 1;
     }
 
+    .step-content {
+      padding: 1rem 0;
+    }
+
     .step-number {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 2.5rem;
-      height: 2.5rem;
-      background: var(--mock-primary);
+      width: 3rem;
+      height: 3rem;
+      background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
       color: #ffffff;
-      border-radius: 50%;
+      border-radius: 14px;
       font-weight: 700;
-      font-size: 1rem;
-      margin-bottom: 1rem;
+      font-size: 1.125rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 4px 12px rgba(224, 122, 95, 0.3);
     }
 
     .step-content h3 {
       font-family: 'Fraunces', serif;
-      font-size: 1.5rem;
+      font-size: clamp(1.375rem, 3vw, 1.625rem);
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      line-height: 1.3;
     }
 
     .step-content p {
       color: var(--mock-text-muted);
-      line-height: 1.7;
-      font-size: 1rem;
+      line-height: 1.75;
+      font-size: 1.0625rem;
     }
 
     /* ============================================
-       COACH CAPABILITIES
+       COACH CAPABILITIES - Refined Layout
        ============================================ */
     .capabilities-list {
       display: grid;
-      gap: 4rem;
+      gap: 5rem;
     }
 
     .capability-row {
       display: grid;
-      grid-template-columns: 1fr 1.2fr;
-      gap: 3rem;
+      grid-template-columns: 1fr 1.25fr;
+      gap: 4rem;
       align-items: flex-start;
     }
 
     .capability-row.reverse {
-      grid-template-columns: 1.2fr 1fr;
+      grid-template-columns: 1.25fr 1fr;
     }
 
     .capability-row.reverse .capability-content {
@@ -484,39 +594,44 @@
       order: 1;
     }
 
+    .capability-content {
+      padding-top: 0.5rem;
+    }
+
     .capability-content h3 {
       font-family: 'Fraunces', serif;
-      font-size: 1.375rem;
+      font-size: clamp(1.25rem, 3vw, 1.5rem);
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 0.75rem;
+      margin-bottom: 1rem;
+      line-height: 1.3;
     }
 
     .capability-content p {
       color: var(--mock-text-muted);
-      line-height: 1.7;
-      font-size: 0.9375rem;
+      line-height: 1.75;
+      font-size: 1rem;
     }
 
     .capability-content p + p {
-      margin-top: 0.75rem;
+      margin-top: 1rem;
     }
 
     /* ============================================
-       MOCK SPECIFIC COMPONENTS
+       MOCK SPECIFIC COMPONENTS - Polished
        ============================================ */
 
     /* Coach Profile Card */
     .mock-coach-profile {
       text-align: center;
-      padding-bottom: 1rem;
+      padding-bottom: 1.25rem;
       border-bottom: 1px solid var(--mock-border);
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
     }
 
     .mock-coach-avatar-lg {
-      width: 80px;
-      height: 80px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
       background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
       display: flex;
@@ -524,15 +639,16 @@
       justify-content: center;
       color: #ffffff;
       font-weight: 600;
-      font-size: 1.75rem;
-      margin: 0 auto 0.75rem;
+      font-size: 1.625rem;
+      margin: 0 auto 0.875rem;
+      box-shadow: 0 4px 16px rgba(224, 122, 95, 0.25);
     }
 
     .mock-coach-name {
-      font-size: 1.25rem;
+      font-size: 1.1875rem;
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.375rem;
     }
 
     .mock-coach-meta {
@@ -541,41 +657,45 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 0.625rem;
       flex-wrap: wrap;
     }
 
     /* Pricing Options */
     .mock-pricing-options {
       display: grid;
-      gap: 0.625rem;
-      margin-bottom: 1rem;
+      gap: 0.5rem;
+      margin-bottom: 1.125rem;
     }
 
     .mock-pricing-option {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0.875rem 1rem;
-      border: 1px solid var(--mock-border);
-      border-radius: 8px;
+      padding: 0.9375rem 1.125rem;
+      border: 1.5px solid var(--mock-border);
+      border-radius: 10px;
       background: #ffffff;
       cursor: default;
+      transition: all 0.15s ease;
     }
 
     .mock-pricing-option.selected {
       border-color: var(--mock-primary);
-      background: #fef7f5;
+      background: linear-gradient(135deg, #fef7f5 0%, #fff5f2 100%);
+      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.12);
     }
 
     .mock-pricing-option .duration {
       font-weight: 500;
       color: var(--mock-text);
+      font-size: 0.9375rem;
     }
 
     .mock-pricing-option .price {
-      font-weight: 600;
+      font-weight: 700;
       color: var(--mock-text);
+      font-size: 0.9375rem;
     }
 
     /* Time Slots Grid */
@@ -583,29 +703,31 @@
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 0.5rem;
-      margin-bottom: 1rem;
+      margin-bottom: 1.25rem;
     }
 
     .mock-time-slot {
-      padding: 0.625rem 0.5rem;
-      border: 1px solid var(--mock-border);
-      border-radius: 6px;
+      padding: 0.6875rem 0.5rem;
+      border: 1.5px solid var(--mock-border);
+      border-radius: 8px;
       text-align: center;
       font-size: 0.8125rem;
       color: var(--mock-text);
       background: #ffffff;
       cursor: default;
+      transition: all 0.15s ease;
     }
 
     .mock-time-slot.selected {
       border-color: var(--mock-primary);
-      background: var(--mock-primary);
+      background: linear-gradient(135deg, var(--mock-primary) 0%, #d16a4f 100%);
       color: #ffffff;
-      font-weight: 500;
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
     }
 
     .mock-time-slot.disabled {
-      background: #f8fafc;
+      background: #f9fafb;
       color: var(--mock-text-light);
       border-color: #f1f5f9;
     }
@@ -614,7 +736,7 @@
     .mock-lesson-meta {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
+      gap: 1.125rem;
       font-size: 0.875rem;
       color: var(--mock-text-muted);
     }
@@ -622,56 +744,59 @@
     .mock-lesson-meta-item {
       display: flex;
       align-items: center;
-      gap: 0.375rem;
+      gap: 0.4375rem;
     }
 
     /* Meeting Link */
     .mock-meeting-link {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem;
-      background: #f0fdf4;
+      gap: 0.625rem;
+      padding: 0.8125rem 0.9375rem;
+      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
       border: 1px solid #bbf7d0;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 0.8125rem;
     }
 
     .mock-meeting-link-url {
       color: #15803d;
       flex: 1;
+      font-weight: 500;
     }
 
     .mock-meeting-link-copy {
       color: var(--mock-text-muted);
       font-size: 0.75rem;
-      padding: 0.25rem 0.5rem;
+      padding: 0.3125rem 0.625rem;
       border: 1px solid var(--mock-border);
-      border-radius: 4px;
+      border-radius: 6px;
       background: #ffffff;
+      font-weight: 500;
     }
 
     /* Modal Style */
     .mock-modal {
       background: var(--mock-card-bg);
-      border-radius: 12px;
+      border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
     }
 
     .mock-modal-header {
-      padding: 1rem 1.25rem;
+      padding: 1.125rem 1.375rem;
       border-bottom: 1px solid var(--mock-border);
       font-weight: 600;
       color: var(--mock-text);
+      font-size: 1.0625rem;
     }
 
     .mock-modal-body {
-      padding: 1.25rem;
+      padding: 1.375rem;
     }
 
     .mock-modal-footer {
-      padding: 1rem 1.25rem;
+      padding: 1rem 1.375rem;
       border-top: 1px solid var(--mock-border);
       background: #fafafa;
       display: flex;
@@ -683,7 +808,7 @@
     .mock-summary-row {
       display: flex;
       justify-content: space-between;
-      padding: 0.5rem 0;
+      padding: 0.5625rem 0;
       font-size: 0.875rem;
     }
 
@@ -697,42 +822,45 @@
 
     .mock-summary-value {
       color: var(--mock-text);
-      font-weight: 500;
+      font-weight: 600;
     }
 
     /* Tabs */
     .mock-tabs {
       display: flex;
       gap: 0.25rem;
-      padding: 0.25rem;
+      padding: 0.3125rem;
       background: #f1f5f9;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.125rem;
     }
 
     .mock-tab {
       flex: 1;
-      padding: 0.5rem 0.75rem;
+      padding: 0.5625rem 0.75rem;
       text-align: center;
       font-size: 0.75rem;
       font-weight: 500;
       color: var(--mock-text-muted);
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: default;
+      transition: all 0.15s ease;
     }
 
     .mock-tab.active {
       background: #ffffff;
       color: var(--mock-text);
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      font-weight: 600;
     }
 
     /* Notes Area */
     .mock-notes-area {
-      background: #f8fafc;
-      border-radius: 8px;
-      padding: 1rem;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 10px;
+      padding: 1rem 1.125rem;
       margin-top: 0.75rem;
+      border: 1px solid #e2e8f0;
     }
 
     .mock-notes-label {
@@ -740,66 +868,78 @@
       font-weight: 600;
       color: var(--mock-text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       margin-bottom: 0.5rem;
     }
 
     /* ============================================
-       FAQ STYLES
+       FAQ STYLES - Premium Cards
        ============================================ */
     .faq-grid {
       display: grid;
-      gap: 1rem;
-      max-width: 800px;
+      gap: 1.125rem;
+      max-width: 760px;
       margin: 0 auto;
     }
 
     .faq-item {
       background: #ffffff;
       border: 1px solid var(--mock-border);
-      border-radius: 12px;
-      padding: 1.25rem 1.5rem;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .faq-item:hover {
+      border-color: #d1d5db;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     }
 
     .faq-question {
       font-weight: 600;
       color: var(--mock-text);
-      margin-bottom: 0.5rem;
-      font-size: 1rem;
+      margin-bottom: 0.625rem;
+      font-size: 1.0625rem;
     }
 
     .faq-answer {
       color: var(--mock-text-muted);
-      font-size: 0.9375rem;
-      line-height: 1.6;
+      font-size: 1rem;
+      line-height: 1.7;
     }
 
     /* ============================================
-       FOOTER TRUST
+       FOOTER TRUST - Refined
        ============================================ */
     .footer-trust {
       text-align: center;
-      padding: 3rem 0;
-      background: #f9fafb;
-      border-top: 1px solid var(--mock-border);
+      padding: 3.5rem 0;
+      background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
+      border-top: 1px solid #e5e7eb;
     }
 
     .footer-trust p {
-      font-size: 1rem;
+      font-size: 1.0625rem;
       color: var(--mock-text-muted);
       font-style: italic;
+      font-family: 'Fraunces', serif;
+      font-weight: 400;
     }
 
     /* ============================================
-       RESPONSIVE
+       RESPONSIVE - Refined Breakpoints
        ============================================ */
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
+      :root {
+        --section-padding: 5rem;
+      }
+
       .step-row,
       .step-row.reverse,
       .capability-row,
       .capability-row.reverse {
         grid-template-columns: 1fr;
-        gap: 2rem;
+        gap: 2.5rem;
       }
 
       .step-row.reverse .step-content,
@@ -809,32 +949,88 @@
         order: unset;
       }
 
+      .step-content,
+      .capability-content {
+        text-align: center;
+        max-width: 560px;
+        margin: 0 auto;
+      }
+
+      .step-number {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
       .mock-time-grid {
         grid-template-columns: repeat(2, 1fr);
       }
     }
 
-    @media (max-width: 600px) {
-      .hiw-hero-new {
-        padding: 4rem 0 3rem;
+    @media (max-width: 640px) {
+      :root {
+        --section-padding: 4rem;
       }
 
-      .hiw-section {
-        padding: 3.5rem 0;
+      .hiw-hero-new {
+        padding: 5rem 0 3.5rem;
+      }
+
+      .hiw-section-header {
+        margin-bottom: 3rem;
+      }
+
+      .steps-grid,
+      .capabilities-list {
+        gap: 4rem;
       }
 
       .mock-content {
-        padding: 1rem;
+        padding: 1.25rem;
+      }
+
+      .mock-browser-bar {
+        padding: 0.75rem 1rem;
       }
 
       .hero-ctas {
         flex-direction: column;
         align-items: center;
+        gap: 0.875rem;
+      }
+
+      .btn-secondary-outline {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
       }
 
       .mock-lesson-meta {
         flex-direction: column;
         gap: 0.5rem;
+      }
+
+      .mock-card {
+        padding: 1.25rem;
+      }
+
+      .faq-item {
+        padding: 1.25rem 1.375rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mock-time-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.375rem;
+      }
+
+      .mock-time-slot {
+        padding: 0.5rem 0.375rem;
+        font-size: 0.75rem;
+      }
+
+      .mock-pricing-option {
+        padding: 0.75rem;
       }
     }
   </style>
@@ -866,7 +1062,7 @@
        HERO SECTION
        ============================================ -->
   <section class="hiw-hero-new">
-    <div class="container">
+    <div class="hiw-container">
       <h1>Stop scheduling chess lessons in DMs</h1>
       <p class="hero-subtitle">
         A professional booking page for chess coaches — confirmations, calendar + meeting links, and join-in-one-click.
@@ -885,7 +1081,7 @@
        FOR STUDENTS SECTION
        ============================================ -->
   <section class="hiw-section" id="for-students">
-    <div class="container">
+    <div class="hiw-container">
       <div class="hiw-section-header">
         <h2>For Students</h2>
         <p>A simple, professional booking experience in three steps.</p>
@@ -1084,7 +1280,7 @@
        FOR COACHES SECTION
        ============================================ -->
   <section class="hiw-section alt-bg" id="for-coaches">
-    <div class="container">
+    <div class="hiw-container">
       <div class="hiw-section-header">
         <h2>For Coaches</h2>
         <p>Stay in control. Confirm on your terms. Meeting links handled automatically.</p>
@@ -1312,13 +1508,14 @@
        AFTER THE LESSON SECTION
        ============================================ -->
   <section class="hiw-section" id="after-lesson">
-    <div class="container">
+    <div class="hiw-container">
       <div class="hiw-section-header">
         <h2>After the Lesson</h2>
         <p>Help students remember what they learned.</p>
       </div>
 
-      <div class="capability-row">
+      <div class="capabilities-list">
+        <div class="capability-row">
         <div class="capability-content">
           <h3>Notes for you. Recaps for students.</h3>
           <p>
@@ -1402,6 +1599,7 @@ Homework: Complete 5 endgame puzzles on Lichess. See you next week!</textarea>
           <p class="mock-caption">Add notes and send recaps to students</p>
         </div>
       </div>
+      </div>
     </div>
   </section>
 
@@ -1409,7 +1607,7 @@ Homework: Complete 5 endgame puzzles on Lichess. See you next week!</textarea>
        FAQ SECTION
        ============================================ -->
   <section class="hiw-section alt-bg" id="faq">
-    <div class="container">
+    <div class="hiw-container">
       <div class="hiw-section-header">
         <h2>Common Questions</h2>
       </div>
@@ -1499,7 +1697,7 @@ Homework: Complete 5 endgame puzzles on Lichess. See you next week!</textarea>
        FOOTER TRUST LINE
        ============================================ -->
   <div class="footer-trust">
-    <div class="container">
+    <div class="hiw-container">
       <p>Built for calm scheduling — so you can focus on coaching.</p>
     </div>
   </div>
