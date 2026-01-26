@@ -71,6 +71,15 @@ export default async function DashboardPage() {
   // Get most recent lesson date for retention nudge (allLessons is sorted desc)
   const lastLessonDate = allLessons?.[0]?.scheduled_start || null;
 
+  // Check if Google Calendar is connected
+  const { data: googleConnection } = await supabase
+    .from("google_connections")
+    .select("google_email")
+    .eq("coach_id", user!.id)
+    .single();
+
+  const isGoogleConnected = !!googleConnection?.google_email;
+
   // Count stats
   const { count: pendingCount } = await supabase
     .from("booking_requests")
@@ -167,7 +176,7 @@ export default async function DashboardPage() {
         <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} lastLessonDate={lastLessonDate} />
 
         {/* Pending Requests */}
-        <PendingRequests requests={pendingRequests || []} timezone={timezone} />
+        <PendingRequests requests={pendingRequests || []} timezone={timezone} isGoogleConnected={isGoogleConnected} />
 
         {/* Recent Activity */}
         <RecentActivity timezone={timezone} />

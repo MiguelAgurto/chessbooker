@@ -32,7 +32,8 @@ function isValidISOTimestamp(value: string): boolean {
 export async function acceptBookingRequest(
   bookingId: string,
   selectedDateTime: string,
-  durationMinutes: number
+  durationMinutes: number,
+  manualMeetingUrl?: string
 ): Promise<{ success: boolean; error?: string; isOverlapError?: boolean; isInsufficientScopes?: boolean }> {
   // Validate selectedDateTime before proceeding
   if (!isValidISOTimestamp(selectedDateTime)) {
@@ -80,11 +81,17 @@ export async function acceptBookingRequest(
   }
 
   // STEP 1: Create Google Calendar event FIRST (before confirming)
+  // OR use manual meeting URL if provided (for coaches without Google Calendar)
   let meetUrl: string | null = null;
   let calendarEventId: string | null = booking.calendar_event_id || null;
 
-  // Only create calendar event if one doesn't already exist
-  if (!calendarEventId) {
+  // If manual meeting URL is provided, use it directly (skip Google Calendar)
+  if (manualMeetingUrl) {
+    console.log(`[Confirm Lesson] Using manual meeting URL for booking ${bookingId}`);
+    meetUrl = manualMeetingUrl;
+  }
+  // Only create calendar event if one doesn't already exist and no manual URL provided
+  else if (!calendarEventId) {
     console.log(`[Confirm Lesson] Creating calendar event for booking ${bookingId}`);
 
     // Fetch Google connection

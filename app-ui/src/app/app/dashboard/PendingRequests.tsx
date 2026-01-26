@@ -29,6 +29,7 @@ interface PendingRequest {
 interface PendingRequestsProps {
   requests: PendingRequest[];
   timezone: string;
+  isGoogleConnected?: boolean;
 }
 
 /**
@@ -116,8 +117,22 @@ interface ConfirmModalProps {
   request: PendingRequest;
   timezone: string;
   onClose: () => void;
-  onConfirm: (requestId: string, selectedTime: string, duration: number) => Promise<void>;
+  onConfirm: (requestId: string, selectedTime: string, duration: number, manualMeetingUrl?: string) => Promise<void>;
   isLoading: boolean;
+  isGoogleConnected: boolean;
+}
+
+/**
+ * Validate that a string is a valid URL
+ */
+function isValidUrl(value: string): boolean {
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function ConfirmModal({
@@ -126,8 +141,10 @@ function ConfirmModal({
   onClose,
   onConfirm,
   isLoading,
+  isGoogleConnected,
 }: ConfirmModalProps) {
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
+  const [manualMeetingUrl, setManualMeetingUrl] = useState("");
 
   const times = getAvailableTimes(request);
   const isReschedule = !!request.reschedule_of;
@@ -152,10 +169,15 @@ function ConfirmModal({
 
   const handleConfirm = async () => {
     if (!selectedIsValid) return;
+    // If Google is not connected, require a valid meeting URL
+    if (!isGoogleConnected && !isValidUrl(manualMeetingUrl)) return;
     const selected = times[selectedTimeIndex];
     const { datetime, duration } = getTimeData(selected);
-    await onConfirm(request.id, datetime, duration);
+    await onConfirm(request.id, datetime, duration, isGoogleConnected ? undefined : manualMeetingUrl);
   };
+
+  // Determine if confirm button should be enabled
+  const canConfirm = selectedIsValid && (isGoogleConnected || isValidUrl(manualMeetingUrl));
 
   const formatTimeDisplay = (time: string | SlotData): { date: string; time: string } => {
     const { datetime, isValid } = getTimeData(time);
@@ -292,6 +314,38 @@ function ConfirmModal({
           </div>
         )}
 
+        {/* Manual meeting link input when Google is not connected */}
+        {!isGoogleConnected && (
+          <div className="mb-4">
+            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+              <p className="text-xs text-blue-700">
+                Google Calendar is not connected. Please provide your meeting link below.
+              </p>
+            </div>
+            <label htmlFor="meetingUrl" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+              Meeting link <span className="text-red-500">*</span>
+            </label>
+            <input
+              id="meetingUrl"
+              type="url"
+              value={manualMeetingUrl}
+              onChange={(e) => setManualMeetingUrl(e.target.value)}
+              placeholder="https://meet.google.com/... or https://zoom.us/..."
+              className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent ${
+                manualMeetingUrl && !isValidUrl(manualMeetingUrl)
+                  ? "border-red-300 bg-red-50"
+                  : "border-cb-border"
+              }`}
+            />
+            {manualMeetingUrl && !isValidUrl(manualMeetingUrl) && (
+              <p className="text-xs text-red-500 mt-1">Please enter a valid URL</p>
+            )}
+            <p className="text-xs text-cb-text-muted mt-1">
+              Zoom, Google Meet, Discord, or any video call link
+            </p>
+          </div>
+        )}
+
         <p className="text-xs text-cb-text-muted mb-4">
           All times are shown in your timezone. The student will receive a confirmation email.
         </p>
@@ -308,7 +362,7 @@ function ConfirmModal({
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={isLoading || !selectedIsValid}
+            disabled={isLoading || !canConfirm}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Confirming..." : "Confirm lesson"}
@@ -388,6 +442,7 @@ function DeclineModal({
 export default function PendingRequests({
   requests,
   timezone,
+  isGoogleConnected = false,
 }: PendingRequestsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -399,13 +454,14 @@ export default function PendingRequests({
   const handleConfirm = async (
     requestId: string,
     selectedTime: string,
-    duration: number
+    duration: number,
+    manualMeetingUrl?: string
   ) => {
     setLoading(requestId);
     setError(null);
     setIsScopeError(false);
 
-    const result = await acceptBookingRequest(requestId, selectedTime, duration);
+    const result = await acceptBookingRequest(requestId, selectedTime, duration, manualMeetingUrl);
 
     if (!result.success) {
       // Handle overlap error specially - close modal and show message
@@ -623,6 +679,7 @@ export default function PendingRequests({
           onClose={() => setConfirmModalRequest(null)}
           onConfirm={handleConfirm}
           isLoading={loading === confirmModalRequest.id}
+          isGoogleConnected={isGoogleConnected}
         />
       )}
 
