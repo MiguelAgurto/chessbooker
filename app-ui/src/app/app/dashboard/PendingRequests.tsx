@@ -201,6 +201,9 @@ function ConfirmModal({
     );
   }
 
+  // Get display info for selected time
+  const selectedTimeDisplay = selectedTime ? formatTimeDisplay(selectedTime) : { date: "", time: "" };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
@@ -208,33 +211,28 @@ function ConfirmModal({
           {isReschedule ? "Confirm rescheduled lesson" : "Confirm lesson"}
         </h3>
 
-        {/* Lesson summary */}
-        <div className="bg-cb-bg rounded-lg p-4 mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-full bg-coral-light flex items-center justify-center">
-              <span className="text-coral font-semibold text-sm">
-                {request.student_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
-              </span>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-cb-text">{request.student_name}</p>
-              <p className="text-xs text-cb-text-muted">{request.student_email}</p>
-            </div>
+        {/* Lesson summary with icons */}
+        <div className="bg-cb-bg rounded-lg p-4 mb-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="text-cb-text-muted">👤</span>
+            <span className="text-sm text-cb-text font-medium">{request.student_name}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-cb-text-muted">📅</span>
+            <span className="text-sm text-cb-text font-medium">{selectedTimeDisplay.date}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-cb-text-muted">🕒</span>
+            <span className="text-sm text-cb-text font-medium">{selectedTimeDisplay.time}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-cb-text-muted">⏱️</span>
+            <span className="text-sm text-cb-text font-medium">{selectedDuration} minutes</span>
           </div>
         </div>
 
-        {/* Time selection */}
-        {times.length === 1 ? (
-          <div className="mb-4">
-            <p className="text-xs font-medium text-cb-text-muted mb-2">Requested time</p>
-            <div className="p-3 rounded-lg border border-coral bg-coral-light">
-              <p className="text-sm font-medium text-cb-text">
-                {formatTimeDisplay(times[0]).date} at {formatTimeDisplay(times[0]).time}
-              </p>
-              <p className="text-xs text-cb-text-muted">{selectedDuration} minutes</p>
-            </div>
-          </div>
-        ) : (
+        {/* Time selection (only if multiple options) */}
+        {times.length > 1 && (
           <div className="mb-4">
             <p className="text-xs font-medium text-cb-text-muted mb-2">Select a time</p>
             <div className="space-y-2">
@@ -295,7 +293,7 @@ function ConfirmModal({
         )}
 
         <p className="text-xs text-cb-text-muted mb-4">
-          The student will receive a confirmation email with the lesson details.
+          All times are shown in your timezone. The student will receive a confirmation email.
         </p>
 
         <div className="flex gap-3">
@@ -344,29 +342,25 @@ function DeclineModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
         <h3 className="text-lg font-semibold text-cb-text mb-2">
-          Decline request
+          Decline lesson
         </h3>
         <p className="text-sm text-cb-text-secondary mb-4">
-          Are you sure you want to decline the lesson request from <strong>{request.student_name}</strong>?
+          {request.student_name} will be notified that the requested time isn&apos;t available.
         </p>
 
         <div className="mb-4">
           <label htmlFor="declineMessage" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
-            Message to student (optional)
+            Optional message to student
           </label>
           <textarea
             id="declineMessage"
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            placeholder="e.g., I'm fully booked this week. Please try again next week."
+            placeholder="Sorry — I'm not available at this time."
             className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none"
             rows={3}
           />
         </div>
-
-        <p className="text-xs text-cb-text-muted mb-4">
-          The student will be notified that you are unable to accept at this time.
-        </p>
 
         <div className="flex gap-3">
           <button
@@ -383,7 +377,7 @@ function DeclineModal({
             disabled={isLoading}
             className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
           >
-            {isLoading ? "Declining..." : "Decline"}
+            {isLoading ? "Declining..." : "Decline lesson"}
           </button>
         </div>
       </div>
