@@ -308,7 +308,7 @@ export default function BookingForm({
         {/* Lesson details */}
         {selectedSlot && (
           <div className="bg-cb-bg rounded-lg p-4 mb-5">
-            <p className="text-xs font-medium text-cb-text-muted uppercase tracking-wide mb-3">Lesson details</p>
+            <p className="text-xs font-medium text-cb-text-muted mb-3">Lesson details</p>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-cb-text-secondary">Coach</span>
@@ -320,7 +320,7 @@ export default function BookingForm({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-cb-text-secondary">Time</span>
-                <span className="text-cb-text font-medium">{selectedSlot.displayTime}</span>
+                <span className="text-cb-text font-medium">{selectedSlot.displayTime} <span className="text-cb-text-muted font-normal">(your time)</span></span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-cb-text-secondary">Duration</span>
@@ -332,7 +332,7 @@ export default function BookingForm({
 
         {/* What happens next */}
         <div className="mb-5">
-          <p className="text-xs font-medium text-cb-text-muted uppercase tracking-wide mb-3">What happens next</p>
+          <p className="text-xs font-medium text-cb-text-muted mb-3">What happens next</p>
           <div className="space-y-3">
             <div className="flex gap-3">
               <div className="w-5 h-5 rounded-full bg-coral-light text-coral flex items-center justify-center flex-shrink-0 text-xs font-medium">1</div>
