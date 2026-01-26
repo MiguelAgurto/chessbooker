@@ -594,9 +594,12 @@ export default function PastLessons({
                 <div className="flex-1 min-w-0">
                   <button
                     onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
-                    className="text-sm font-medium text-cb-text hover:text-coral transition-colors text-left"
+                    className="text-sm font-medium text-cb-text hover:text-coral hover:underline transition-colors text-left cursor-pointer inline-flex items-center gap-1 group"
                   >
                     {lesson.student_name}
+                    <svg className="w-3 h-3 text-cb-text-muted group-hover:text-coral transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </button>
                   <p className="text-xs text-cb-text-muted">
                     {dateTime} · {lesson.duration_minutes} min
