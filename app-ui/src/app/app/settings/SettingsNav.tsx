@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 
-type NavItem = "profile" | "pricing";
+type NavItem = "profile" | "pricing" | "rules";
 
 const navItems: { key: NavItem; label: string; href: string }[] = [
   { key: "profile", label: "Profile", href: "/app/settings" },
   { key: "pricing", label: "Pricing & Booking", href: "/app/settings/pricing" },
+  { key: "rules", label: "Rules", href: "/app/settings/rules" },
 ];
 
 export default function SettingsNav({ active }: { active: NavItem }) {
