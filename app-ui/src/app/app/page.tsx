@@ -99,14 +99,6 @@ export default async function DashboardPage() {
     .eq("status", "completed")
     .gte("scheduled_start", firstDayOfMonth.toISOString());
 
-  // Fetch recent notification events for activity feed
-  // RLS enforces coach_id filtering, no need to filter manually
-  const { data: recentEvents } = await supabase
-    .from("coach_notification_events")
-    .select("id, event_type, student_name, student_email, created_at, metadata")
-    .order("created_at", { ascending: false })
-    .limit(20);
-
   const nextLesson = upcomingLessons?.[0] || null;
 
   return (
@@ -178,7 +170,7 @@ export default async function DashboardPage() {
         <PendingRequests requests={pendingRequests || []} timezone={timezone} />
 
         {/* Recent Activity */}
-        <RecentActivity events={recentEvents || []} timezone={timezone} />
+        <RecentActivity timezone={timezone} />
       </div>
 
       {/* Past Lessons */}

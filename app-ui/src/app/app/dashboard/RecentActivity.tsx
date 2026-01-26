@@ -1,18 +1,8 @@
-"use client";
-
+import { unstable_noStore as noStore } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
 import { getRelativeTimeAgo } from "@/lib/timezone";
 
-interface NotificationEvent {
-  id: string;
-  event_type: string;
-  student_name: string;
-  student_email: string;
-  created_at: string;
-  metadata: Record<string, unknown> | null;
-}
-
 interface RecentActivityProps {
-  events: NotificationEvent[];
   timezone: string;
 }
 
@@ -54,8 +44,19 @@ function getEventLabel(eventType: string): string {
   }
 }
 
-export default function RecentActivity({ events, timezone }: RecentActivityProps) {
-  if (events.length === 0) {
+export default async function RecentActivity({ timezone }: RecentActivityProps) {
+  noStore();
+
+  const supabase = await createClient();
+
+  // RLS enforces coach_id filtering, no manual filter needed
+  const { data: events } = await supabase
+    .from("coach_notification_events")
+    .select("id, event_type, student_name, student_email, created_at, metadata")
+    .order("created_at", { ascending: false })
+    .limit(20);
+
+  if (!events || events.length === 0) {
     return (
       <div className="card p-4">
         <h3 className="text-sm font-semibold text-cb-text mb-3">Recent Activity</h3>
