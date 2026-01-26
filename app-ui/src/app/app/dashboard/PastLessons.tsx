@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTimeForCoach, getRelativeTimeAgo } from "@/lib/timezone";
 import {
@@ -8,6 +8,53 @@ import {
   markLessonCompleted,
   sendLessonRecap,
 } from "./actions";
+
+// Toast notification component
+function Toast({
+  message,
+  type,
+  onClose,
+}: {
+  message: string;
+  type: "success" | "error";
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 4000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-2 fade-in duration-200">
+      <div
+        className={`flex items-center gap-2 px-4 py-3 rounded-lg shadow-lg ${
+          type === "success"
+            ? "bg-green-600 text-white"
+            : "bg-red-600 text-white"
+        }`}
+      >
+        {type === "success" ? (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        )}
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-2 text-white/80 hover:text-white transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 interface PastLesson {
   id: string;
@@ -122,11 +169,13 @@ function RecapModal({
   timezone,
   onClose,
   onSuccess,
+  onError,
 }: {
   lesson: PastLesson;
   timezone: string;
   onClose: () => void;
   onSuccess: () => void;
+  onError: (message: string) => void;
 }) {
   const [recap, setRecap] = useState(lesson.student_recap || "");
   const [loading, setLoading] = useState(false);
@@ -140,13 +189,6 @@ function RecapModal({
       return;
     }
 
-    if (alreadySent) {
-      const confirmed = confirm(
-        "A recap was already sent for this lesson. Send again?"
-      );
-      if (!confirmed) return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -156,7 +198,9 @@ function RecapModal({
       onSuccess();
       onClose();
     } else {
-      setError(result.error || "Failed to send recap");
+      const errorMessage = result.error || "Failed to send recap";
+      setError(errorMessage);
+      onError(errorMessage);
     }
 
     setLoading(false);
@@ -183,7 +227,7 @@ function RecapModal({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
-              Recap sent on{" "}
+              Last sent{" "}
               {new Date(lesson.recap_sent_at!).toLocaleDateString("en-US", {
                 month: "short",
                 day: "numeric",
@@ -351,6 +395,11 @@ export default function PastLessons({
   const [historyModal, setHistoryModal] = useState<{ name: string; email: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type });
+  };
 
   const handleMarkCompleted = async (lesson: PastLesson) => {
     const confirmed = confirm("Mark this lesson as completed?");
@@ -476,9 +525,6 @@ export default function PastLessons({
                         {retentionSignal.label}
                       </span>
                     )}
-                    {lesson.recap_sent_at && (
-                      <span className="text-xs text-green-600">📩 Recap sent</span>
-                    )}
                     {lesson.coach_notes && (
                       <span className="w-1.5 h-1.5 bg-coral rounded-full" title="Has notes" />
                     )}
@@ -490,50 +536,61 @@ export default function PastLessons({
                   )}
                 </div>
                 {/* Action buttons */}
-                <div className="flex flex-wrap items-center gap-1 flex-shrink-0">
-                  {/* Complete button - only for confirmed lessons */}
-                  {!isCompleted && (
+                <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {/* Complete button - only for confirmed lessons */}
+                    {!isCompleted && (
+                      <button
+                        onClick={() => handleMarkCompleted(lesson)}
+                        disabled={loading === lesson.id}
+                        className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
+                        title="Mark as completed"
+                      >
+                        ✓ Complete
+                      </button>
+                    )}
+                    {/* History button */}
                     <button
-                      onClick={() => handleMarkCompleted(lesson)}
-                      disabled={loading === lesson.id}
-                      className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
-                      title="Mark as completed"
+                      onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
+                      className="text-xs px-1.5 py-0.5 rounded bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg transition-colors"
+                      title="View student history"
                     >
-                      ✓ Complete
+                      📚 History
                     </button>
+                    {/* Notes button */}
+                    <button
+                      onClick={() => setNotesModal(lesson)}
+                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                        lesson.coach_notes
+                          ? "bg-coral-light text-coral hover:bg-coral/20"
+                          : "bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg"
+                      }`}
+                      title="Coach notes"
+                    >
+                      📝 Notes
+                    </button>
+                    {/* Recap button */}
+                    <button
+                      onClick={() => setRecapModal(lesson)}
+                      className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
+                        lesson.recap_sent_at
+                          ? "bg-green-50 text-green-700 hover:bg-green-100"
+                          : "bg-coral text-white hover:bg-coral-dark"
+                      }`}
+                      title={lesson.recap_sent_at ? "Resend recap" : "Send recap"}
+                    >
+                      ✉️ Recap
+                    </button>
+                  </div>
+                  {/* Last sent indicator */}
+                  {lesson.recap_sent_at && (
+                    <span className="text-[10px] text-cb-text-muted">
+                      Last sent {new Date(lesson.recap_sent_at).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
+                    </span>
                   )}
-                  {/* History button */}
-                  <button
-                    onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
-                    className="text-xs px-1.5 py-0.5 rounded bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg transition-colors"
-                    title="View student history"
-                  >
-                    📚 History
-                  </button>
-                  {/* Notes button */}
-                  <button
-                    onClick={() => setNotesModal(lesson)}
-                    className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                      lesson.coach_notes
-                        ? "bg-coral-light text-coral hover:bg-coral/20"
-                        : "bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg"
-                    }`}
-                    title="Coach notes"
-                  >
-                    📝 Notes
-                  </button>
-                  {/* Recap button */}
-                  <button
-                    onClick={() => setRecapModal(lesson)}
-                    className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
-                      lesson.recap_sent_at
-                        ? "bg-green-50 text-green-700 hover:bg-green-100"
-                        : "bg-coral text-white hover:bg-coral-dark"
-                    }`}
-                    title="Send recap"
-                  >
-                    ✉️ Recap
-                  </button>
                 </div>
               </div>
             </div>
@@ -555,7 +612,11 @@ export default function PastLessons({
           lesson={recapModal}
           timezone={timezone}
           onClose={() => setRecapModal(null)}
-          onSuccess={() => router.refresh()}
+          onSuccess={() => {
+            showToast("Recap sent", "success");
+            router.refresh();
+          }}
+          onError={(message) => showToast(message, "error")}
         />
       )}
 
@@ -567,6 +628,15 @@ export default function PastLessons({
           lessons={allLessons}
           timezone={timezone}
           onClose={() => setHistoryModal(null)}
+        />
+      )}
+
+      {/* Toast notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
         />
       )}
     </div>
