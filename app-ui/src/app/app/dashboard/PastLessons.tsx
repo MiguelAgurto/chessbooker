@@ -77,59 +77,38 @@ interface PastLessonsProps {
 }
 
 /**
- * Generate a student-friendly recap from coach notes
- * Transforms private notes into a warm, encouraging summary
+ * Generate a student-friendly recap template from coach notes
+ * Creates a structured template that coaches can easily edit before sending
  */
 function generateRecapFromNotes(notes: string): string {
   if (!notes.trim()) return "";
 
-  // Clean up the notes and make them student-friendly
-  let recap = notes.trim();
-
-  // Replace negative framing with constructive framing
-  const replacements: [RegExp, string][] = [
-    [/\bneed to work on\b/gi, "focus area:"],
-    [/\bstruggling with\b/gi, "practicing"],
-    [/\bweak at\b/gi, "developing"],
-  ];
-
-  for (const [pattern, replacement] of replacements) {
-    recap = recap.replace(pattern, replacement);
-  }
-
-  // Split into sentences/points and clean up
-  const lines = recap
-    .split(/[.\n]+/)
+  // Clean up the notes - normalize whitespace and format as bullet points if needed
+  const cleanedNotes = notes
+    .trim()
+    .split(/\n+/)
     .map((line) => line.trim())
-    .filter((line) => line.length > 0);
+    .filter((line) => line.length > 0)
+    .map((line) => {
+      // Add bullet if line doesn't already have one
+      if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
+        return `• ${line.slice(1).trim()}`;
+      }
+      return `• ${line}`;
+    })
+    .join("\n");
 
-  if (lines.length === 0) return "";
+  // Build a simple, editable template
+  const template = `What we covered:
+${cleanedNotes}
 
-  // Build a friendly recap structure
-  const recapParts: string[] = [];
+What to practice next:
+• [Add focus area]
+• [Add focus area]
 
-  // Add what was covered
-  if (lines.length > 0) {
-    recapParts.push("What we covered:");
-    lines.slice(0, 3).forEach((line) => {
-      recapParts.push(`• ${line.charAt(0).toUpperCase() + line.slice(1)}`);
-    });
-  }
+Keep up the great work!`;
 
-  // Add practice suggestions if there are more points
-  if (lines.length > 3) {
-    recapParts.push("");
-    recapParts.push("To practice before next time:");
-    lines.slice(3, 5).forEach((line) => {
-      recapParts.push(`• ${line.charAt(0).toUpperCase() + line.slice(1)}`);
-    });
-  }
-
-  // Add encouraging closing
-  recapParts.push("");
-  recapParts.push("Keep up the great work!");
-
-  return recapParts.join("\n");
+  return template;
 }
 
 // Combined Lesson Notes & Recap Modal
