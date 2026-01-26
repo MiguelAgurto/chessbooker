@@ -99,7 +99,7 @@ export default async function ReschedulePage({ params }: PageProps) {
     );
   }
 
-  const coach = booking.coaches as {
+  const coachData = booking.coaches as unknown as {
     id: string;
     name: string;
     timezone: string;
@@ -107,7 +107,13 @@ export default async function ReschedulePage({ params }: PageProps) {
     pricing: { "60min": number; "90min": number };
     min_notice_minutes: number | null;
     buffer_minutes: number | null;
-  };
+  } | null;
+
+  if (!coachData) {
+    notFound();
+  }
+
+  const coach = coachData;
 
   // Fetch coach availability
   const { data: availability } = await supabase
