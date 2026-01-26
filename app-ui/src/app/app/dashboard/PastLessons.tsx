@@ -446,6 +446,19 @@ export default function PastLessons({
             ? `Last lesson: ${getRelativeTimeAgo(lastLessonDate, timezone)}`
             : null;
 
+          // Calculate retention signal based on days since last completed lesson
+          let retentionSignal: { label: string; level: "warning" | "danger" } | null = null;
+          if (lastLessonDate) {
+            const daysSinceLastLesson = Math.floor(
+              (Date.now() - new Date(lastLessonDate).getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (daysSinceLastLesson >= 30) {
+              retentionSignal = { label: "Inactive · 30+ days", level: "danger" };
+            } else if (daysSinceLastLesson >= 14) {
+              retentionSignal = { label: "Inactive · 14+ days", level: "warning" };
+            }
+          }
+
           return (
             <div
               key={lesson.id}
@@ -480,6 +493,15 @@ export default function PastLessons({
                     }`}>
                       {isCompleted ? "Completed" : "Needs review"}
                     </span>
+                    {retentionSignal && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded ${
+                        retentionSignal.level === "danger"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}>
+                        {retentionSignal.label}
+                      </span>
+                    )}
                     {lesson.recap_sent_at && (
                       <span className="text-xs text-green-600">Recap sent</span>
                     )}
