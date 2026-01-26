@@ -546,21 +546,22 @@ export default function PendingRequests({
 
               {/* Lesson details: Date, time, duration */}
               {primaryTime && primaryTime.isValid ? (
-                <div className="flex items-center gap-4 mb-3 text-sm">
-                  <div className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <span className="text-cb-text font-medium">{dateDisplay}</span>
+                <div className="mb-3">
+                  <div className="flex items-center gap-5 text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-cb-text-muted">📅</span>
+                      <span className="text-cb-text font-medium">{dateDisplay}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-cb-text-muted">🕒</span>
+                      <span className="text-cb-text font-medium">{timeDisplay}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-cb-text-muted">⏱️</span>
+                      <span className="text-cb-text font-medium">{primaryTime.duration} min</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-cb-text font-medium">{timeDisplay}</span>
-                    <span className="text-cb-text-muted">(your time)</span>
-                  </div>
-                  <span className="text-cb-text-muted">{primaryTime.duration} min</span>
+                  <p className="text-xs text-cb-text-muted mt-1">Your time</p>
                 </div>
               ) : (
                 <p className="text-xs text-cb-text-muted mb-3 italic">
