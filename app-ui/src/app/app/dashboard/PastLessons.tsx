@@ -440,7 +440,9 @@ export default function PastLessons({
           const dateTime = formatDateTimeForCoach(lesson.scheduled_start, timezone);
           const isCompleted = lesson.status === "completed";
           const lastLessonDate = studentLastLesson[lesson.student_email];
-          const lastLessonText = lastLessonDate
+          // Only show "Last lesson" if it's different from the current lesson
+          const isCurrentLessonTheLastOne = lastLessonDate === lesson.scheduled_start;
+          const lastLessonText = lastLessonDate && !isCurrentLessonTheLastOne
             ? `Last lesson: ${getRelativeTimeAgo(lastLessonDate, timezone)}`
             : null;
 
