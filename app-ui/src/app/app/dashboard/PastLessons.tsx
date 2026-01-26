@@ -438,17 +438,7 @@ export default function PastLessons({
           return (
             <div
               key={lesson.id}
-              onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  setHistoryModal({ name: lesson.student_name, email: lesson.student_email });
-                }
-              }}
-              tabIndex={0}
-              role="button"
-              aria-label={`View history for ${lesson.student_name}`}
-              className="p-3 bg-cb-bg rounded-lg cursor-pointer hover:bg-cb-border-light hover:ring-1 hover:ring-cb-border transition-all focus:outline-none focus:ring-2 focus:ring-coral focus:ring-offset-1"
+              className="py-3"
             >
               <div className="flex items-start gap-3">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
@@ -501,8 +491,8 @@ export default function PastLessons({
                     </p>
                   )}
                 </div>
-                {/* Action buttons - stopPropagation prevents row click */}
-                <div className="flex flex-wrap items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                {/* Action buttons */}
+                <div className="flex flex-wrap items-center gap-1.5 flex-shrink-0">
                   {/* Complete button - only for confirmed lessons */}
                   {!isCompleted && (
                     <button
@@ -514,6 +504,14 @@ export default function PastLessons({
                       ✓ Complete
                     </button>
                   )}
+                  {/* History button */}
+                  <button
+                    onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
+                    className="text-xs px-2 py-1 rounded-md bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg transition-colors"
+                    title="View student history"
+                  >
+                    📚 History
+                  </button>
                   {/* Notes button */}
                   <button
                     onClick={() => setNotesModal(lesson)}
