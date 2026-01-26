@@ -109,3 +109,42 @@ export function getRelativeDateLabel(
     day: "numeric",
   });
 }
+
+/**
+ * Get relative time ago (e.g., "2 days ago", "3 weeks ago")
+ * For dates within 30 days, shows relative time; otherwise shows formatted date
+ */
+export function getRelativeTimeAgo(
+  datetime: string | Date,
+  timezone: string
+): string {
+  const date = typeof datetime === "string" ? new Date(datetime) : datetime;
+  const now = new Date();
+
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return "Today";
+  }
+  if (diffDays === 1) {
+    return "Yesterday";
+  }
+  if (diffDays < 7) {
+    return `${diffDays} days ago`;
+  }
+  if (diffDays < 14) {
+    return "1 week ago";
+  }
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `${weeks} weeks ago`;
+  }
+
+  // For older dates, show formatted date
+  return date.toLocaleDateString("en-US", {
+    timeZone: timezone,
+    month: "short",
+    day: "numeric",
+  });
+}

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDateTimeForCoach } from "@/lib/timezone";
+import { formatDateTimeForCoach, getRelativeTimeAgo } from "@/lib/timezone";
 import {
   updateCoachNotes,
   markLessonCompleted,
@@ -25,6 +25,7 @@ interface PastLesson {
 interface PastLessonsProps {
   lessons: PastLesson[];
   timezone: string;
+  studentLastLesson?: Record<string, string>; // student_email -> last completed lesson date
 }
 
 // Actions Modal - renders as overlay, not clipped by scroll container
@@ -366,6 +367,7 @@ function RecapModal({
 export default function PastLessons({
   lessons,
   timezone,
+  studentLastLesson = {},
 }: PastLessonsProps) {
   const router = useRouter();
   const [actionsModal, setActionsModal] = useState<PastLesson | null>(null);
@@ -437,6 +439,10 @@ export default function PastLessons({
         {lessons.map((lesson) => {
           const dateTime = formatDateTimeForCoach(lesson.scheduled_start, timezone);
           const isCompleted = lesson.status === "completed";
+          const lastLessonDate = studentLastLesson[lesson.student_email];
+          const lastLessonText = lastLessonDate
+            ? `Last lesson: ${getRelativeTimeAgo(lastLessonDate, timezone)}`
+            : null;
 
           return (
             <div
@@ -464,7 +470,7 @@ export default function PastLessons({
                   <p className="text-xs text-cb-text-muted">
                     {dateTime} · {lesson.duration_minutes} min
                   </p>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1">
                     <span className={`text-xs px-1.5 py-0.5 rounded ${
                       isCompleted
                         ? "bg-green-100 text-green-700"
@@ -479,6 +485,11 @@ export default function PastLessons({
                       <span className="w-1.5 h-1.5 bg-coral rounded-full" title="Has notes" />
                     )}
                   </div>
+                  {lastLessonText && (
+                    <p className="text-xs text-cb-text-muted mt-1">
+                      {lastLessonText}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => setActionsModal(lesson)}
