@@ -78,7 +78,7 @@ export default function UpcomingLessons({
               <span className="text-lg flex-shrink-0">💡</span>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-cb-text">
-                  You don't have any upcoming lessons
+                  You don&apos;t have any upcoming lessons
                 </p>
                 <p className="text-xs text-cb-text-secondary mt-1">
                   Most coaches get new bookings after sharing their booking link with students.
