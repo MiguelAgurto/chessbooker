@@ -201,6 +201,7 @@ function groupSlotsByDate(slots: Slot[]): Map<string, Slot[]> {
 
 export default function BookingForm({
   coachId,
+  coachName,
   coachTimezone,
   availability,
   blockedBookings,
@@ -209,6 +210,7 @@ export default function BookingForm({
   bufferMinutes = 0,
 }: {
   coachId: string;
+  coachName: string;
   coachTimezone: string;
   availability: AvailabilityRule[];
   blockedBookings: BlockedBooking[];
@@ -299,9 +301,12 @@ export default function BookingForm({
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-cb-text mb-2">Request Submitted!</h3>
-          <p className="text-cb-text-secondary text-sm">
-            The coach will review your request and get back to you at {studentEmail}.
+          <h3 className="text-lg font-semibold text-cb-text mb-2">Request sent!</h3>
+          <p className="text-cb-text-secondary text-sm mb-3">
+            {coachName} will confirm your session shortly.
+          </p>
+          <p className="text-cb-text-muted text-xs">
+            Check your inbox at {studentEmail} for confirmation details.
           </p>
         </div>
       </div>
@@ -310,9 +315,10 @@ export default function BookingForm({
 
   return (
     <div className="space-y-6">
-      {/* Pricing Section - Selectable cards */}
+      {/* Session Selection */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-cb-text mb-4">Select a Session</h2>
+        <h2 className="text-lg font-semibold text-cb-text mb-1">Choose your session</h2>
+        <p className="text-sm text-cb-text-muted mb-4">Select the length that works best for you</p>
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -388,9 +394,9 @@ export default function BookingForm({
         <div>
           <label className="label">Select a Time</label>
 
-          {/* Timezone info - most prominent context */}
+          {/* Timezone info - reassuring for international students */}
           <p className="text-sm text-cb-text-secondary mb-1">
-            Times shown in your timezone: {userTimezone}
+            All times shown in your local timezone ({userTimezone})
           </p>
 
           {/* Next available - secondary context */}
@@ -457,7 +463,7 @@ export default function BookingForm({
             {loading ? "Sending..." : "Request Session"}
           </button>
           <p className="mt-3 text-sm text-cb-text-secondary text-center">
-            You&apos;ll receive a confirmation email once the coach approves.
+            You&apos;ll receive a confirmation email once {coachName} confirms your session.
           </p>
         </div>
       </form>
