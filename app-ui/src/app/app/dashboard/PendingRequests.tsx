@@ -558,6 +558,7 @@ export default function PendingRequests({
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span className="text-cb-text font-medium">{timeDisplay}</span>
+                    <span className="text-cb-text-muted">(your time)</span>
                   </div>
                   <span className="text-cb-text-muted">{primaryTime.duration} min</span>
                 </div>
@@ -590,7 +591,7 @@ export default function PendingRequests({
                   disabled={loading === request.id}
                   className="px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
                 >
-                  Decline
+                  Decline lesson
                 </button>
               </div>
             </div>
