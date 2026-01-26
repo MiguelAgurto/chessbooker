@@ -92,7 +92,7 @@ export default function UpcomingLessons({
                   </a>
                   {coachSlug && (
                     <Link
-                      href={`/book/${coachSlug}`}
+                      href={`/c/${coachSlug}`}
                       target="_blank"
                       className="text-xs text-cb-text-secondary hover:text-coral transition-colors"
                     >
@@ -131,7 +131,7 @@ export default function UpcomingLessons({
               </a>
               {coachSlug && (
                 <Link
-                  href={`/book/${coachSlug}`}
+                  href={`/c/${coachSlug}`}
                   target="_blank"
                   className="text-xs text-cb-text-secondary hover:text-coral transition-colors"
                 >
