@@ -33,7 +33,7 @@ export async function acceptBookingRequest(
   bookingId: string,
   selectedDateTime: string,
   durationMinutes: number
-): Promise<{ success: boolean; error?: string; isOverlapError?: boolean }> {
+): Promise<{ success: boolean; error?: string; isOverlapError?: boolean; isInsufficientScopes?: boolean }> {
   // Validate selectedDateTime before proceeding
   if (!isValidISOTimestamp(selectedDateTime)) {
     return {
@@ -119,9 +119,19 @@ export async function acceptBookingRequest(
 
     if (!calendarResult.success) {
       console.error(`[Confirm Lesson] Calendar creation failed for booking ${bookingId}:`, calendarResult.error);
+
+      // Check for insufficient scopes error
+      if (calendarResult.isInsufficientScopes || calendarResult.error === "INSUFFICIENT_SCOPES") {
+        return {
+          success: false,
+          error: "Your Google connection needs updated permissions. Please go to Settings and click 'Reconnect' on Google Calendar to grant calendar access.",
+          isInsufficientScopes: true,
+        };
+      }
+
       return {
         success: false,
-        error: `Failed to create calendar event: ${calendarResult.error}. Please try again or check your Google Calendar connection.`,
+        error: `Failed to create calendar event: ${calendarResult.error}. Please try again or check your Google Calendar connection in Settings.`,
       };
     }
 

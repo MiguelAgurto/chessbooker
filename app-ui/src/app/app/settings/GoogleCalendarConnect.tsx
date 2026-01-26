@@ -6,17 +6,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 interface GoogleCalendarConnectProps {
   isConnected: boolean;
   googleEmail: string | null;
+  needsReconnect?: boolean; // True if scopes are insufficient
 }
 
 export default function GoogleCalendarConnect({
   isConnected,
   googleEmail,
+  needsReconnect = false,
 }: GoogleCalendarConnectProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [disconnecting, setDisconnecting] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const [message, setMessage] = useState<{
-    type: "success" | "error";
+    type: "success" | "error" | "warning";
     text: string;
   } | null>(null);
 
@@ -27,6 +30,9 @@ export default function GoogleCalendarConnect({
   const getUrlMessage = () => {
     if (googleParam === "connected") {
       return { type: "success" as const, text: "Google Calendar connected successfully!" };
+    }
+    if (googleParam === "reconnected") {
+      return { type: "success" as const, text: "Google Calendar reconnected with updated permissions!" };
     }
     if (googleParam === "disconnected") {
       return { type: "success" as const, text: "Google Calendar disconnected." };
@@ -42,6 +48,7 @@ export default function GoogleCalendarConnect({
         save_failed: "Failed to save connection.",
         exchange_failed: "Failed to complete authorization.",
         access_denied: "Access was denied.",
+        insufficient_scopes: "Calendar permissions not granted. Please reconnect and allow calendar access.",
       };
       return {
         type: "error" as const,
@@ -56,6 +63,29 @@ export default function GoogleCalendarConnect({
   const handleConnect = () => {
     // Navigate to the connect endpoint
     window.location.href = "/api/google/connect";
+  };
+
+  const handleReconnect = async () => {
+    setReconnecting(true);
+    setMessage(null);
+
+    try {
+      // First disconnect, then redirect to connect
+      const response = await fetch("/api/google/disconnect", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Redirect to reconnect with force consent
+        window.location.href = "/api/google/connect?reconnect=true";
+      } else {
+        setMessage({ type: "error", text: "Failed to reconnect. Please try again." });
+        setReconnecting(false);
+      }
+    } catch {
+      setMessage({ type: "error", text: "Failed to reconnect. Please try again." });
+      setReconnecting(false);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -98,6 +128,8 @@ export default function GoogleCalendarConnect({
           className={`mb-4 p-3 rounded-lg text-sm ${
             displayMessage.type === "success"
               ? "bg-green-50 text-green-700 border border-green-200"
+              : displayMessage.type === "warning"
+              ? "bg-amber-50 text-amber-700 border border-amber-200"
               : "bg-red-50 text-red-700 border border-red-200"
           }`}
         >
@@ -105,33 +137,76 @@ export default function GoogleCalendarConnect({
         </div>
       )}
 
+      {/* Reconnect warning banner */}
+      {isConnected && needsReconnect && !displayMessage && (
+        <div className="mb-4 p-3 rounded-lg text-sm bg-amber-50 text-amber-700 border border-amber-200">
+          <p className="font-medium mb-1">⚠️ Update required</p>
+          <p className="text-amber-600">
+            Your Google connection needs updated permissions to create calendar events.
+            Please reconnect to grant calendar access.
+          </p>
+        </div>
+      )}
+
       {isConnected ? (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
-              <svg
-                className="w-5 h-5 text-green-600"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M9 12l2 2 4-4" />
-                <circle cx="12" cy="12" r="10" />
-              </svg>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                needsReconnect ? "bg-amber-50" : "bg-green-50"
+              }`}>
+                {needsReconnect ? (
+                  <svg
+                    className="w-5 h-5 text-amber-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-5 h-5 text-green-600"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M9 12l2 2 4-4" />
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-cb-text">
+                  {needsReconnect ? "Needs reconnection" : "Connected"}
+                </div>
+                <div className="text-sm text-cb-text-secondary">{googleEmail}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-cb-text">Connected</div>
-              <div className="text-sm text-cb-text-secondary">{googleEmail}</div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleReconnect}
+                disabled={reconnecting || disconnecting}
+                className={`text-sm font-medium transition-colors disabled:opacity-50 ${
+                  needsReconnect
+                    ? "text-coral hover:text-coral-dark"
+                    : "text-cb-text-muted hover:text-coral"
+                }`}
+              >
+                {reconnecting ? "Reconnecting..." : "Reconnect"}
+              </button>
+              <span className="text-cb-border">|</span>
+              <button
+                onClick={handleDisconnect}
+                disabled={disconnecting || reconnecting}
+                className="text-sm text-cb-text-muted hover:text-red-500 font-medium transition-colors disabled:opacity-50"
+              >
+                {disconnecting ? "..." : "Disconnect"}
+              </button>
             </div>
           </div>
-          <button
-            onClick={handleDisconnect}
-            disabled={disconnecting}
-            className="text-sm text-cb-text-muted hover:text-red-500 font-medium transition-colors disabled:opacity-50"
-          >
-            {disconnecting ? "Disconnecting..." : "Disconnect"}
-          </button>
         </div>
       ) : (
         <button

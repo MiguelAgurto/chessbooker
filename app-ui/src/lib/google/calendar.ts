@@ -27,6 +27,7 @@ interface CreateEventResult {
   eventId?: string;
   meetUrl?: string;
   error?: string;
+  isInsufficientScopes?: boolean;
 }
 
 /**
@@ -215,14 +216,89 @@ export async function createCalendarEvent(
     };
   } catch (error) {
     console.error("[Google Calendar] Failed to create event:", error);
-    // Log more details if available
-    if (error && typeof error === "object" && "response" in error) {
-      const errWithResponse = error as { response?: { data?: unknown } };
-      console.error("[Google Calendar] API error response:", errWithResponse.response?.data);
+
+    // Extract detailed error info
+    let errorMessage = "Unknown error";
+    let isInsufficientScopes = false;
+
+    if (error && typeof error === "object") {
+      // Check for GaxiosError structure (Google API errors)
+      const gaxiosError = error as {
+        response?: {
+          status?: number;
+          statusText?: string;
+          data?: {
+            error?: {
+              code?: number;
+              message?: string;
+              status?: string;
+              errors?: Array<{ domain?: string; reason?: string; message?: string }>;
+            };
+          };
+        };
+        message?: string;
+        code?: string | number;
+      };
+
+      // Log detailed error response
+      if (gaxiosError.response) {
+        console.error("[Google Calendar] API error response:", {
+          status: gaxiosError.response.status,
+          statusText: gaxiosError.response.statusText,
+          data: JSON.stringify(gaxiosError.response.data, null, 2),
+        });
+
+        const apiError = gaxiosError.response.data?.error;
+        if (apiError) {
+          errorMessage = apiError.message || errorMessage;
+
+          // Check for insufficient scopes / permission denied
+          const isForbidden =
+            apiError.status === "PERMISSION_DENIED" ||
+            apiError.code === 403 ||
+            gaxiosError.response.status === 403;
+
+          const hasScopeError =
+            apiError.message?.toLowerCase().includes("insufficient") ||
+            apiError.message?.toLowerCase().includes("scope") ||
+            apiError.message?.toLowerCase().includes("permission") ||
+            apiError.errors?.some(
+              (e) =>
+                e.reason === "insufficientPermissions" ||
+                e.reason === "forbidden" ||
+                e.reason === "accessNotConfigured"
+            );
+
+          if (isForbidden || hasScopeError) {
+            isInsufficientScopes = true;
+            errorMessage = "INSUFFICIENT_SCOPES";
+            console.error(
+              "[Google Calendar] INSUFFICIENT SCOPES DETECTED. User needs to reconnect Google Calendar with updated permissions.",
+              { status: gaxiosError.response.status, apiError }
+            );
+          }
+        }
+      } else if (gaxiosError.message) {
+        errorMessage = gaxiosError.message;
+        if (
+          gaxiosError.message.toLowerCase().includes("insufficient") ||
+          gaxiosError.message.toLowerCase().includes("scope") ||
+          gaxiosError.message.toLowerCase().includes("permission") ||
+          gaxiosError.code === 403 ||
+          gaxiosError.code === "403"
+        ) {
+          isInsufficientScopes = true;
+          errorMessage = "INSUFFICIENT_SCOPES";
+        }
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
     }
+
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: errorMessage,
+      isInsufficientScopes,
     };
   }
 }

@@ -392,6 +392,7 @@ export default function PendingRequests({
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isScopeError, setIsScopeError] = useState(false);
   const [confirmModalRequest, setConfirmModalRequest] = useState<PendingRequest | null>(null);
   const [declineModalRequest, setDeclineModalRequest] = useState<PendingRequest | null>(null);
 
@@ -402,6 +403,7 @@ export default function PendingRequests({
   ) => {
     setLoading(requestId);
     setError(null);
+    setIsScopeError(false);
 
     const result = await acceptBookingRequest(requestId, selectedTime, duration);
 
@@ -411,6 +413,11 @@ export default function PendingRequests({
         setConfirmModalRequest(null);
         setError(result.error || "That time was just taken. Please pick another slot.");
         router.refresh(); // Refresh to update availability
+      } else if (result.isInsufficientScopes) {
+        // Handle insufficient scopes - close modal and show link to Settings
+        setConfirmModalRequest(null);
+        setError("Your Google Calendar connection needs updated permissions to create lesson events.");
+        setIsScopeError(true);
       } else {
         setError(result.error || "Failed to confirm lesson");
       }
@@ -469,12 +476,27 @@ export default function PendingRequests({
 
       {error && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex-shrink-0 flex items-start justify-between gap-2">
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 flex-1">
             <span className="flex-shrink-0">⚠️</span>
-            <span>{error}</span>
+            <div>
+              <span>{error}</span>
+              {isScopeError && (
+                <div className="mt-2">
+                  <a
+                    href="/app/settings"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-coral hover:text-coral-dark underline"
+                  >
+                    Go to Settings to reconnect
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </a>
+                </div>
+              )}
+            </div>
           </div>
           <button
-            onClick={() => setError(null)}
+            onClick={() => { setError(null); setIsScopeError(false); }}
             className="text-amber-600 hover:text-amber-800 flex-shrink-0"
           >
             ✕
