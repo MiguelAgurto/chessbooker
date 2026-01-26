@@ -217,7 +217,8 @@ Thanks for using ChessBooker.`;
 }
 
 export async function declineBookingRequest(
-  bookingId: string
+  bookingId: string,
+  declineMessage?: string
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = await createClient();
 
@@ -247,9 +248,18 @@ export async function declineBookingRequest(
   const studentEmail = booking.student_email;
   const studentName = booking.student_name;
 
-  const emailBody = `Hi ${studentName},
+  let emailBody = `Hi ${studentName},
 
-Unfortunately, ${coachName} is unable to accept your booking request at this time.
+Unfortunately, ${coachName} is unable to accept your booking request at this time.`;
+
+  if (declineMessage && declineMessage.trim()) {
+    emailBody += `
+
+Message from ${coachName}:
+"${declineMessage.trim()}"`;
+  }
+
+  emailBody += `
 
 Please feel free to submit a new request with different times.
 

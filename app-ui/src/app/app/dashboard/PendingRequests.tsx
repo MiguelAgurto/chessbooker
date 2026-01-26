@@ -90,24 +90,47 @@ function isLegacyOnlyRequest(request: PendingRequest): boolean {
   return !hasValidISOTime;
 }
 
-interface AcceptModalProps {
+/**
+ * Get the primary requested time for display
+ */
+function getPrimaryTime(request: PendingRequest): { datetime: string; duration: number; isValid: boolean } | null {
+  const times = getAvailableTimes(request);
+  if (times.length === 0) return null;
+
+  const time = times[0];
+  if (typeof time === "string") {
+    return {
+      datetime: time,
+      duration: request.duration_minutes || 60,
+      isValid: isValidISOTimestamp(time),
+    };
+  }
+  return {
+    datetime: time.datetime,
+    duration: time.duration_minutes || 60,
+    isValid: isValidISOTimestamp(time.datetime),
+  };
+}
+
+interface ConfirmModalProps {
   request: PendingRequest;
   timezone: string;
   onClose: () => void;
-  onAccept: (requestId: string, selectedTime: string, duration: number) => Promise<void>;
+  onConfirm: (requestId: string, selectedTime: string, duration: number) => Promise<void>;
   isLoading: boolean;
 }
 
-function AcceptModal({
+function ConfirmModal({
   request,
   timezone,
   onClose,
-  onAccept,
+  onConfirm,
   isLoading,
-}: AcceptModalProps) {
+}: ConfirmModalProps) {
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
 
   const times = getAvailableTimes(request);
+  const isReschedule = !!request.reschedule_of;
 
   const getTimeData = (time: string | SlotData): { datetime: string; duration: number; isValid: boolean } => {
     if (typeof time === "string") {
@@ -125,22 +148,35 @@ function AcceptModal({
   };
 
   const selectedTime = times[selectedTimeIndex];
-  const { isValid: selectedIsValid } = selectedTime ? getTimeData(selectedTime) : { isValid: false };
+  const { isValid: selectedIsValid, duration: selectedDuration } = selectedTime ? getTimeData(selectedTime) : { isValid: false, duration: 60 };
 
-  const handleAccept = async () => {
+  const handleConfirm = async () => {
     if (!selectedIsValid) return;
     const selected = times[selectedTimeIndex];
     const { datetime, duration } = getTimeData(selected);
-    await onAccept(request.id, datetime, duration);
+    await onConfirm(request.id, datetime, duration);
   };
 
-  const formatTimeDisplay = (time: string | SlotData): string => {
+  const formatTimeDisplay = (time: string | SlotData): { date: string; time: string } => {
     const { datetime, isValid } = getTimeData(time);
     if (isValid) {
-      return formatDateTimeForCoach(datetime, timezone);
+      const d = new Date(datetime);
+      const dateStr = d.toLocaleDateString("en-US", {
+        timeZone: timezone,
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+      const timeStr = d.toLocaleTimeString("en-US", {
+        timeZone: timezone,
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      });
+      return { date: dateStr, time: timeStr };
     }
     // For non-ISO values, display as-is (legacy free-text format)
-    return typeof time === "string" ? time : time.datetime;
+    return { date: "", time: typeof time === "string" ? time : time.datetime };
   };
 
   if (times.length === 0) {
@@ -148,10 +184,10 @@ function AcceptModal({
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
           <h3 className="text-lg font-semibold text-cb-text mb-2">
-            No Times Available
+            No times available
           </h3>
           <p className="text-sm text-cb-text-secondary mb-4">
-            This booking request has no proposed times. Manual scheduling is required.
+            This request has no proposed times. Please coordinate with the student directly.
           </p>
           <button
             type="button"
@@ -168,86 +204,186 @@ function AcceptModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
-        <h3 className="text-lg font-semibold text-cb-text mb-2">
-          Review & confirm session time
+        <h3 className="text-lg font-semibold text-cb-text mb-4">
+          {isReschedule ? "Confirm rescheduled lesson" : "Confirm lesson"}
         </h3>
-        <p className="text-sm text-cb-text-secondary mb-1">
-          Session with <strong>{request.student_name}</strong>
-        </p>
-        <p className="text-xs text-cb-text-muted mb-4">
-          Once confirmed, this lesson will be added to your calendar.
-        </p>
 
-        <div className="space-y-2 mb-4">
-          {times.map((time, index) => {
-            const { duration, isValid } = getTimeData(time);
-            return (
-              <label
-                key={index}
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  selectedTimeIndex === index
-                    ? "border-coral bg-coral-light"
-                    : "border-cb-border hover:border-coral"
-                } ${!isValid ? "opacity-70" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="selectedTime"
-                  checked={selectedTimeIndex === index}
-                  onChange={() => setSelectedTimeIndex(index)}
-                  className="sr-only"
-                />
-                <div
-                  className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                    selectedTimeIndex === index
-                      ? "border-coral"
-                      : "border-cb-border"
-                  }`}
-                >
-                  {selectedTimeIndex === index && (
-                    <div className="w-2 h-2 rounded-full bg-coral" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-cb-text">
-                    {formatTimeDisplay(time)}
-                  </p>
-                  <p className="text-xs text-cb-text-muted">
-                    {duration} min
-                    {!isValid && (
-                      <span className="ml-2 text-amber-600">(not a valid timestamp)</span>
-                    )}
-                  </p>
-                </div>
-              </label>
-            );
-          })}
+        {/* Lesson summary */}
+        <div className="bg-cb-bg rounded-lg p-4 mb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full bg-coral-light flex items-center justify-center">
+              <span className="text-coral font-semibold text-sm">
+                {request.student_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+              </span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-cb-text">{request.student_name}</p>
+              <p className="text-xs text-cb-text-muted">{request.student_email}</p>
+            </div>
+          </div>
         </div>
+
+        {/* Time selection */}
+        {times.length === 1 ? (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-cb-text-muted mb-2">Requested time</p>
+            <div className="p-3 rounded-lg border border-coral bg-coral-light">
+              <p className="text-sm font-medium text-cb-text">
+                {formatTimeDisplay(times[0]).date} at {formatTimeDisplay(times[0]).time}
+              </p>
+              <p className="text-xs text-cb-text-muted">{selectedDuration} minutes</p>
+            </div>
+          </div>
+        ) : (
+          <div className="mb-4">
+            <p className="text-xs font-medium text-cb-text-muted mb-2">Select a time</p>
+            <div className="space-y-2">
+              {times.map((time, index) => {
+                const { duration, isValid } = getTimeData(time);
+                const { date, time: timeStr } = formatTimeDisplay(time);
+                return (
+                  <label
+                    key={index}
+                    className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                      selectedTimeIndex === index
+                        ? "border-coral bg-coral-light"
+                        : "border-cb-border hover:border-coral"
+                    } ${!isValid ? "opacity-70" : ""}`}
+                  >
+                    <input
+                      type="radio"
+                      name="selectedTime"
+                      checked={selectedTimeIndex === index}
+                      onChange={() => setSelectedTimeIndex(index)}
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                        selectedTimeIndex === index
+                          ? "border-coral"
+                          : "border-cb-border"
+                      }`}
+                    >
+                      {selectedTimeIndex === index && (
+                        <div className="w-2 h-2 rounded-full bg-coral" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-cb-text">
+                        {date} at {timeStr}
+                      </p>
+                      <p className="text-xs text-cb-text-muted">
+                        {duration} min
+                        {!isValid && (
+                          <span className="ml-2 text-amber-600">(invalid format)</span>
+                        )}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {!selectedIsValid && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-xs text-amber-700">
-              The selected time is not a valid ISO timestamp. Manual scheduling is needed - please coordinate with the student directly.
+              This time format cannot be processed automatically. Please coordinate with the student directly.
             </p>
           </div>
         )}
+
+        <p className="text-xs text-cb-text-muted mb-4">
+          The student will receive a confirmation email with the lesson details.
+        </p>
 
         <div className="flex gap-3">
           <button
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 py-2 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors disabled:opacity-50"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             type="button"
-            onClick={handleAccept}
+            onClick={handleConfirm}
             disabled={isLoading || !selectedIsValid}
-            className="flex-1 px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? "Accepting..." : "Accept"}
+            {isLoading ? "Confirming..." : "Confirm lesson"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface DeclineModalProps {
+  request: PendingRequest;
+  onClose: () => void;
+  onDecline: (requestId: string, message?: string) => Promise<void>;
+  isLoading: boolean;
+}
+
+function DeclineModal({
+  request,
+  onClose,
+  onDecline,
+  isLoading,
+}: DeclineModalProps) {
+  const [message, setMessage] = useState("");
+
+  const handleDecline = async () => {
+    await onDecline(request.id, message.trim() || undefined);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4 shadow-xl">
+        <h3 className="text-lg font-semibold text-cb-text mb-2">
+          Decline request
+        </h3>
+        <p className="text-sm text-cb-text-secondary mb-4">
+          Are you sure you want to decline the lesson request from <strong>{request.student_name}</strong>?
+        </p>
+
+        <div className="mb-4">
+          <label htmlFor="declineMessage" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+            Message to student (optional)
+          </label>
+          <textarea
+            id="declineMessage"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="e.g., I'm fully booked this week. Please try again next week."
+            className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none"
+            rows={3}
+          />
+        </div>
+
+        <p className="text-xs text-cb-text-muted mb-4">
+          The student will be notified that you are unable to accept at this time.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-cb-text-secondary border border-cb-border rounded-lg hover:bg-cb-bg transition-colors disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleDecline}
+            disabled={isLoading}
+            className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+          >
+            {isLoading ? "Declining..." : "Decline"}
           </button>
         </div>
       </div>
@@ -262,10 +398,10 @@ export default function PendingRequests({
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [acceptModalRequest, setAcceptModalRequest] =
-    useState<PendingRequest | null>(null);
+  const [confirmModalRequest, setConfirmModalRequest] = useState<PendingRequest | null>(null);
+  const [declineModalRequest, setDeclineModalRequest] = useState<PendingRequest | null>(null);
 
-  const handleAccept = async (
+  const handleConfirm = async (
     requestId: string,
     selectedTime: string,
     duration: number
@@ -278,49 +414,34 @@ export default function PendingRequests({
     if (!result.success) {
       // Handle overlap error specially - close modal and show message
       if (result.isOverlapError) {
-        setAcceptModalRequest(null);
+        setConfirmModalRequest(null);
         setError(result.error || "That time was just taken. Please pick another slot.");
         router.refresh(); // Refresh to update availability
       } else {
-        setError(result.error || "Failed to accept booking");
+        setError(result.error || "Failed to confirm lesson");
       }
     } else {
-      setAcceptModalRequest(null);
+      setConfirmModalRequest(null);
       router.refresh();
     }
 
     setLoading(null);
   };
 
-  const handleDecline = async (requestId: string) => {
-    if (!confirm("Are you sure you want to decline this request?")) {
-      return;
-    }
-
+  const handleDecline = async (requestId: string, message?: string) => {
     setLoading(requestId);
     setError(null);
 
-    const result = await declineBookingRequest(requestId);
+    const result = await declineBookingRequest(requestId, message);
 
     if (!result.success) {
-      setError(result.error || "Failed to decline booking");
+      setError(result.error || "Failed to decline request");
     } else {
+      setDeclineModalRequest(null);
       router.refresh();
     }
 
     setLoading(null);
-  };
-
-  const formatRequestedTime = (time: string | SlotData): string => {
-    const datetime = typeof time === "string" ? time : time.datetime;
-    const duration = typeof time === "object" ? time.duration_minutes : null;
-
-    if (isValidISOTimestamp(datetime)) {
-      const formatted = formatDateTimeForCoach(datetime, timezone);
-      return duration ? `${formatted} (${duration} min)` : formatted;
-    }
-    // Return as-is for legacy free-text format
-    return duration ? `${datetime} (${duration} min)` : datetime;
   };
 
   if (requests.length === 0) {
@@ -367,112 +488,132 @@ export default function PendingRequests({
         </div>
       )}
 
-      <div className="space-y-4 overflow-y-auto flex-1 pr-1">
+      <div className="space-y-3 overflow-y-auto flex-1 pr-1">
         {requests.map((request) => {
-          const times = getAvailableTimes(request);
           const isLegacyOnly = isLegacyOnlyRequest(request);
           const isReschedule = !!request.reschedule_of;
+          const primaryTime = getPrimaryTime(request);
+
+          // Format primary time for display
+          let dateDisplay = "";
+          let timeDisplay = "";
+          if (primaryTime && primaryTime.isValid) {
+            const d = new Date(primaryTime.datetime);
+            dateDisplay = d.toLocaleDateString("en-US", {
+              timeZone: timezone,
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            });
+            timeDisplay = d.toLocaleTimeString("en-US", {
+              timeZone: timezone,
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            });
+          }
 
           return (
             <div
               key={request.id}
               className="p-4 bg-cb-bg rounded-lg"
             >
-              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-cb-text">
-                      {request.student_name}
-                    </p>
-                    {isReschedule && (
-                      <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded">
-                        Reschedule
-                      </span>
-                    )}
+              {/* Header: Student info + badge */}
+              <div className="flex items-start justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-full bg-coral-light flex items-center justify-center flex-shrink-0">
+                    <span className="text-coral font-medium text-xs">
+                      {request.student_name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                    </span>
                   </div>
-                  <p className="text-xs text-cb-text-muted truncate">
-                    {request.student_email}
-                    {request.student_timezone && (
-                      <span className="ml-2 text-cb-text-muted">
-                        ({request.student_timezone})
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-cb-text-secondary mt-1">
-                    {request.duration_minutes} min session
-                  </p>
-
-                  <div className="mt-2">
-                    <p className="text-xs font-medium text-cb-text-secondary mb-1">
-                      Requested times:
-                    </p>
-                    {times.length > 0 ? (
-                      <ul className="space-y-0.5">
-                        {times.map((time, i) => (
-                          <li key={i} className="text-xs text-cb-text-muted">
-                            {formatRequestedTime(time)}
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-xs text-cb-text-muted italic">
-                        No times specified
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-cb-text truncate">
+                        {request.student_name}
                       </p>
-                    )}
-                  </div>
-
-                  {request.expires_at && (
-                    <p className="text-xs text-cb-text-muted mt-2">
-                      Expires: {new Date(request.expires_at).toLocaleString("en-US", {
-                        timeZone: timezone,
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      })}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex gap-2 sm:flex-col">
-                  {isLegacyOnly ? (
-                    <div
-                      className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg cursor-not-allowed text-center"
-                      title="This request uses free-text times. Please confirm manually."
-                    >
-                      Manual scheduling
+                      {isReschedule && (
+                        <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded flex-shrink-0">
+                          Reschedule
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setAcceptModalRequest(request)}
-                      disabled={loading === request.id}
-                      className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
-                    >
-                      {isReschedule ? "Confirm Reschedule" : "Accept"}
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleDecline(request.id)}
-                    disabled={loading === request.id}
-                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                  >
-                    {loading === request.id ? "..." : "Decline"}
-                  </button>
+                    <p className="text-xs text-cb-text-muted truncate">
+                      {request.student_email}
+                    </p>
+                  </div>
                 </div>
+              </div>
+
+              {/* Lesson details: Date, time, duration */}
+              {primaryTime && primaryTime.isValid ? (
+                <div className="flex items-center gap-4 mb-3 text-sm">
+                  <div className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-cb-text font-medium">{dateDisplay}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span className="text-cb-text font-medium">{timeDisplay}</span>
+                  </div>
+                  <span className="text-cb-text-muted">{primaryTime.duration} min</span>
+                </div>
+              ) : (
+                <p className="text-xs text-cb-text-muted mb-3 italic">
+                  {isLegacyOnly ? "Manual scheduling required" : "No time specified"}
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2">
+                {isLegacyOnly ? (
+                  <div
+                    className="flex-1 px-3 py-2 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg cursor-not-allowed text-center"
+                    title="This request uses free-text times. Please confirm manually."
+                  >
+                    Manual scheduling
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmModalRequest(request)}
+                    disabled={loading === request.id}
+                    className="flex-1 px-3 py-2 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    {loading === request.id ? "..." : "Confirm lesson"}
+                  </button>
+                )}
+                <button
+                  onClick={() => setDeclineModalRequest(request)}
+                  disabled={loading === request.id}
+                  className="px-3 py-2 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                >
+                  Decline
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {acceptModalRequest && (
-        <AcceptModal
-          request={acceptModalRequest}
+      {confirmModalRequest && (
+        <ConfirmModal
+          request={confirmModalRequest}
           timezone={timezone}
-          onClose={() => setAcceptModalRequest(null)}
-          onAccept={handleAccept}
-          isLoading={loading === acceptModalRequest.id}
+          onClose={() => setConfirmModalRequest(null)}
+          onConfirm={handleConfirm}
+          isLoading={loading === confirmModalRequest.id}
+        />
+      )}
+
+      {declineModalRequest && (
+        <DeclineModal
+          request={declineModalRequest}
+          onClose={() => setDeclineModalRequest(null)}
+          onDecline={handleDecline}
+          isLoading={loading === declineModalRequest.id}
         />
       )}
     </div>
