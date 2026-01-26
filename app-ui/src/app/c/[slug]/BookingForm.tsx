@@ -460,7 +460,7 @@ export default function BookingForm({
             disabled={loading || !isFormValid}
             className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Sending..." : "Request Session"}
+            {loading ? "Sending..." : "Request Lesson"}
           </button>
           <p className="mt-3 text-sm text-cb-text-secondary text-center">
             You&apos;ll receive a confirmation email once {coachName} confirms your lesson.
