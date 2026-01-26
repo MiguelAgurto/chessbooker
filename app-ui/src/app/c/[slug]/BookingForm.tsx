@@ -139,7 +139,8 @@ function generateSlots(
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
 
-      for (let mins = startMinutes; mins + durationMinutes <= endMinutes; mins += durationMinutes) {
+      // Use 30-minute grid for slot start times (:00 and :30 only)
+      for (let mins = startMinutes; mins + durationMinutes <= endMinutes; mins += 30) {
         const slotHour = Math.floor(mins / 60);
         const slotMin = mins % 60;
         const timeStr = `${slotHour.toString().padStart(2, "0")}:${slotMin.toString().padStart(2, "0")}`;
