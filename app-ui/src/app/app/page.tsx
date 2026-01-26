@@ -76,15 +76,25 @@ export default async function DashboardPage() {
     .eq("coach_id", user!.id)
     .eq("status", "pending");
 
-  // Get first day of current month for confirmed count
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  // Determine current month in coach's timezone for accurate monthly stats
+  const coachDateStr = new Date().toLocaleDateString("en-CA", { timeZone: timezone }); // "YYYY-MM-DD"
+  const [year, month] = coachDateStr.split("-").map(Number);
+  const firstDayOfMonth = new Date(Date.UTC(year, month - 1, 1));
 
+  // Count confirmed lessons scheduled this month
   const { count: confirmedThisMonth } = await supabase
     .from("booking_requests")
     .select("*", { count: "exact", head: true })
     .eq("coach_id", user!.id)
     .eq("status", "confirmed")
+    .gte("scheduled_start", firstDayOfMonth.toISOString());
+
+  // Count completed lessons this month (high-signal activity metric)
+  const { count: completedThisMonth } = await supabase
+    .from("booking_requests")
+    .select("*", { count: "exact", head: true })
+    .eq("coach_id", user!.id)
+    .eq("status", "completed")
     .gte("scheduled_start", firstDayOfMonth.toISOString());
 
   const nextLesson = upcomingLessons?.[0] || null;
@@ -99,7 +109,7 @@ export default async function DashboardPage() {
       />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="card p-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-coral-light rounded-lg flex items-center justify-center">
@@ -118,6 +128,22 @@ export default async function DashboardPage() {
 
         <div className="card p-4">
           <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 fill-blue-500" viewBox="0 0 24 24">
+                <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-2xl font-semibold text-cb-text">
+                {confirmedThisMonth || 0}
+              </p>
+              <p className="text-xs text-cb-text-secondary">Scheduled</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="card p-4">
+          <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
               <svg className="w-5 h-5 fill-green-500" viewBox="0 0 24 24">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
@@ -125,9 +151,9 @@ export default async function DashboardPage() {
             </div>
             <div>
               <p className="text-2xl font-semibold text-cb-text">
-                {confirmedThisMonth || 0}
+                {completedThisMonth || 0}
               </p>
-              <p className="text-xs text-cb-text-secondary">This month</p>
+              <p className="text-xs text-cb-text-secondary">Lessons this month</p>
             </div>
           </div>
         </div>
