@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { getRelativeDateLabel } from "@/lib/timezone";
 
 interface UpcomingLesson {
@@ -15,11 +16,13 @@ interface UpcomingLesson {
 interface UpcomingLessonsProps {
   lessons: UpcomingLesson[];
   timezone: string;
+  coachSlug?: string;
 }
 
 export default function UpcomingLessons({
   lessons,
   timezone,
+  coachSlug,
 }: UpcomingLessonsProps) {
   if (lessons.length === 0) {
     return (
@@ -29,16 +32,31 @@ export default function UpcomingLessons({
         </h2>
         <div className="text-center py-8">
           <div className="w-12 h-12 bg-cb-bg rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+            <span className="text-2xl">📅</span>
           </div>
           <p className="text-sm font-medium text-cb-text-secondary">
             No upcoming lessons
           </p>
-          <p className="text-xs text-cb-text-muted mt-1">
-            Confirmed sessions will appear here
+          <p className="text-xs text-cb-text-muted mt-1 mb-4">
+            When students book a lesson, it will appear here.
           </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+            <a
+              href="#booking-link"
+              className="text-sm px-4 py-2 rounded-lg bg-coral text-white hover:bg-coral-dark transition-colors font-medium"
+            >
+              Share booking link
+            </a>
+            {coachSlug && (
+              <Link
+                href={`/book/${coachSlug}`}
+                target="_blank"
+                className="text-xs text-cb-text-secondary hover:text-coral transition-colors"
+              >
+                View booking page →
+              </Link>
+            )}
+          </div>
         </div>
       </div>
     );

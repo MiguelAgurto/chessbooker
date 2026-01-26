@@ -378,15 +378,13 @@ export default function PastLessons({
         </h2>
         <div className="text-center py-8">
           <div className="w-12 h-12 bg-cb-bg rounded-full flex items-center justify-center mx-auto mb-3">
-            <svg className="w-6 h-6 text-cb-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <span className="text-2xl">📋</span>
           </div>
           <p className="text-sm font-medium text-cb-text-secondary">
             No past lessons yet
           </p>
           <p className="text-xs text-cb-text-muted mt-1">
-            Completed sessions will appear here
+            Completed lessons will appear here for notes, history, and recaps.
           </p>
         </div>
       </div>

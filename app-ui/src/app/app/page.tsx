@@ -133,7 +133,7 @@ export default async function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Upcoming Lessons */}
-        <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} />
+        <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} />
 
         {/* Pending Requests */}
         <PendingRequests requests={pendingRequests || []} timezone={timezone} />
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Booking Link */}
-      <div className="card p-6">
+      <div id="booking-link" className="card p-6 scroll-mt-4">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-semibold text-cb-text">
             Your Public Booking Link
