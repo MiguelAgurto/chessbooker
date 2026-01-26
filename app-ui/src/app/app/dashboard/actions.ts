@@ -74,13 +74,77 @@ export async function acceptBookingRequest(
     };
   }
 
-  // Update booking status and scheduled times
+  // Check if booking already has a calendar event (prevent duplicates)
+  if (booking.calendar_event_id) {
+    console.log(`[Confirm Lesson] Booking ${bookingId} already has calendar_event_id=${booking.calendar_event_id}, skipping calendar creation`);
+  }
+
+  // STEP 1: Create Google Calendar event FIRST (before confirming)
+  let meetUrl: string | null = null;
+  let calendarEventId: string | null = booking.calendar_event_id || null;
+
+  // Only create calendar event if one doesn't already exist
+  if (!calendarEventId) {
+    console.log(`[Confirm Lesson] Creating calendar event for booking ${bookingId}`);
+
+    // Fetch Google connection
+    const { data: googleConnection, error: connError } = await supabase
+      .from("google_connections")
+      .select("google_email, refresh_token")
+      .eq("coach_id", booking.coach_id)
+      .single();
+
+    if (connError || !googleConnection) {
+      console.error(`[Confirm Lesson] No Google Calendar connection for coach ${booking.coach_id}:`, connError);
+      return {
+        success: false,
+        error: "Google Calendar not connected. Please connect your Google account in Settings before confirming lessons.",
+      };
+    }
+
+    console.log(`[Confirm Lesson] Found Google connection: email=${googleConnection.google_email}, calendarId=primary`);
+
+    // Create the calendar event
+    const calendarResult = await createCalendarEvent({
+      coachId: booking.coach_id,
+      bookingId,
+      summary: `Chess lesson - ${studentName}`,
+      description: `ChessBooker lesson with ${studentName}\n\nStudent email: ${studentEmail}\nBooking ID: ${bookingId}`,
+      startDateTime: scheduledStart.toISOString(),
+      durationMinutes,
+      coachTimezone,
+      studentEmail,
+      coachGoogleEmail: googleConnection.google_email,
+    });
+
+    if (!calendarResult.success) {
+      console.error(`[Confirm Lesson] Calendar creation failed for booking ${bookingId}:`, calendarResult.error);
+      return {
+        success: false,
+        error: `Failed to create calendar event: ${calendarResult.error}. Please try again or check your Google Calendar connection.`,
+      };
+    }
+
+    calendarEventId = calendarResult.eventId || null;
+    meetUrl = calendarResult.meetUrl || null;
+
+    console.log(`[Confirm Lesson] Calendar event created: eventId=${calendarEventId}, meetUrl=${meetUrl}`);
+  } else {
+    // Use existing meeting URL if calendar event already exists
+    meetUrl = booking.meeting_url || null;
+    console.log(`[Confirm Lesson] Using existing calendar event: eventId=${calendarEventId}, meetUrl=${meetUrl}`);
+  }
+
+  // STEP 2: Update booking status to confirmed (with calendar info) in a single update
   const { error: updateError } = await supabase
     .from("booking_requests")
     .update({
       status: "confirmed",
       scheduled_start: scheduledStart.toISOString(),
       scheduled_end: scheduledEnd.toISOString(),
+      meeting_url: meetUrl,
+      calendar_event_id: calendarEventId,
+      calendar_provider: calendarEventId ? "google" : null,
     })
     .eq("id", bookingId);
 
@@ -88,16 +152,20 @@ export async function acceptBookingRequest(
     // Check for Postgres exclusion constraint violation (23P01)
     // This happens when trying to book an overlapping time slot
     if (updateError.code === "23P01" || updateError.message?.includes("exclusion")) {
+      console.error(`[Confirm Lesson] Time slot overlap for booking ${bookingId}`);
       return {
         success: false,
         error: "That time was just taken. Please pick another slot.",
         isOverlapError: true,
       };
     }
+    console.error(`[Confirm Lesson] Database update failed for booking ${bookingId}:`, updateError);
     return { success: false, error: updateError.message };
   }
 
-  // If this is a reschedule confirmation, cancel the original booking
+  console.log(`[Confirm Lesson] Booking ${bookingId} confirmed successfully`);
+
+  // STEP 3: If this is a reschedule confirmation, cancel the original booking
   if (isReschedule && booking.reschedule_of) {
     const { error: cancelError } = await supabase
       .from("booking_requests")
@@ -109,65 +177,20 @@ export async function acceptBookingRequest(
       .eq("id", booking.reschedule_of);
 
     if (cancelError) {
-      console.error("Failed to cancel original booking:", cancelError);
+      console.error(`[Confirm Lesson] Failed to cancel original booking ${booking.reschedule_of}:`, cancelError);
       // Continue anyway - the new booking is confirmed
     }
   }
 
-  // Only proceed with calendar + email AFTER DB update succeeds
-  // Try to create Google Calendar event
-  let meetUrl: string | null = null;
-  let calendarEventId: string | null = null;
-
-  try {
-    const { data: googleConnection } = await supabase
-      .from("google_connections")
-      .select("google_email, refresh_token")
-      .eq("coach_id", booking.coach_id)
-      .single();
-
-    if (googleConnection) {
-      const calendarResult = await createCalendarEvent({
-        coachId: booking.coach_id,
-        bookingId,
-        summary: `Chess lesson - ${studentName}`,
-        description: `ChessBooker session with ${studentName}\n\nStudent email: ${studentEmail}\nBooking ID: ${bookingId}`,
-        startDateTime: scheduledStart.toISOString(),
-        durationMinutes,
-        coachTimezone,
-        studentEmail,
-        coachGoogleEmail: googleConnection.google_email,
-      });
-
-      if (calendarResult.success) {
-        meetUrl = calendarResult.meetUrl || null;
-        calendarEventId = calendarResult.eventId || null;
-
-        // Update booking with calendar info
-        await supabase
-          .from("booking_requests")
-          .update({
-            meeting_url: meetUrl,
-            calendar_event_id: calendarEventId,
-            calendar_provider: "google",
-          })
-          .eq("id", bookingId);
-      }
-    }
-  } catch (calendarError) {
-    console.error("Calendar creation failed:", calendarError);
-    // Continue - booking is confirmed, calendar is optional
-  }
-
-  // Send confirmation email
+  // STEP 4: Send confirmation email
   const formattedTime = formatDateTimeForEmail(scheduledStart.toISOString(), studentTimezone);
   const rescheduleLink = getAppUrl(`/reschedule/${bookingId}`);
 
   let emailBody = `Hi ${studentName},
 
-Great news! Your ${isReschedule ? "rescheduled " : ""}session has been confirmed.
+Great news! Your ${isReschedule ? "rescheduled " : ""}lesson has been confirmed.
 
-Session details:
+Lesson details:
 - Coach: ${coachName}
 - Time: ${formattedTime}
 - Duration: ${durationMinutes} minutes
@@ -185,16 +208,16 @@ See you at the board!
 Need to reschedule? Use this link:
 ${rescheduleLink}
 
-Thanks for using ChessBooker.`;
+${coachName}`;
 
   try {
     await sendEmail({
       to: studentEmail,
-      subject: `Your session with ${coachName} is confirmed`,
+      subject: `Your lesson with ${coachName} is confirmed`,
       text: emailBody,
     });
   } catch (emailError) {
-    console.error("Failed to send confirmation email:", emailError);
+    console.error(`[Confirm Lesson] Failed to send confirmation email for booking ${bookingId}:`, emailError);
   }
 
   // Enqueue notification event
