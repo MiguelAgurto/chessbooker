@@ -411,7 +411,7 @@ export default function PastLessons({
         </div>
       )}
 
-      <div className="space-y-3 overflow-y-auto flex-1 pr-1">
+      <div className="space-y-2 overflow-y-auto flex-1 pr-1">
         {lessons.map((lesson) => {
           const dateTime = formatDateTimeForCoach(lesson.scheduled_start, timezone);
           const isCompleted = lesson.status === "completed";
@@ -438,18 +438,18 @@ export default function PastLessons({
           return (
             <div
               key={lesson.id}
-              className="py-3"
+              className="py-2"
             >
-              <div className="flex items-start gap-3">
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${
+              <div className="flex items-start gap-2.5">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
                   isCompleted ? "bg-green-50" : "bg-amber-50"
                 }`}>
                   {isCompleted ? (
-                    <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )}
@@ -492,13 +492,13 @@ export default function PastLessons({
                   )}
                 </div>
                 {/* Action buttons */}
-                <div className="flex flex-wrap items-center gap-1.5 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-1 flex-shrink-0">
                   {/* Complete button - only for confirmed lessons */}
                   {!isCompleted && (
                     <button
                       onClick={() => handleMarkCompleted(lesson)}
                       disabled={loading === lesson.id}
-                      className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
+                      className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 transition-colors disabled:opacity-50"
                       title="Mark as completed"
                     >
                       ✓ Complete
@@ -507,7 +507,7 @@ export default function PastLessons({
                   {/* History button */}
                   <button
                     onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
-                    className="text-xs px-2 py-1 rounded-md bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg transition-colors"
+                    className="text-xs px-1.5 py-0.5 rounded bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg transition-colors"
                     title="View student history"
                   >
                     📚 History
@@ -515,7 +515,7 @@ export default function PastLessons({
                   {/* Notes button */}
                   <button
                     onClick={() => setNotesModal(lesson)}
-                    className={`text-xs px-2 py-1 rounded-md transition-colors ${
+                    className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
                       lesson.coach_notes
                         ? "bg-coral-light text-coral hover:bg-coral/20"
                         : "bg-white border border-cb-border text-cb-text-secondary hover:bg-cb-bg"
@@ -527,7 +527,7 @@ export default function PastLessons({
                   {/* Recap button */}
                   <button
                     onClick={() => setRecapModal(lesson)}
-                    className={`text-xs px-2 py-1 rounded-md transition-colors ${
+                    className={`text-xs px-1.5 py-0.5 rounded transition-colors ${
                       lesson.recap_sent_at
                         ? "bg-green-50 text-green-700 hover:bg-green-100"
                         : "bg-coral text-white hover:bg-coral-dark"
