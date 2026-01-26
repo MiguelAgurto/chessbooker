@@ -273,7 +273,120 @@ function RecapModal({
   );
 }
 
-// Student History Modal
+// Timeline item types
+type TimelineItem = {
+  type: "lesson" | "notes" | "recap";
+  timestamp: Date;
+  lesson: PastLesson;
+};
+
+// Build timeline items for a lesson, ordered oldest → newest
+function buildLessonTimeline(lesson: PastLesson): TimelineItem[] {
+  const items: TimelineItem[] = [];
+
+  // 1. Lesson completed/confirmed (anchor)
+  if (lesson.status === "completed" || lesson.status === "confirmed") {
+    items.push({
+      type: "lesson",
+      timestamp: new Date(lesson.scheduled_start),
+      lesson,
+    });
+  }
+
+  // 2. Coach notes (if any) - use lesson end time as proxy since we don't track edit time
+  if (lesson.coach_notes) {
+    items.push({
+      type: "notes",
+      timestamp: new Date(lesson.scheduled_end),
+      lesson,
+    });
+  }
+
+  // 3. Recap sent (if any)
+  if (lesson.recap_sent_at) {
+    items.push({
+      type: "recap",
+      timestamp: new Date(lesson.recap_sent_at),
+      lesson,
+    });
+  }
+
+  // Sort oldest → newest
+  return items.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+}
+
+// Timeline item component
+function TimelineItemView({
+  item,
+  timezone,
+  isLast,
+}: {
+  item: TimelineItem;
+  timezone: string;
+  isLast: boolean;
+}) {
+  const formatTimestamp = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      timeZone: timezone,
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="flex gap-3">
+      {/* Timeline dot and line */}
+      <div className="flex flex-col items-center">
+        <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1.5 ${
+          item.type === "lesson"
+            ? "bg-green-500"
+            : item.type === "notes"
+            ? "bg-coral"
+            : "bg-blue-500"
+        }`} />
+        {!isLast && (
+          <div className="w-px flex-1 bg-cb-border-light min-h-[16px]" />
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 pb-4">
+        {item.type === "lesson" && (
+          <>
+            <p className="text-sm font-medium text-cb-text">
+              Lesson {item.lesson.status === "completed" ? "completed" : "scheduled"}
+            </p>
+            <p className="text-xs text-cb-text-muted mt-0.5">
+              {formatTimestamp(item.timestamp)} · {item.lesson.duration_minutes} min
+            </p>
+          </>
+        )}
+
+        {item.type === "notes" && (
+          <>
+            <p className="text-sm font-medium text-cb-text">Coach notes</p>
+            <p className="text-xs text-cb-text-secondary mt-1 leading-relaxed">
+              {item.lesson.coach_notes}
+            </p>
+          </>
+        )}
+
+        {item.type === "recap" && (
+          <>
+            <p className="text-sm font-medium text-cb-text">Recap sent</p>
+            <p className="text-xs text-cb-text-muted mt-0.5">
+              {formatTimestamp(item.timestamp)}
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Student History Modal with Timeline
 function StudentHistoryModal({
   studentName,
   studentEmail,
@@ -287,10 +400,18 @@ function StudentHistoryModal({
   timezone: string;
   onClose: () => void;
 }) {
-  // Filter lessons for this student and sort by date (most recent first)
+  // Filter lessons for this student and sort by date (oldest first for timeline)
   const studentLessons = lessons
     .filter((l) => l.student_email === studentEmail)
-    .sort((a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime());
+    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime());
+
+  // Build all timeline items across all lessons
+  const allTimelineItems: { lesson: PastLesson; items: TimelineItem[] }[] = studentLessons.map(
+    (lesson) => ({
+      lesson,
+      items: buildLessonTimeline(lesson),
+    })
+  );
 
   return (
     <div
@@ -305,7 +426,7 @@ function StudentHistoryModal({
         <div className="flex items-center justify-between p-4 border-b border-cb-border-light flex-shrink-0">
           <div>
             <h3 className="text-base font-semibold text-cb-text">
-              Student History
+              Session Timeline
             </h3>
             <p className="text-sm text-cb-text-secondary mt-0.5">
               {studentName}
@@ -324,46 +445,47 @@ function StudentHistoryModal({
           </button>
         </div>
 
-        {/* Lesson list */}
+        {/* Timeline */}
         <div className="flex-1 overflow-y-auto p-4">
           {studentLessons.length === 0 ? (
             <p className="text-sm text-cb-text-muted text-center py-4">
-              No lessons found for this student.
+              No sessions found for this student.
             </p>
           ) : (
-            <div className="space-y-3">
-              {studentLessons.map((lesson) => {
-                const dateTime = formatDateTimeForCoach(lesson.scheduled_start, timezone);
-                const isCompleted = lesson.status === "completed";
+            <div className="space-y-6">
+              {allTimelineItems.map(({ lesson, items }) => {
+                const lessonDate = new Date(lesson.scheduled_start).toLocaleDateString("en-US", {
+                  timeZone: timezone,
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                  year: studentLessons.length > 1 &&
+                    new Date(studentLessons[0].scheduled_start).getFullYear() !==
+                    new Date(studentLessons[studentLessons.length - 1].scheduled_start).getFullYear()
+                    ? "numeric"
+                    : undefined,
+                });
 
                 return (
-                  <div key={lesson.id} className="p-3 bg-cb-bg rounded-lg">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-cb-text">
-                          {dateTime}
-                        </p>
-                        <p className="text-xs text-cb-text-muted">
-                          {lesson.duration_minutes} min
-                        </p>
-                        <div className="flex items-center flex-wrap gap-2 mt-1.5">
-                          <span className={`text-xs px-1.5 py-0.5 rounded ${
-                            isCompleted
-                              ? "bg-green-100 text-green-700"
-                              : "bg-amber-100 text-amber-700"
-                          }`}>
-                            {isCompleted ? "Completed" : "Confirmed"}
-                          </span>
-                          {lesson.recap_sent_at && (
-                            <span className="text-xs text-green-600">Recap sent</span>
-                          )}
-                        </div>
-                        {lesson.coach_notes && (
-                          <p className="text-xs text-cb-text-muted mt-2 italic border-l-2 border-cb-border pl-2">
-                            {lesson.coach_notes}
-                          </p>
-                        )}
-                      </div>
+                  <div key={lesson.id}>
+                    {/* Session date header */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-xs font-medium text-cb-text-secondary uppercase tracking-wide">
+                        {lessonDate}
+                      </span>
+                      <div className="flex-1 h-px bg-cb-border-light" />
+                    </div>
+
+                    {/* Timeline items for this lesson */}
+                    <div className="ml-1">
+                      {items.map((item, itemIndex) => (
+                        <TimelineItemView
+                          key={`${item.type}-${item.timestamp.getTime()}`}
+                          item={item}
+                          timezone={timezone}
+                          isLast={itemIndex === items.length - 1}
+                        />
+                      ))}
                     </div>
                   </div>
                 );
@@ -375,7 +497,7 @@ function StudentHistoryModal({
         {/* Footer */}
         <div className="p-4 border-t border-cb-border-light flex-shrink-0">
           <p className="text-xs text-cb-text-muted text-center">
-            {studentLessons.length} lesson{studentLessons.length !== 1 ? "s" : ""} total
+            {studentLessons.length} session{studentLessons.length !== 1 ? "s" : ""} · Oldest → Newest
           </p>
         </div>
       </div>
