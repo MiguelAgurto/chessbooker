@@ -295,20 +295,60 @@ export default function BookingForm({
   if (submitted) {
     return (
       <div className="card p-6">
-        <div className="text-center py-4">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 fill-green-500" viewBox="0 0 24 24">
+        {/* Success header */}
+        <div className="text-center mb-6">
+          <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg className="w-7 h-7 fill-green-500" viewBox="0 0 24 24">
               <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
             </svg>
           </div>
-          <h3 className="text-lg font-semibold text-cb-text mb-2">Request sent!</h3>
-          <p className="text-cb-text-secondary text-sm mb-3">
-            {coachName} will confirm your lesson shortly.
-          </p>
-          <p className="text-cb-text-muted text-xs">
-            Check your inbox at {studentEmail} for confirmation details.
-          </p>
+          <h3 className="text-lg font-semibold text-cb-text">Request sent!</h3>
         </div>
+
+        {/* Lesson details */}
+        {selectedSlot && (
+          <div className="bg-cb-bg rounded-lg p-4 mb-5">
+            <p className="text-xs font-medium text-cb-text-muted uppercase tracking-wide mb-3">Lesson details</p>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-cb-text-secondary">Coach</span>
+                <span className="text-cb-text font-medium">{coachName}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-cb-text-secondary">Date</span>
+                <span className="text-cb-text font-medium">{selectedSlot.label}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-cb-text-secondary">Time</span>
+                <span className="text-cb-text font-medium">{selectedSlot.displayTime}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-cb-text-secondary">Duration</span>
+                <span className="text-cb-text font-medium">{duration} minutes</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* What happens next */}
+        <div className="mb-5">
+          <p className="text-xs font-medium text-cb-text-muted uppercase tracking-wide mb-3">What happens next</p>
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="w-5 h-5 rounded-full bg-coral-light text-coral flex items-center justify-center flex-shrink-0 text-xs font-medium">1</div>
+              <p className="text-sm text-cb-text-secondary">{coachName} reviews your request</p>
+            </div>
+            <div className="flex gap-3">
+              <div className="w-5 h-5 rounded-full bg-coral-light text-coral flex items-center justify-center flex-shrink-0 text-xs font-medium">2</div>
+              <p className="text-sm text-cb-text-secondary">You receive a confirmation email once confirmed</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Email helper text */}
+        <p className="text-xs text-cb-text-muted text-center">
+          A confirmation email will be sent to {studentEmail}
+        </p>
       </div>
     );
   }
