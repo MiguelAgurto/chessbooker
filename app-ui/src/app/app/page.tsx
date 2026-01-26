@@ -66,6 +66,9 @@ export default async function DashboardPage() {
     }
   }
 
+  // Get most recent lesson date for retention nudge (allLessons is sorted desc)
+  const lastLessonDate = allLessons?.[0]?.scheduled_start || null;
+
   // Count stats
   const { count: pendingCount } = await supabase
     .from("booking_requests")
@@ -133,7 +136,7 @@ export default async function DashboardPage() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         {/* Upcoming Lessons */}
-        <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} />
+        <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} lastLessonDate={lastLessonDate} />
 
         {/* Pending Requests */}
         <PendingRequests requests={pendingRequests || []} timezone={timezone} />
