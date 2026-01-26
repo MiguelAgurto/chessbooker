@@ -100,10 +100,10 @@ export default async function DashboardPage() {
     .gte("scheduled_start", firstDayOfMonth.toISOString());
 
   // Fetch recent notification events for activity feed
+  // RLS enforces coach_id filtering, no need to filter manually
   const { data: recentEvents } = await supabase
     .from("coach_notification_events")
     .select("id, event_type, student_name, student_email, created_at, metadata")
-    .eq("coach_id", user!.id)
     .order("created_at", { ascending: false })
     .limit(20);
 
