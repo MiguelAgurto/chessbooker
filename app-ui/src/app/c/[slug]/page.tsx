@@ -12,7 +12,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
 
   const { data: coach } = await supabase
     .from("coaches")
-    .select("id, name, title, timezone, pricing, headline, bio, languages, tags, rating, years_coaching, avatar_url")
+    .select("id, name, title, timezone, pricing, headline, bio, languages, tags, rating, years_coaching, avatar_url, min_notice_minutes, buffer_minutes")
     .eq("slug", slug)
     .single();
 
@@ -138,6 +138,8 @@ export default async function PublicBookingPage({ params }: PageProps) {
           availability={availability || []}
           confirmedBookings={confirmedBookings || []}
           pricing={coach.pricing || { "60min": 50, "90min": 70 }}
+          minNoticeMinutes={coach.min_notice_minutes ?? 0}
+          bufferMinutes={coach.buffer_minutes ?? 0}
         />
       </div>
     </div>

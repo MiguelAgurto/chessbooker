@@ -10,6 +10,8 @@ interface Coach {
   timezone: string;
   slug: string;
   pricing: { "60min": number; "90min": number };
+  min_notice_minutes: number | null;
+  buffer_minutes: number | null;
 }
 
 export default function PricingForm({ coach }: { coach: Coach | null }) {
@@ -21,6 +23,8 @@ export default function PricingForm({ coach }: { coach: Coach | null }) {
   const [slug, setSlug] = useState(coach?.slug || "");
   const [price60, setPrice60] = useState(coach?.pricing?.["60min"] || 50);
   const [price90, setPrice90] = useState(coach?.pricing?.["90min"] || 70);
+  const [minNotice, setMinNotice] = useState(coach?.min_notice_minutes ?? 60);
+  const [buffer, setBuffer] = useState(coach?.buffer_minutes ?? 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +38,8 @@ export default function PricingForm({ coach }: { coach: Coach | null }) {
         timezone,
         slug,
         pricing: { "60min": price60, "90min": price90 },
+        min_notice_minutes: minNotice,
+        buffer_minutes: buffer,
       })
       .eq("id", coach!.id);
 
@@ -151,6 +157,57 @@ export default function PricingForm({ coach }: { coach: Coach | null }) {
                 min="0"
               />
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-cb-border-light pt-6">
+        <h3 className="text-sm font-semibold text-cb-text mb-4">Booking Rules</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="minNotice" className="label">
+              Minimum notice
+            </label>
+            <select
+              id="minNotice"
+              value={minNotice}
+              onChange={(e) => setMinNotice(Number(e.target.value))}
+              className="input-field"
+            >
+              <option value={0}>No minimum</option>
+              <option value={60}>1 hour</option>
+              <option value={120}>2 hours</option>
+              <option value={360}>6 hours</option>
+              <option value={720}>12 hours</option>
+              <option value={1440}>24 hours</option>
+              <option value={2880}>48 hours</option>
+            </select>
+            <p className="mt-1.5 text-xs text-cb-text-muted">
+              Students must book at least this far in advance.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="buffer" className="label">
+              Buffer between lessons
+            </label>
+            <select
+              id="buffer"
+              value={buffer}
+              onChange={(e) => setBuffer(Number(e.target.value))}
+              className="input-field"
+            >
+              <option value={0}>No buffer</option>
+              <option value={5}>5 minutes</option>
+              <option value={10}>10 minutes</option>
+              <option value={15}>15 minutes</option>
+              <option value={20}>20 minutes</option>
+              <option value={30}>30 minutes</option>
+              <option value={45}>45 minutes</option>
+              <option value={60}>60 minutes</option>
+            </select>
+            <p className="mt-1.5 text-xs text-cb-text-muted">
+              Prevents back-to-back bookings.
+            </p>
           </div>
         </div>
       </div>

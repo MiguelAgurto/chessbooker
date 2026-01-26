@@ -112,15 +112,22 @@ function parseBookedInterval(slot: BookedSlot | string): { start: number; end: n
 }
 
 // Check if a slot overlaps with any booked interval (all in UTC ms)
+// Buffer time extends the blocked window on both sides
 function isSlotBlocked(
   slotStartUtc: number,
   slotDurationMins: number,
-  bookedIntervals: { start: number; end: number }[]
+  bookedIntervals: { start: number; end: number }[],
+  bufferMinutes: number = 0
 ): boolean {
   const slotEnd = slotStartUtc + slotDurationMins * 60 * 1000;
+  const bufferMs = bufferMinutes * 60 * 1000;
 
   for (const booked of bookedIntervals) {
-    if (slotStartUtc < booked.end && slotEnd > booked.start) {
+    // Extend the blocked window by buffer on both sides
+    const blockedStart = booked.start - bufferMs;
+    const blockedEnd = booked.end + bufferMs;
+
+    if (slotStartUtc < blockedEnd && slotEnd > blockedStart) {
       return true;
     }
   }
@@ -132,10 +139,15 @@ function generateSlots(
   durationMinutes: number,
   bookedIntervals: { start: number; end: number }[],
   coachTimezone: string,
-  studentTimezone: string
+  studentTimezone: string,
+  minNoticeMinutes: number = 0,
+  bufferMinutes: number = 0
 ): Slot[] {
   const slots: Slot[] = [];
   const nowUtc = Date.now();
+
+  // Calculate the earliest bookable time (now + min notice)
+  const earliestBookableTime = nowUtc + minNoticeMinutes * 60 * 1000;
 
   // Generate slots for next 7 days (in coach timezone)
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
@@ -164,8 +176,11 @@ function generateSlots(
         // Skip past slots (compare in UTC)
         if (slotStartUtc <= nowUtc) continue;
 
-        // Skip blocked slots
-        if (isSlotBlocked(slotStartUtc, durationMinutes, bookedIntervals)) continue;
+        // Skip slots that don't meet minimum notice requirement
+        if (slotStartUtc < earliestBookableTime) continue;
+
+        // Skip blocked slots (with buffer time applied)
+        if (isSlotBlocked(slotStartUtc, durationMinutes, bookedIntervals, bufferMinutes)) continue;
 
         // Format display in student timezone
         const slotDate = new Date(slotStartUtc);
@@ -215,12 +230,16 @@ export default function BookingForm({
   availability,
   confirmedBookings,
   pricing,
+  minNoticeMinutes = 0,
+  bufferMinutes = 0,
 }: {
   coachId: string;
   coachTimezone: string;
   availability: AvailabilityRule[];
   confirmedBookings: ConfirmedBooking[];
   pricing: { "60min": number; "90min": number };
+  minNoticeMinutes?: number;
+  bufferMinutes?: number;
 }) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -248,8 +267,8 @@ export default function BookingForm({
   }, [confirmedBookings]);
 
   const slots = useMemo(
-    () => generateSlots(availability, duration, bookedIntervals, coachTimezone, userTimezone),
-    [availability, duration, bookedIntervals, coachTimezone, userTimezone]
+    () => generateSlots(availability, duration, bookedIntervals, coachTimezone, userTimezone, minNoticeMinutes, bufferMinutes),
+    [availability, duration, bookedIntervals, coachTimezone, userTimezone, minNoticeMinutes, bufferMinutes]
   );
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
 
