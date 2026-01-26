@@ -52,7 +52,7 @@ export default async function RecentActivity({ timezone }: RecentActivityProps) 
   // RLS enforces coach_id filtering, no manual filter needed
   const { data: events } = await supabase
     .from("coach_notification_events")
-    .select("id, event_type, student_name, student_email, created_at, metadata")
+    .select("created_at, event_type, entity_table, entity_id, metadata")
     .order("created_at", { ascending: false })
     .limit(20);
 
@@ -71,20 +71,22 @@ export default async function RecentActivity({ timezone }: RecentActivityProps) 
     <div className="card p-4">
       <h3 className="text-sm font-semibold text-cb-text mb-3">Recent Activity</h3>
       <div className="space-y-2 max-h-48 overflow-y-auto">
-        {events.map((event) => {
+        {events.map((event, index) => {
           const { icon, color } = getEventIcon(event.event_type);
           const label = getEventLabel(event.event_type);
           const timeAgo = getRelativeTimeAgo(event.created_at, timezone);
+          const metadata = event.metadata as Record<string, unknown> | null;
+          const studentName = metadata?.student_name as string || "Student";
 
           return (
             <div
-              key={event.id}
+              key={`${event.entity_id}-${index}`}
               className={`flex items-start gap-2 p-2 rounded-lg ${color}`}
             >
               <span className="text-sm flex-shrink-0">{icon}</span>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-medium text-cb-text truncate">
-                  {label} - {event.student_name}
+                  {label} - {studentName}
                 </p>
                 <p className="text-xs text-cb-text-muted">{timeAgo}</p>
               </div>
