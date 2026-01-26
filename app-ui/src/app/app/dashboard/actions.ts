@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, getAppUrl } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { createCalendarEvent } from "@/lib/google/calendar";
 
@@ -59,6 +59,7 @@ export async function acceptBookingRequest(
   const studentEmail = booking.student_email;
   const studentName = booking.student_name;
   const studentTimezone = booking.student_timezone || "UTC";
+  const isReschedule = !!booking.reschedule_of;
 
   // Calculate scheduled times
   const scheduledStart = new Date(selectedDateTime);
@@ -93,6 +94,23 @@ export async function acceptBookingRequest(
       };
     }
     return { success: false, error: updateError.message };
+  }
+
+  // If this is a reschedule confirmation, cancel the original booking
+  if (isReschedule && booking.reschedule_of) {
+    const { error: cancelError } = await supabase
+      .from("booking_requests")
+      .update({
+        status: "cancelled",
+        scheduled_start: null,
+        scheduled_end: null,
+      })
+      .eq("id", booking.reschedule_of);
+
+    if (cancelError) {
+      console.error("Failed to cancel original booking:", cancelError);
+      // Continue anyway - the new booking is confirmed
+    }
   }
 
   // Only proceed with calendar + email AFTER DB update succeeds
@@ -142,10 +160,11 @@ export async function acceptBookingRequest(
 
   // Send confirmation email
   const formattedTime = formatDateTimeForEmail(scheduledStart.toISOString(), studentTimezone);
+  const rescheduleLink = getAppUrl(`/reschedule/${bookingId}`);
 
   let emailBody = `Hi ${studentName},
 
-Great news! Your session has been confirmed.
+Great news! Your ${isReschedule ? "rescheduled " : ""}session has been confirmed.
 
 Session details:
 - Coach: ${coachName}
@@ -161,6 +180,9 @@ Session details:
   emailBody += `
 
 See you at the board!
+
+Need to reschedule? Use this link:
+${rescheduleLink}
 
 Thanks for using ChessBooker.`;
 
