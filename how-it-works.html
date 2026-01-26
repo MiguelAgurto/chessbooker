@@ -3,12 +3,184 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How ChessBooker Works – From Request to Google Meet</title>
-  <meta name="description" content="Learn how ChessBooker automates your chess coaching workflow — from lesson requests to Google Calendar events and Meet links. No more back-and-forth.">
+  <title>How ChessBooker Works – Simple Booking for Chess Coaches</title>
+  <meta name="description" content="See how ChessBooker handles lesson requests, confirmations, and meeting links. A calm, organized workflow for chess coaches.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/styles.css">
+  <style>
+    /* Screenshot placeholder styles */
+    .screenshot-placeholder {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 2px dashed var(--color-border, #d1d5db);
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      text-align: center;
+      margin: 1.5rem 0;
+    }
+    .screenshot-placeholder .placeholder-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      opacity: 0.4;
+    }
+    .screenshot-placeholder .placeholder-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
+    }
+    .screenshot-placeholder .placeholder-label {
+      font-size: 0.875rem;
+      color: var(--color-text-muted, #6b7280);
+      font-weight: 500;
+    }
+    .screenshot-placeholder .placeholder-caption {
+      font-size: 0.75rem;
+      color: var(--color-text-muted, #6b7280);
+      margin-top: 0.5rem;
+      font-style: italic;
+    }
+
+    /* Flow section styles */
+    .flow-section {
+      padding: 5rem 0;
+    }
+    .flow-section.alt-bg {
+      background: var(--color-surface, #f9fafb);
+    }
+    .flow-grid {
+      display: grid;
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+    .flow-step {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+    .flow-step.reverse {
+      direction: rtl;
+    }
+    .flow-step.reverse > * {
+      direction: ltr;
+    }
+    .flow-step-content {
+      padding: 1rem 0;
+    }
+    .flow-step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      background: var(--color-coral, #e07a5f);
+      color: white;
+      border-radius: 50%;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 1rem;
+    }
+    .flow-step-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--color-heading, #1a1a2e);
+    }
+    .flow-step-content p {
+      color: var(--color-text, #4a4a68);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .flow-step-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .flow-step-content ul li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-text, #4a4a68);
+    }
+    .flow-step-content ul li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 6px;
+      height: 6px;
+      background: var(--color-coral, #e07a5f);
+      border-radius: 50%;
+    }
+
+    /* Capabilities grid */
+    .capabilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .capability-card {
+      background: white;
+      border: 1px solid var(--color-border, #e5e7eb);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .capability-card h4 {
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-heading, #1a1a2e);
+    }
+    .capability-card p {
+      color: var(--color-text-muted, #6b7280);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* After lesson section */
+    .after-lesson-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-top: 3rem;
+    }
+
+    /* Dashboard preview */
+    .dashboard-preview {
+      margin-top: 3rem;
+    }
+    .dashboard-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .dashboard-tab {
+      padding: 0.5rem 1rem;
+      background: var(--color-surface, #f3f4f6);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--color-text-muted, #6b7280);
+    }
+    .dashboard-tab.active {
+      background: var(--color-coral, #e07a5f);
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .flow-step {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+      }
+      .flow-step.reverse {
+        direction: ltr;
+      }
+      .after-lesson-content {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
 </head>
 <body>
 
@@ -37,231 +209,242 @@
   <section class="hiw-hero">
     <div class="container">
       <h1>How <span class="highlight">ChessBooker</span> Works</h1>
-      <p>From lesson request to Google Meet + Calendar — automated. No more back-and-forth messages.</p>
+      <p>Students request lessons. You confirm or decline. Meeting links are created automatically. No more back-and-forth messages.</p>
       <a href="#pilot" class="btn btn-primary">Join the Pilot</a>
     </div>
   </section>
 
-  <!-- Lesson Lifecycle Section -->
-  <section class="lifecycle-section" id="lifecycle">
+  <!-- For Students Section -->
+  <section class="flow-section" id="for-students">
     <div class="container">
       <div class="section-header">
-        <h2>The Full <span class="highlight">Lesson Lifecycle</span></h2>
-        <p>Every step from request to completion, handled automatically.</p>
+        <h2>For <span class="highlight">Students</span></h2>
+        <p>A simple, professional booking experience in three steps.</p>
       </div>
 
-      <div class="lifecycle-grid">
-        <!-- Step A -->
-        <div class="lifecycle-card">
-          <div class="lifecycle-header">
-            <div class="lifecycle-step">A</div>
-            <h3>Student sends a request</h3>
+      <div class="flow-grid">
+        <!-- Step 1 -->
+        <div class="flow-step">
+          <div class="flow-step-content">
+            <div class="flow-step-number">1</div>
+            <h3>Visit your booking page</h3>
+            <p>Each coach has a public booking page. Students see your availability, rates, and lesson options all in one place.</p>
+            <ul>
+              <li>Your profile and coaching details</li>
+              <li>Available time slots in the student's timezone</li>
+              <li>Session lengths you offer</li>
+            </ul>
           </div>
-          <ul>
-            <li>Student fills out your booking form with their name, email, and timezone</li>
-            <li>They pick preferred times and session length</li>
-            <li>Request goes straight to your dashboard for review</li>
-          </ul>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+              </div>
+              <div class="placeholder-label">Screenshot: Public Booking Page</div>
+              <div class="placeholder-caption">Clean booking form with coach profile and availability</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Step B -->
-        <div class="lifecycle-card">
-          <div class="lifecycle-header">
-            <div class="lifecycle-step">B</div>
-            <h3>You accept the lesson</h3>
+        <!-- Step 2 -->
+        <div class="flow-step reverse">
+          <div class="flow-step-content">
+            <div class="flow-step-number">2</div>
+            <h3>Submit a lesson request</h3>
+            <p>Students pick their preferred times and submit a request. No account required. Just name, email, and timezone.</p>
+            <ul>
+              <li>Select preferred time slots</li>
+              <li>Choose session duration</li>
+              <li>Add optional notes for the coach</li>
+            </ul>
           </div>
-          <ul>
-            <li>One click to confirm the booking</li>
-            <li>Google Calendar event is created automatically</li>
-            <li>Google Meet link is generated and attached</li>
-            <li>Both you and the student receive confirmation emails</li>
-          </ul>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+              </div>
+              <div class="placeholder-label">Screenshot: Request Form</div>
+              <div class="placeholder-caption">Simple form with time selection and student details</div>
+            </div>
+          </div>
         </div>
 
-        <!-- Step C -->
-        <div class="lifecycle-card">
-          <div class="lifecycle-header">
-            <div class="lifecycle-step">C</div>
-            <h3>Reschedule if needed</h3>
+        <!-- Step 3 -->
+        <div class="flow-step">
+          <div class="flow-step-content">
+            <div class="flow-step-number">3</div>
+            <h3>Get confirmed and join</h3>
+            <p>Once you confirm the lesson, students receive an email with all the details and a single "Join lesson" button when it's time.</p>
+            <ul>
+              <li>Confirmation email with lesson details</li>
+              <li>Calendar invite (if you use Google Calendar)</li>
+              <li>One-click access to join the video call</li>
+            </ul>
           </div>
-          <ul>
-            <li>Pick a new date and time from your dashboard</li>
-            <li>Google Calendar event updates automatically</li>
-            <li>Meet link stays the same — no confusion</li>
-            <li>Reschedule emails sent to both parties</li>
-          </ul>
-        </div>
-
-        <!-- Step D -->
-        <div class="lifecycle-card">
-          <div class="lifecycle-header">
-            <div class="lifecycle-step">D</div>
-            <h3>Cancel when necessary</h3>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+              </div>
+              <div class="placeholder-label">Screenshot: Upcoming Lessons</div>
+              <div class="placeholder-caption">Student view with "Join lesson" button</div>
+            </div>
           </div>
-          <ul>
-            <li>Cancel a session with one click</li>
-            <li>Google Calendar event is removed automatically</li>
-            <li>Cancellation emails notify the student</li>
-            <li>Your booking still updates even if Google is down</li>
-          </ul>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Coach Experience Section -->
-  <section class="coach-ux-section">
+  <!-- For Coaches Section -->
+  <section class="flow-section alt-bg" id="for-coaches">
     <div class="container">
       <div class="section-header">
-        <h2>Built for <span class="highlight">Coaches</span></h2>
-        <p>A simple, focused dashboard that helps you manage lessons efficiently.</p>
+        <h2>For <span class="highlight">Coaches</span></h2>
+        <p>Stay in control of your schedule. Confirm lessons on your terms.</p>
       </div>
 
-      <div class="coach-ux-grid">
-        <div class="coach-ux-card">
-          <div class="coach-ux-icon">
-            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
-          </div>
-          <h4>Meet link visible</h4>
-          <p>See your video call link inside each booking</p>
+      <!-- Pending Requests -->
+      <div class="flow-step" style="margin-top: 3rem;">
+        <div class="flow-step-content">
+          <h3>Review pending requests</h3>
+          <p>When a student requests a lesson, it appears in your dashboard. You decide whether to confirm or decline.</p>
+          <ul>
+            <li>See student details and requested times</li>
+            <li>Confirm with one click</li>
+            <li>Decline if the time doesn't work</li>
+            <li>Students are notified either way</li>
+          </ul>
         </div>
-
-        <div class="coach-ux-card">
-          <div class="coach-ux-icon">
-            <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+        <div class="flow-step-visual">
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+            </div>
+            <div class="placeholder-label">Screenshot: Confirm / Decline Request</div>
+            <div class="placeholder-caption">Pending request with student info and action buttons</div>
           </div>
-          <h4>Copy & Open</h4>
-          <p>Quick actions to copy or open your Meet link</p>
         </div>
+      </div>
 
-        <div class="coach-ux-card">
-          <div class="coach-ux-icon">
-            <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
-          </div>
-          <h4>Open in Calendar</h4>
-          <p>Jump to the session in Google Calendar</p>
+      <!-- Meeting Links -->
+      <div class="flow-step reverse" style="margin-top: 3rem;">
+        <div class="flow-step-content">
+          <h3>Automatic meeting links</h3>
+          <p>When you confirm a lesson, ChessBooker creates a Google Calendar event with a Google Meet link automatically. No extra steps.</p>
+          <p>Not using Google? Enter your own Zoom, Discord, or other meeting link when confirming.</p>
+          <ul>
+            <li>Google Calendar + Meet created automatically</li>
+            <li>Manual link option for Zoom, Discord, or others</li>
+            <li>Meeting link visible to both you and the student</li>
+          </ul>
         </div>
-
-        <div class="coach-ux-card">
-          <div class="coach-ux-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
+        <div class="flow-step-visual">
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
+            </div>
+            <div class="placeholder-label">Screenshot: Calendar + Meeting Link</div>
+            <div class="placeholder-caption">Confirmed lesson with Google Meet link attached</div>
           </div>
-          <h4>Always works</h4>
-          <p>Booking saves even if Google is temporarily down</p>
+        </div>
+      </div>
+
+      <!-- Dashboard Overview -->
+      <div class="dashboard-preview">
+        <h3 style="text-align: center; margin-bottom: 1.5rem;">Your dashboard at a glance</h3>
+        <div class="dashboard-tabs" style="justify-content: center;">
+          <span class="dashboard-tab active">Upcoming</span>
+          <span class="dashboard-tab">Pending</span>
+          <span class="dashboard-tab">Past</span>
+          <span class="dashboard-tab">Activity</span>
+        </div>
+        <div class="screenshot-placeholder">
+          <div class="placeholder-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <div class="placeholder-label">Screenshot: Coach Dashboard Overview</div>
+          <div class="placeholder-caption">Tabs for Upcoming, Pending, Past lessons, and recent Activity</div>
+        </div>
+      </div>
+
+      <!-- Capabilities -->
+      <div class="capabilities-grid">
+        <div class="capability-card">
+          <h4>Upcoming lessons</h4>
+          <p>See all confirmed lessons in one place. Join with a single click when it's time.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Pending requests</h4>
+          <p>Review and respond to new lesson requests. Confirm or decline with full context.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Recent activity</h4>
+          <p>A timeline of confirmations, cancellations, and updates. Know what's happening at a glance.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Reschedule or cancel</h4>
+          <p>Plans change. Update lesson times or cancel entirely. Students are notified automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- After the Lesson Section -->
+  <section class="flow-section" id="after-lesson">
+    <div class="container">
+      <div class="section-header">
+        <h2>After the <span class="highlight">Lesson</span></h2>
+        <p>Help students remember what they learned.</p>
+      </div>
+
+      <div class="after-lesson-content">
+        <div>
+          <h3>Add notes, send a recap</h3>
+          <p>After a lesson is complete, add your notes about what was covered, key takeaways, or homework for the student.</p>
+          <p>With one click, send a recap email so students have a record of their progress.</p>
+          <ul>
+            <li>Add private notes after each lesson</li>
+            <li>Send a student recap with key points</li>
+            <li>Build a history of lessons and progress</li>
+          </ul>
+        </div>
+        <div>
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+            </div>
+            <div class="placeholder-label">Screenshot: Past Lessons with Notes</div>
+            <div class="placeholder-caption">Completed lesson with coach notes and "Send recap" option</div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Google Integration Section -->
-  <section class="integration-section">
+  <section class="flow-section alt-bg">
     <div class="container">
       <div class="section-header">
-        <h2>Google Calendar & <span class="highlight">Meet</span></h2>
-        <p>Connect once, automate forever.</p>
+        <h2>Google Calendar <span class="highlight">Integration</span></h2>
+        <p>Connect once. Events and meeting links are created automatically.</p>
       </div>
 
-      <div class="integration-card">
-        <div class="integration-step">
-          <div class="integration-num">1</div>
-          <div>
-            <h4>Connect your Google account once</h4>
-            <p>One click from your Settings page. We only ask for calendar access — not your email or other data.</p>
-          </div>
+      <div class="capabilities-grid" style="max-width: 900px; margin: 3rem auto 0;">
+        <div class="capability-card">
+          <h4>Connect your Google account</h4>
+          <p>One-time setup from your settings. We only request calendar access, nothing else.</p>
         </div>
-
-        <div class="integration-step">
-          <div class="integration-num">2</div>
-          <div>
-            <h4>Your data stays secure</h4>
-            <p>Your Google credentials are stored securely and never exposed. You can disconnect anytime.</p>
-          </div>
+        <div class="capability-card">
+          <h4>Events created on confirm</h4>
+          <p>When you confirm a lesson, a calendar event with Google Meet link appears in your calendar.</p>
         </div>
-
-        <div class="integration-step">
-          <div class="integration-num">3</div>
-          <div>
-            <h4>Events created automatically</h4>
-            <p>Accept a booking → calendar event with Meet link appears instantly. Reschedule or cancel → the event updates or deletes automatically.</p>
-          </div>
+        <div class="capability-card">
+          <h4>Updates sync automatically</h4>
+          <p>Reschedule or cancel a lesson, and the calendar event updates or removes itself.</p>
         </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Reliability Section -->
-  <section class="reliability-section">
-    <div class="container">
-      <div class="section-header">
-        <h2>Reliability <span class="highlight">Promise</span></h2>
-        <p>Your bookings always go through.</p>
-      </div>
-
-      <div class="reliability-grid">
-        <div class="reliability-card">
-          <div class="reliability-icon">
-            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-          </div>
-          <h4>Google down? No problem.</h4>
-          <p>If Google's servers are slow or unavailable, your booking still saves. Calendar sync happens when it can.</p>
-        </div>
-
-        <div class="reliability-card">
-          <div class="reliability-icon">
-            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-          </div>
-          <h4>Emails always send</h4>
-          <p>Confirmation and notification emails are sent independently. You and your student stay informed.</p>
-        </div>
-
-        <div class="reliability-card">
-          <div class="reliability-icon">
-            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-          </div>
-          <h4>Your flow continues</h4>
-          <p>Any sync issues are handled behind the scenes. Your dashboard keeps working without interruption.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Roadmap Section -->
-  <section class="roadmap-section">
-    <div class="container">
-      <div class="section-header">
-        <h2>What's <span class="highlight">Next</span></h2>
-        <p>Features we're building for coaches like you.</p>
-      </div>
-
-      <div class="roadmap-card">
-        <div class="roadmap-item">
-          <div class="roadmap-icon">
-            <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
-          </div>
-          <div>
-            <h4>Payments (Stripe)</h4>
-            <p>Students pay when booking. You confirm after payment.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item">
-          <div class="roadmap-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
-          </div>
-          <div>
-            <h4>Reminders</h4>
-            <p>Automatic 24-hour and 1-hour email reminders before sessions.</p>
-          </div>
-        </div>
-
-        <div class="roadmap-item muted">
-          <div class="roadmap-icon muted">
-            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
-          </div>
-          <div>
-            <h4>Packages & Subscriptions</h4>
-            <p>Sell bundles of lessons or recurring coaching plans. (Coming later)</p>
-          </div>
+        <div class="capability-card">
+          <h4>Optional, not required</h4>
+          <p>Google Calendar is helpful but not mandatory. You can use ChessBooker without it.</p>
         </div>
       </div>
     </div>
@@ -271,38 +454,37 @@
   <section class="faq-section-hiw" id="faq-hiw">
     <div class="container">
       <div class="section-header">
-        <h2>Frequently Asked <span class="highlight">Questions</span></h2>
-        <p>Common questions from coaches.</p>
+        <h2>Common <span class="highlight">Questions</span></h2>
       </div>
 
       <div class="faq-accordion">
         <div class="faq-item-acc">
           <button class="faq-question">
-            Do I need to pay to use ChessBooker during the pilot?
+            Is ChessBooker free during the pilot?
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>No. The pilot is completely free. We're looking for feedback from real coaches to improve the product before launch.</p>
+            <p>Yes. The pilot is completely free. We're gathering feedback from coaches to improve the product before launch.</p>
           </div>
         </div>
 
         <div class="faq-item-acc">
           <button class="faq-question">
-            What happens if Google Calendar fails during a booking?
+            What if I don't use Google Calendar?
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>Your booking still goes through. Calendar and Meet link creation are attempted, but failures never block the booking. Emails are still sent, and you can manually share a meeting link if needed.</p>
+            <p>No problem. When confirming a lesson, you can enter your own meeting link (Zoom, Discord, or any other platform). Google Calendar integration is optional.</p>
           </div>
         </div>
 
         <div class="faq-item-acc">
           <button class="faq-question">
-            Can students see my full calendar?
+            Can I decline a lesson request?
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>No. Students only see the availability windows you explicitly set in your schedule. Your actual Google Calendar events remain completely private.</p>
+            <p>Yes. You have full control over which requests you accept. If a time doesn't work or you're not available, decline the request and the student will be notified.</p>
           </div>
         </div>
 
@@ -312,27 +494,27 @@
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>Payments are not yet implemented. Currently, you handle payment collection outside of ChessBooker (PayPal, bank transfer, etc.). Stripe integration for pay-before-accept is on the roadmap.</p>
+            <p>Currently, you handle payment collection outside of ChessBooker (PayPal, bank transfer, etc.). Integrated payments are on the roadmap.</p>
           </div>
         </div>
 
         <div class="faq-item-acc">
           <button class="faq-question">
-            Can I use ChessBooker without connecting Google Calendar?
+            Can students see my calendar?
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>Yes. Google Calendar integration is optional. Without it, bookings work normally — you just won't get automatic calendar events and Meet links.</p>
+            <p>No. Students only see the availability windows you set in your schedule. Your actual Google Calendar events remain private.</p>
           </div>
         </div>
 
         <div class="faq-item-acc">
           <button class="faq-question">
-            Can I reschedule or cancel a booking after accepting it?
+            What happens if I need to reschedule or cancel?
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>Yes. You can reschedule to a new time or cancel entirely. Both actions update the Google Calendar event (if connected) and send notification emails to the student.</p>
+            <p>You can reschedule to a new time or cancel entirely from your dashboard. The student receives a notification, and your Google Calendar event updates automatically.</p>
           </div>
         </div>
 
@@ -342,17 +524,7 @@
             <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
           </button>
           <div class="faq-answer">
-            <p>Yes. We only request calendar access (not email or other data). Your credentials are stored securely and used only to create events. You can disconnect anytime from Settings.</p>
-          </div>
-        </div>
-
-        <div class="faq-item-acc">
-          <button class="faq-question">
-            What information do students provide when booking?
-            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
-          </button>
-          <div class="faq-answer">
-            <p>Students provide their name, email, timezone, preferred time slots, and session duration. This information is stored securely and shown to you when they submit a request.</p>
+            <p>Yes. We only request calendar access (not email or other data). Your credentials are stored securely and you can disconnect anytime from Settings.</p>
           </div>
         </div>
       </div>
