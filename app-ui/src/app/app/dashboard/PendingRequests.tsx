@@ -21,6 +21,9 @@ interface PendingRequest {
   preferred_time_2?: string | null;
   preferred_time_3?: string | null;
   created_at: string;
+  status: string;
+  expires_at?: string | null;
+  reschedule_of?: string | null;
 }
 
 interface PendingRequestsProps {
@@ -368,17 +371,31 @@ export default function PendingRequests({
         {requests.map((request) => {
           const times = getAvailableTimes(request);
           const isLegacyOnly = isLegacyOnlyRequest(request);
+          const isExpired = request.status === "expired";
+          const isReschedule = !!request.reschedule_of;
 
           return (
             <div
               key={request.id}
-              className="p-4 bg-cb-bg rounded-lg"
+              className={`p-4 bg-cb-bg rounded-lg ${isExpired ? "opacity-60" : ""}`}
             >
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-cb-text">
-                    {request.student_name}
-                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-medium text-cb-text">
+                      {request.student_name}
+                    </p>
+                    {isExpired && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded">
+                        Expired
+                      </span>
+                    )}
+                    {isReschedule && (
+                      <span className="px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded">
+                        Reschedule
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-cb-text-muted truncate">
                     {request.student_email}
                     {request.student_timezone && (
@@ -409,10 +426,27 @@ export default function PendingRequests({
                       </p>
                     )}
                   </div>
+
+                  {request.expires_at && !isExpired && (
+                    <p className="text-xs text-cb-text-muted mt-2">
+                      Expires: {new Date(request.expires_at).toLocaleString("en-US", {
+                        timeZone: timezone,
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex gap-2 sm:flex-col">
-                  {isLegacyOnly ? (
+                  {isExpired ? (
+                    <div className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-gray-500 bg-gray-100 rounded-lg cursor-not-allowed text-center">
+                      Request expired
+                    </div>
+                  ) : isLegacyOnly ? (
                     <div
                       className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg cursor-not-allowed text-center"
                       title="This request uses free-text times. Please confirm manually."
@@ -425,16 +459,18 @@ export default function PendingRequests({
                       disabled={loading === request.id}
                       className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                     >
-                      Accept
+                      {isReschedule ? "Confirm Reschedule" : "Accept"}
                     </button>
                   )}
-                  <button
-                    onClick={() => handleDecline(request.id)}
-                    disabled={loading === request.id}
-                    className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
-                  >
-                    {loading === request.id ? "..." : "Decline"}
-                  </button>
+                  {!isExpired && (
+                    <button
+                      onClick={() => handleDecline(request.id)}
+                      disabled={loading === request.id}
+                      className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      {loading === request.id ? "..." : "Decline"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
