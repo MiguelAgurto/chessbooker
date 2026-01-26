@@ -47,20 +47,20 @@ export default async function DashboardPage() {
     .order("scheduled_start", { ascending: false })
     .limit(20);
 
-  // Fetch all completed lessons to compute last lesson date per student
-  const { data: completedLessons } = await supabase
+  // Fetch all confirmed/completed lessons for student history and retention signals
+  const { data: allLessons } = await supabase
     .from("booking_requests")
-    .select("student_email, scheduled_start")
+    .select("*")
     .eq("coach_id", user!.id)
-    .eq("status", "completed")
+    .in("status", ["confirmed", "completed"])
     .order("scheduled_start", { ascending: false });
 
   // Build map of student_email -> most recent completed lesson date
   const studentLastLesson: Record<string, string> = {};
-  if (completedLessons) {
-    for (const lesson of completedLessons) {
-      // Only keep the first (most recent) entry per student
-      if (!studentLastLesson[lesson.student_email]) {
+  if (allLessons) {
+    for (const lesson of allLessons) {
+      // Only consider completed lessons for retention signals
+      if (lesson.status === "completed" && !studentLastLesson[lesson.student_email]) {
         studentLastLesson[lesson.student_email] = lesson.scheduled_start;
       }
     }
@@ -145,6 +145,7 @@ export default async function DashboardPage() {
           lessons={pastLessons || []}
           timezone={timezone}
           studentLastLesson={studentLastLesson}
+          allLessons={allLessons || []}
         />
       </div>
 

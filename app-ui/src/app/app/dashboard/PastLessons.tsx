@@ -26,6 +26,7 @@ interface PastLessonsProps {
   lessons: PastLesson[];
   timezone: string;
   studentLastLesson?: Record<string, string>; // student_email -> last completed lesson date
+  allLessons?: PastLesson[]; // All lessons for student history view
 }
 
 // Actions Modal - renders as overlay, not clipped by scroll container
@@ -364,15 +365,127 @@ function RecapModal({
   );
 }
 
+// Student History Modal
+function StudentHistoryModal({
+  studentName,
+  studentEmail,
+  lessons,
+  timezone,
+  onClose,
+}: {
+  studentName: string;
+  studentEmail: string;
+  lessons: PastLesson[];
+  timezone: string;
+  onClose: () => void;
+}) {
+  // Filter lessons for this student and sort by date (most recent first)
+  const studentLessons = lessons
+    .filter((l) => l.student_email === studentEmail)
+    .sort((a, b) => new Date(b.scheduled_start).getTime() - new Date(a.scheduled_start).getTime());
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg w-full max-w-lg mx-4 shadow-xl max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-cb-border-light flex-shrink-0">
+          <div>
+            <h3 className="text-base font-semibold text-cb-text">
+              Student History
+            </h3>
+            <p className="text-sm text-cb-text-secondary mt-0.5">
+              {studentName}
+            </p>
+            <p className="text-xs text-cb-text-muted">
+              {studentEmail}
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-cb-bg transition-colors text-cb-text-muted"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Lesson list */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {studentLessons.length === 0 ? (
+            <p className="text-sm text-cb-text-muted text-center py-4">
+              No lessons found for this student.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {studentLessons.map((lesson) => {
+                const dateTime = formatDateTimeForCoach(lesson.scheduled_start, timezone);
+                const isCompleted = lesson.status === "completed";
+
+                return (
+                  <div key={lesson.id} className="p-3 bg-cb-bg rounded-lg">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-cb-text">
+                          {dateTime}
+                        </p>
+                        <p className="text-xs text-cb-text-muted">
+                          {lesson.duration_minutes} min
+                        </p>
+                        <div className="flex items-center flex-wrap gap-2 mt-1.5">
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            isCompleted
+                              ? "bg-green-100 text-green-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}>
+                            {isCompleted ? "Completed" : "Confirmed"}
+                          </span>
+                          {lesson.recap_sent_at && (
+                            <span className="text-xs text-green-600">Recap sent</span>
+                          )}
+                        </div>
+                        {lesson.coach_notes && (
+                          <p className="text-xs text-cb-text-muted mt-2 italic border-l-2 border-cb-border pl-2">
+                            {lesson.coach_notes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-cb-border-light flex-shrink-0">
+          <p className="text-xs text-cb-text-muted text-center">
+            {studentLessons.length} lesson{studentLessons.length !== 1 ? "s" : ""} total
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PastLessons({
   lessons,
   timezone,
   studentLastLesson = {},
+  allLessons = [],
 }: PastLessonsProps) {
   const router = useRouter();
   const [actionsModal, setActionsModal] = useState<PastLesson | null>(null);
   const [notesModal, setNotesModal] = useState<PastLesson | null>(null);
   const [recapModal, setRecapModal] = useState<PastLesson | null>(null);
+  const [historyModal, setHistoryModal] = useState<{ name: string; email: string } | null>(null);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -479,9 +592,12 @@ export default function PastLessons({
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-cb-text">
+                  <button
+                    onClick={() => setHistoryModal({ name: lesson.student_name, email: lesson.student_email })}
+                    className="text-sm font-medium text-cb-text hover:text-coral transition-colors text-left"
+                  >
                     {lesson.student_name}
-                  </p>
+                  </button>
                   <p className="text-xs text-cb-text-muted">
                     {dateTime} · {lesson.duration_minutes} min
                   </p>
@@ -558,6 +674,17 @@ export default function PastLessons({
           timezone={timezone}
           onClose={() => setRecapModal(null)}
           onSuccess={() => router.refresh()}
+        />
+      )}
+
+      {/* Student History Modal */}
+      {historyModal && (
+        <StudentHistoryModal
+          studentName={historyModal.name}
+          studentEmail={historyModal.email}
+          lessons={allLessons}
+          timezone={timezone}
+          onClose={() => setHistoryModal(null)}
         />
       )}
     </div>
