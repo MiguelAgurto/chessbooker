@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { sendEmail, getAppUrl } from "@/lib/email";
 import { revalidatePath } from "next/cache";
 import { createCalendarEvent } from "@/lib/google/calendar";
+import { enqueueNotificationEvent } from "@/lib/notifications";
 
 function formatDateTimeForEmail(datetime: string, timezone: string): string {
   const date = new Date(datetime);
@@ -196,6 +197,19 @@ Thanks for using ChessBooker.`;
     console.error("Failed to send confirmation email:", emailError);
   }
 
+  // Enqueue notification event
+  await enqueueNotificationEvent({
+    coachId: booking.coach_id,
+    eventType: isReschedule ? "reschedule_confirmed" : "request_confirmed",
+    bookingId,
+    studentName,
+    studentEmail,
+    metadata: {
+      scheduledStart: scheduledStart.toISOString(),
+      durationMinutes,
+    },
+  });
+
   revalidatePath("/app");
   revalidatePath("/app/requests");
 
@@ -250,6 +264,15 @@ Thanks for using ChessBooker.`;
   } catch (emailError) {
     console.error("Failed to send decline email:", emailError);
   }
+
+  // Enqueue notification event
+  await enqueueNotificationEvent({
+    coachId: booking.coach_id,
+    eventType: "request_declined",
+    bookingId,
+    studentName,
+    studentEmail,
+  });
 
   revalidatePath("/app");
   revalidatePath("/app/requests");

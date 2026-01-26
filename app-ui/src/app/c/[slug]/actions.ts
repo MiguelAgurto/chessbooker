@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail, getAppUrl } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { enqueueNotificationEvent } from "@/lib/notifications";
 
 interface SlotData {
   datetime: string;
@@ -46,17 +47,21 @@ export async function createBookingRequest({
   const scheduledEnd = new Date(scheduledStart.getTime() + selectedSlot.duration_minutes * 60 * 1000);
 
   // Insert the booking request with scheduled_start/end to immediately hold the slot
-  const { error: insertError } = await supabase.from("booking_requests").insert({
-    coach_id: coachId,
-    student_name: studentName,
-    student_email: studentEmail,
-    student_timezone: studentTimezone,
-    requested_times: requestedTimes,
-    scheduled_start: scheduledStart.toISOString(),
-    scheduled_end: scheduledEnd.toISOString(),
-    duration_minutes: selectedSlot.duration_minutes,
-    status: "pending",
-  });
+  const { data: insertedBooking, error: insertError } = await supabase
+    .from("booking_requests")
+    .insert({
+      coach_id: coachId,
+      student_name: studentName,
+      student_email: studentEmail,
+      student_timezone: studentTimezone,
+      requested_times: requestedTimes,
+      scheduled_start: scheduledStart.toISOString(),
+      scheduled_end: scheduledEnd.toISOString(),
+      duration_minutes: selectedSlot.duration_minutes,
+      status: "pending",
+    })
+    .select("id")
+    .single();
 
   if (insertError) {
     // Check for exclusion constraint violation (slot already taken)
@@ -146,6 +151,19 @@ Reply directly to this email to contact the student.`,
   }
   // Also revalidate the coach dashboard
   revalidatePath("/app");
+
+  // Enqueue notification event
+  await enqueueNotificationEvent({
+    coachId,
+    eventType: "request_created",
+    bookingId: insertedBooking?.id || "",
+    studentName,
+    studentEmail,
+    metadata: {
+      requestedTime: slot.datetime,
+      durationMinutes: duration,
+    },
+  });
 
   return { success: true };
 }

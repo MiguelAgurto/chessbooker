@@ -5,6 +5,7 @@ import CoachHeader from "./dashboard/CoachHeader";
 import UpcomingLessons from "./dashboard/UpcomingLessons";
 import PastLessons from "./dashboard/PastLessons";
 import PendingRequests from "./dashboard/PendingRequests";
+import RecentActivity from "./dashboard/RecentActivity";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -98,6 +99,14 @@ export default async function DashboardPage() {
     .eq("status", "completed")
     .gte("scheduled_start", firstDayOfMonth.toISOString());
 
+  // Fetch recent notification events for activity feed
+  const { data: recentEvents } = await supabase
+    .from("coach_notification_events")
+    .select("id, event_type, student_name, student_email, created_at, metadata")
+    .eq("coach_id", user!.id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+
   const nextLesson = upcomingLessons?.[0] || null;
 
   return (
@@ -161,12 +170,15 @@ export default async function DashboardPage() {
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Upcoming Lessons */}
         <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} lastLessonDate={lastLessonDate} />
 
         {/* Pending Requests */}
         <PendingRequests requests={pendingRequests || []} timezone={timezone} />
+
+        {/* Recent Activity */}
+        <RecentActivity events={recentEvents || []} timezone={timezone} />
       </div>
 
       {/* Past Lessons */}

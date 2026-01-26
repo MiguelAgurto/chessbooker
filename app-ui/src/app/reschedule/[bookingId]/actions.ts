@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail, getAppUrl } from "@/lib/email";
 import { revalidatePath } from "next/cache";
+import { enqueueNotificationEvent } from "@/lib/notifications";
 
 interface SlotData {
   datetime: string;
@@ -75,18 +76,22 @@ export async function createRescheduleRequest({
   const scheduledEnd = new Date(scheduledStart.getTime() + selectedSlot.duration_minutes * 60 * 1000);
 
   // Insert the reschedule request with scheduled times to hold the new slot
-  const { error: insertError } = await supabase.from("booking_requests").insert({
-    coach_id: coachId,
-    student_name: studentName,
-    student_email: studentEmail,
-    student_timezone: studentTimezone,
-    requested_times: requestedTimes,
-    scheduled_start: scheduledStart.toISOString(),
-    scheduled_end: scheduledEnd.toISOString(),
-    duration_minutes: selectedSlot.duration_minutes,
-    status: "pending",
-    reschedule_of: originalBookingId,
-  });
+  const { data: insertedBooking, error: insertError } = await supabase
+    .from("booking_requests")
+    .insert({
+      coach_id: coachId,
+      student_name: studentName,
+      student_email: studentEmail,
+      student_timezone: studentTimezone,
+      requested_times: requestedTimes,
+      scheduled_start: scheduledStart.toISOString(),
+      scheduled_end: scheduledEnd.toISOString(),
+      duration_minutes: selectedSlot.duration_minutes,
+      status: "pending",
+      reschedule_of: originalBookingId,
+    })
+    .select("id")
+    .single();
 
   if (insertError) {
     // Check for exclusion constraint violation
@@ -179,6 +184,20 @@ Reply directly to this email to contact the student.`,
     revalidatePath(`/c/${coach.slug}`);
   }
   revalidatePath("/app");
+
+  // Enqueue notification event
+  await enqueueNotificationEvent({
+    coachId,
+    eventType: "reschedule_requested",
+    bookingId: insertedBooking?.id || "",
+    studentName,
+    studentEmail,
+    metadata: {
+      originalBookingId,
+      requestedTime: selectedSlot.datetime,
+      durationMinutes: selectedSlot.duration_minutes,
+    },
+  });
 
   return { success: true };
 }
