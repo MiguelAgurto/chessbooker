@@ -273,7 +273,14 @@ export default function PendingRequests({
     const result = await acceptBookingRequest(requestId, selectedTime, duration);
 
     if (!result.success) {
-      setError(result.error || "Failed to accept booking");
+      // Handle overlap error specially - close modal and show message
+      if (result.isOverlapError) {
+        setAcceptModalRequest(null);
+        setError(result.error || "That time was just taken. Please pick another slot.");
+        router.refresh(); // Refresh to update availability
+      } else {
+        setError(result.error || "Failed to accept booking");
+      }
     } else {
       setAcceptModalRequest(null);
       router.refresh();
@@ -343,8 +350,17 @@ export default function PendingRequests({
       </h2>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg flex-shrink-0">
-          {error}
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex-shrink-0 flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2">
+            <span className="flex-shrink-0">⚠️</span>
+            <span>{error}</span>
+          </div>
+          <button
+            onClick={() => setError(null)}
+            className="text-amber-600 hover:text-amber-800 flex-shrink-0"
+          >
+            ✕
+          </button>
         </div>
       )}
 

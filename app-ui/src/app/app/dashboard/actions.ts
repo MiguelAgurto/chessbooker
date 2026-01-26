@@ -32,7 +32,7 @@ export async function acceptBookingRequest(
   bookingId: string,
   selectedDateTime: string,
   durationMinutes: number
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; error?: string; isOverlapError?: boolean }> {
   // Validate selectedDateTime before proceeding
   if (!isValidISOTimestamp(selectedDateTime)) {
     return {
@@ -83,6 +83,15 @@ export async function acceptBookingRequest(
     .eq("id", bookingId);
 
   if (updateError) {
+    // Check for Postgres exclusion constraint violation (23P01)
+    // This happens when trying to book an overlapping time slot
+    if (updateError.code === "23P01" || updateError.message?.includes("exclusion")) {
+      return {
+        success: false,
+        error: "That time was just taken. Please pick another slot.",
+        isOverlapError: true,
+      };
+    }
     return { success: false, error: updateError.message };
   }
 
