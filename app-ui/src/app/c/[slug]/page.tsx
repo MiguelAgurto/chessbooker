@@ -169,7 +169,7 @@ export default async function PublicBookingPage({ params }: PageProps) {
             <div className="w-8 border-t border-dashed border-cb-border"></div>
             <div className="flex-1 text-center">
               <div className="w-10 h-10 rounded-full bg-coral-light text-coral flex items-center justify-center mx-auto mb-2 text-sm font-semibold">2</div>
-              <p className="text-xs text-cb-text-secondary leading-tight">Your coach confirms the session</p>
+              <p className="text-xs text-cb-text-secondary leading-tight">Your coach confirms the lesson</p>
             </div>
             <div className="w-8 border-t border-dashed border-cb-border"></div>
             <div className="flex-1 text-center">

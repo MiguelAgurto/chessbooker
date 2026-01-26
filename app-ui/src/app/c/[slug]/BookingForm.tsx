@@ -303,7 +303,7 @@ export default function BookingForm({
           </div>
           <h3 className="text-lg font-semibold text-cb-text mb-2">Request sent!</h3>
           <p className="text-cb-text-secondary text-sm mb-3">
-            {coachName} will confirm your session shortly.
+            {coachName} will confirm your lesson shortly.
           </p>
           <p className="text-cb-text-muted text-xs">
             Check your inbox at {studentEmail} for confirmation details.
@@ -317,7 +317,7 @@ export default function BookingForm({
     <div className="space-y-6">
       {/* Session Selection */}
       <div className="card p-6">
-        <h2 className="text-lg font-semibold text-cb-text mb-1">Choose your session</h2>
+        <h2 className="text-lg font-semibold text-cb-text mb-1">Choose your lesson</h2>
         <p className="text-sm text-cb-text-muted mb-4">Select the length that works best for you</p>
         <div className="grid grid-cols-2 gap-3">
           <button
@@ -386,7 +386,7 @@ export default function BookingForm({
             className="input-field"
           />
           <p className="mt-1.5 text-sm text-cb-text-secondary">
-            Used only to confirm your session
+            Used only to confirm your lesson
           </p>
         </div>
 
@@ -396,7 +396,7 @@ export default function BookingForm({
 
           {/* Timezone info - reassuring for international students */}
           <p className="text-sm text-cb-text-secondary mb-1">
-            All times shown in your local timezone ({userTimezone})
+            🕐 All times shown in your local timezone ({userTimezone})
           </p>
 
           {/* Next available - secondary context */}
@@ -463,7 +463,7 @@ export default function BookingForm({
             {loading ? "Sending..." : "Request Session"}
           </button>
           <p className="mt-3 text-sm text-cb-text-secondary text-center">
-            You&apos;ll receive a confirmation email once {coachName} confirms your session.
+            You&apos;ll receive a confirmation email once {coachName} confirms your lesson.
           </p>
         </div>
       </form>
