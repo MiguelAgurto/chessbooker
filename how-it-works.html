@@ -3,1034 +3,181 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How ChessBooker Works – Professional Booking for Chess Coaches</title>
-  <meta name="description" content="See how ChessBooker handles lesson requests, confirmations, calendar events, and meeting links. A calm, professional workflow for chess coaches.">
+  <title>How ChessBooker Works – Simple Booking for Chess Coaches</title>
+  <meta name="description" content="See how ChessBooker handles lesson requests, confirmations, and meeting links. A calm, organized workflow for chess coaches.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/assets/css/styles.css">
   <style>
-    /* ============================================
-       CSS VARIABLES
-       ============================================ */
-    :root {
-      --mock-bg: #f8fafc;
-      --mock-border: #e2e8f0;
-      --mock-card-bg: #ffffff;
-      --mock-shadow: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
-      --mock-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
-      --mock-text: #1e293b;
-      --mock-text-muted: #64748b;
-      --mock-text-light: #94a3b8;
-      --mock-primary: #e07a5f;
-      --mock-primary-hover: #d16a4f;
-      --mock-success: #10b981;
-      --mock-warning: #f59e0b;
-      --mock-info: #3b82f6;
-
-      /* Layout */
-      --content-max-width: 1040px;
-      --section-padding: 6rem;
-      --section-padding-sm: 4rem;
+    /* Screenshot placeholder styles */
+    .screenshot-placeholder {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 2px dashed var(--color-border, #d1d5db);
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      text-align: center;
+      margin: 1.5rem 0;
     }
-
-    /* ============================================
-       PAGE LAYOUT SYSTEM
-       ============================================ */
-    .hiw-container {
-      max-width: var(--content-max-width);
-      margin: 0 auto;
-      padding: 0 1.5rem;
+    .screenshot-placeholder .placeholder-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 1rem;
+      opacity: 0.4;
     }
-
-    /* ============================================
-       TYPOGRAPHY HIERARCHY
-       ============================================ */
-    .hiw-h1 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(2.25rem, 5vw, 3.25rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      line-height: 1.15;
-      letter-spacing: -0.02em;
+    .screenshot-placeholder .placeholder-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: currentColor;
     }
-
-    .hiw-h2 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.875rem, 4vw, 2.5rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      line-height: 1.2;
-      letter-spacing: -0.015em;
-    }
-
-    .hiw-h3 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.25rem, 3vw, 1.5rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      line-height: 1.3;
-    }
-
-    .hiw-body {
-      font-size: 1.0625rem;
-      color: var(--mock-text-muted);
-      line-height: 1.7;
-    }
-
-    .hiw-body-lg {
-      font-size: 1.125rem;
-      color: var(--mock-text-muted);
-      line-height: 1.75;
-    }
-
-    .hiw-caption {
+    .screenshot-placeholder .placeholder-label {
       font-size: 0.875rem;
-      color: var(--mock-text-light);
-      line-height: 1.5;
-    }
-
-    /* ============================================
-       HERO SECTION
-       ============================================ */
-    .hiw-hero-new {
-      padding: 7rem 0 5rem;
-      text-align: center;
-      background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-      position: relative;
-    }
-
-    .hiw-hero-new::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--mock-border), transparent);
-    }
-
-    .hiw-hero-new h1 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(2.25rem, 5vw, 3.25rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 1.5rem;
-      line-height: 1.15;
-      letter-spacing: -0.02em;
-    }
-
-    .hiw-hero-new .hero-subtitle {
-      font-size: 1.1875rem;
-      color: var(--mock-text-muted);
-      max-width: 580px;
-      margin: 0 auto 1.25rem;
-      line-height: 1.7;
-    }
-
-    .hiw-hero-new .hero-trust {
-      font-size: 0.9375rem;
-      color: var(--mock-text-light);
-      margin-bottom: 2.5rem;
-    }
-
-    .hero-ctas {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn-secondary-outline {
-      background: transparent;
-      color: var(--mock-text-muted);
-      border: 1px solid var(--mock-border);
-      padding: 0.8125rem 1.625rem;
-      border-radius: 10px;
-      font-weight: 500;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      font-size: 0.9375rem;
-    }
-
-    .btn-secondary-outline:hover {
-      border-color: var(--mock-text-muted);
-      color: var(--mock-text);
-      background: rgba(0, 0, 0, 0.02);
-    }
-
-    /* ============================================
-       SECTION STYLES
-       ============================================ */
-    .hiw-section {
-      padding: var(--section-padding) 0;
-    }
-
-    .hiw-section.alt-bg {
-      background: #f9fafb;
-      border-top: 1px solid #f1f5f9;
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .hiw-section-header {
-      text-align: center;
-      max-width: 580px;
-      margin: 0 auto 4rem;
-    }
-
-    .hiw-section-header h2 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.875rem, 4vw, 2.5rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 1rem;
-      letter-spacing: -0.015em;
-    }
-
-    .hiw-section-header p {
-      color: var(--mock-text-muted);
-      font-size: 1.125rem;
-      line-height: 1.7;
-    }
-
-    /* ============================================
-       MOCK SCREENSHOT CONTAINER - Premium Frame
-       ============================================ */
-    .mock-container {
-      background: var(--mock-card-bg);
-      border: 1px solid var(--mock-border);
-      border-radius: 16px;
-      box-shadow: var(--mock-shadow);
-      overflow: hidden;
-      max-width: 100%;
-      transition: box-shadow 0.3s ease, transform 0.3s ease;
-    }
-
-    .mock-container:hover {
-      box-shadow: var(--mock-shadow-lg);
-      transform: translateY(-2px);
-    }
-
-    .mock-browser-bar {
-      background: linear-gradient(to bottom, #f8fafc, #f1f5f9);
-      padding: 0.875rem 1.125rem;
-      display: flex;
-      align-items: center;
-      gap: 0.875rem;
-      border-bottom: 1px solid var(--mock-border);
-    }
-
-    .mock-browser-dots {
-      display: flex;
-      gap: 7px;
-    }
-
-    .mock-browser-dots span {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      box-shadow: inset 0 -1px 2px rgba(0, 0, 0, 0.1);
-    }
-
-    .mock-browser-dots span:nth-child(1) { background: linear-gradient(135deg, #ff6b6b, #ee5a5a); }
-    .mock-browser-dots span:nth-child(2) { background: linear-gradient(135deg, #feca57, #f9bf3b); }
-    .mock-browser-dots span:nth-child(3) { background: linear-gradient(135deg, #5cd859, #48c946); }
-
-    .mock-browser-url {
-      flex: 1;
-      background: #ffffff;
-      border: 1px solid var(--mock-border);
-      border-radius: 8px;
-      padding: 0.5rem 1rem;
-      font-size: 0.75rem;
-      color: var(--mock-text-light);
-      font-family: 'SF Mono', 'Monaco', 'Menlo', monospace;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .mock-browser-url::before {
-      content: '';
-      width: 12px;
-      height: 12px;
-      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z'/%3E%3C/svg%3E") center/contain no-repeat;
-      opacity: 0.6;
-    }
-
-    .mock-content {
-      padding: 1.75rem;
-      background: var(--mock-bg);
-    }
-
-    .mock-caption {
-      text-align: center;
-      font-size: 0.875rem;
-      color: var(--mock-text-light);
-      margin-top: 1.25rem;
-      font-style: normal;
+      color: var(--color-text-muted, #6b7280);
       font-weight: 500;
     }
-
-    /* ============================================
-       MOCK UI COMPONENTS - Refined
-       ============================================ */
-    .mock-card {
-      background: var(--mock-card-bg);
-      border: 1px solid var(--mock-border);
-      border-radius: 14px;
-      padding: 1.375rem;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      transition: box-shadow 0.2s ease;
-    }
-
-    .mock-card + .mock-card {
-      margin-top: 0.875rem;
-    }
-
-    .mock-avatar {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
-      font-weight: 600;
-      font-size: 1.125rem;
-      flex-shrink: 0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .mock-avatar-sm {
-      width: 40px;
-      height: 40px;
-      font-size: 0.9375rem;
-    }
-
-    .mock-avatar-blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
-    .mock-avatar-purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
-    .mock-avatar-green { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
-
-    .mock-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      padding: 0.6875rem 1.25rem;
-      border-radius: 10px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      cursor: default;
-      border: none;
-      font-family: 'Manrope', sans-serif;
-      transition: all 0.15s ease;
-    }
-
-    .mock-btn-primary {
-      background: linear-gradient(135deg, var(--mock-primary) 0%, #d16a4f 100%);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
-    }
-
-    .mock-btn-success {
-      background: linear-gradient(135deg, var(--mock-success) 0%, #059669 100%);
-      color: #ffffff;
-      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-    }
-
-    .mock-btn-outline {
-      background: #ffffff;
-      color: var(--mock-text-muted);
-      border: 1px solid var(--mock-border);
-    }
-
-    .mock-btn-outline-danger {
-      background: #ffffff;
-      color: #dc2626;
-      border: 1px solid #fecaca;
-    }
-
-    .mock-btn-sm {
-      padding: 0.5rem 1rem;
-      font-size: 0.8125rem;
-    }
-
-    .mock-btn-block {
-      width: 100%;
-    }
-
-    .mock-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.25rem;
-      padding: 0.3125rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.6875rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .mock-badge-pending {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      color: #92400e;
-    }
-
-    .mock-badge-confirmed {
-      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-      color: #065f46;
-    }
-
-    .mock-badge-completed {
-      background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
-      color: #3730a3;
-    }
-
-    .mock-badge-sent {
-      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-      color: #1e40af;
-    }
-
-    .mock-badge-gm {
-      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-      color: #92400e;
-      font-size: 0.625rem;
-      padding: 0.1875rem 0.5rem;
-    }
-
-    .mock-label {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: var(--mock-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 0.5rem;
-    }
-
-    .mock-input {
-      width: 100%;
-      padding: 0.6875rem 0.9375rem;
-      border: 1px solid var(--mock-border);
-      border-radius: 10px;
-      font-size: 0.875rem;
-      background: #ffffff;
-      color: var(--mock-text);
-      font-family: 'Manrope', sans-serif;
-      transition: border-color 0.15s ease;
-    }
-
-    .mock-textarea {
-      width: 100%;
-      padding: 0.75rem 0.9375rem;
-      border: 1px solid var(--mock-border);
-      border-radius: 10px;
-      font-size: 0.8125rem;
-      background: #ffffff;
-      color: var(--mock-text);
-      font-family: 'Manrope', sans-serif;
-      resize: none;
-      line-height: 1.55;
-    }
-
-    .mock-divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--mock-border), transparent);
-      margin: 1.25rem 0;
-    }
-
-    .mock-icon {
-      width: 16px;
-      height: 16px;
-      flex-shrink: 0;
-    }
-
-    .mock-icon-lg {
-      width: 20px;
-      height: 20px;
-    }
-
-    /* ============================================
-       MOCK TEXT UTILITIES
-       ============================================ */
-    .mock-text-heading {
-      font-weight: 600;
-      color: var(--mock-text);
-    }
-
-    .mock-text-muted {
-      color: var(--mock-text-muted);
-    }
-
-    .mock-text-light {
-      color: var(--mock-text-light);
-    }
-
-    .mock-text-sm {
-      font-size: 0.8125rem;
-    }
-
-    .mock-text-xs {
+    .screenshot-placeholder .placeholder-caption {
       font-size: 0.75rem;
+      color: var(--color-text-muted, #6b7280);
+      margin-top: 0.5rem;
+      font-style: italic;
     }
 
-    /* ============================================
-       MOCK LAYOUT UTILITIES
-       ============================================ */
-    .mock-flex {
-      display: flex;
-      align-items: center;
+    /* Flow section styles */
+    .flow-section {
+      padding: 5rem 0;
     }
-
-    .mock-flex-between {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+    .flow-section.alt-bg {
+      background: var(--color-surface, #f9fafb);
     }
-
-    .mock-flex-start {
-      align-items: flex-start;
-    }
-
-    .mock-gap-xs { gap: 0.375rem; }
-    .mock-gap-sm { gap: 0.5rem; }
-    .mock-gap-md { gap: 0.75rem; }
-    .mock-gap-lg { gap: 1rem; }
-
-    .mock-mb-xs { margin-bottom: 0.375rem; }
-    .mock-mb-sm { margin-bottom: 0.5rem; }
-    .mock-mb-md { margin-bottom: 0.75rem; }
-    .mock-mb-lg { margin-bottom: 1rem; }
-
-    .mock-mt-sm { margin-top: 0.5rem; }
-    .mock-mt-md { margin-top: 0.75rem; }
-
-    /* ============================================
-       STEP CARDS - Modern Grid Layout
-       ============================================ */
-    .steps-grid {
+    .flow-grid {
       display: grid;
-      gap: 5rem;
+      gap: 2rem;
+      margin-top: 3rem;
     }
-
-    .step-row {
+    .flow-step {
       display: grid;
-      grid-template-columns: 1fr 1.25fr;
-      gap: 4rem;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
       align-items: center;
     }
-
-    .step-row.reverse {
-      grid-template-columns: 1.25fr 1fr;
+    .flow-step.reverse {
+      direction: rtl;
     }
-
-    .step-row.reverse .step-content {
-      order: 2;
+    .flow-step.reverse > * {
+      direction: ltr;
     }
-
-    .step-row.reverse .step-visual {
-      order: 1;
-    }
-
-    .step-content {
+    .flow-step-content {
       padding: 1rem 0;
     }
-
-    .step-number {
+    .flow-step-number {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 3rem;
-      height: 3rem;
-      background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
-      color: #ffffff;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 1.125rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 4px 12px rgba(224, 122, 95, 0.3);
-    }
-
-    .step-content h3 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.375rem, 3vw, 1.625rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 1rem;
-      line-height: 1.3;
-    }
-
-    .step-content p {
-      color: var(--mock-text-muted);
-      line-height: 1.75;
-      font-size: 1.0625rem;
-    }
-
-    /* ============================================
-       COACH CAPABILITIES - Refined Layout
-       ============================================ */
-    .capabilities-list {
-      display: grid;
-      gap: 5rem;
-    }
-
-    .capability-row {
-      display: grid;
-      grid-template-columns: 1fr 1.25fr;
-      gap: 4rem;
-      align-items: flex-start;
-    }
-
-    .capability-row.reverse {
-      grid-template-columns: 1.25fr 1fr;
-    }
-
-    .capability-row.reverse .capability-content {
-      order: 2;
-    }
-
-    .capability-row.reverse .capability-visual {
-      order: 1;
-    }
-
-    .capability-content {
-      padding-top: 0.5rem;
-    }
-
-    .capability-content h3 {
-      font-family: 'Fraunces', serif;
-      font-size: clamp(1.25rem, 3vw, 1.5rem);
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 1rem;
-      line-height: 1.3;
-    }
-
-    .capability-content p {
-      color: var(--mock-text-muted);
-      line-height: 1.75;
-      font-size: 1rem;
-    }
-
-    .capability-content p + p {
-      margin-top: 1rem;
-    }
-
-    /* ============================================
-       MOCK SPECIFIC COMPONENTS - Polished
-       ============================================ */
-
-    /* Coach Profile Card */
-    .mock-coach-profile {
-      text-align: center;
-      padding-bottom: 1.25rem;
-      border-bottom: 1px solid var(--mock-border);
-      margin-bottom: 1.25rem;
-    }
-
-    .mock-coach-avatar-lg {
-      width: 76px;
-      height: 76px;
+      width: 2rem;
+      height: 2rem;
+      background: var(--color-coral, #e07a5f);
+      color: white;
       border-radius: 50%;
-      background: linear-gradient(135deg, var(--mock-primary) 0%, #c96a52 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #ffffff;
       font-weight: 600;
-      font-size: 1.625rem;
-      margin: 0 auto 0.875rem;
-      box-shadow: 0 4px 16px rgba(224, 122, 95, 0.25);
-    }
-
-    .mock-coach-name {
-      font-size: 1.1875rem;
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 0.375rem;
-    }
-
-    .mock-coach-meta {
-      font-size: 0.8125rem;
-      color: var(--mock-text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.625rem;
-      flex-wrap: wrap;
-    }
-
-    /* Pricing Options */
-    .mock-pricing-options {
-      display: grid;
-      gap: 0.5rem;
-      margin-bottom: 1.125rem;
-    }
-
-    .mock-pricing-option {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.9375rem 1.125rem;
-      border: 1.5px solid var(--mock-border);
-      border-radius: 10px;
-      background: #ffffff;
-      cursor: default;
-      transition: all 0.15s ease;
-    }
-
-    .mock-pricing-option.selected {
-      border-color: var(--mock-primary);
-      background: linear-gradient(135deg, #fef7f5 0%, #fff5f2 100%);
-      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.12);
-    }
-
-    .mock-pricing-option .duration {
-      font-weight: 500;
-      color: var(--mock-text);
-      font-size: 0.9375rem;
-    }
-
-    .mock-pricing-option .price {
-      font-weight: 700;
-      color: var(--mock-text);
-      font-size: 0.9375rem;
-    }
-
-    /* Time Slots Grid */
-    .mock-time-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 1.25rem;
-    }
-
-    .mock-time-slot {
-      padding: 0.6875rem 0.5rem;
-      border: 1.5px solid var(--mock-border);
-      border-radius: 8px;
-      text-align: center;
-      font-size: 0.8125rem;
-      color: var(--mock-text);
-      background: #ffffff;
-      cursor: default;
-      transition: all 0.15s ease;
-    }
-
-    .mock-time-slot.selected {
-      border-color: var(--mock-primary);
-      background: linear-gradient(135deg, var(--mock-primary) 0%, #d16a4f 100%);
-      color: #ffffff;
-      font-weight: 600;
-      box-shadow: 0 2px 8px rgba(224, 122, 95, 0.3);
-    }
-
-    .mock-time-slot.disabled {
-      background: #f9fafb;
-      color: var(--mock-text-light);
-      border-color: #f1f5f9;
-    }
-
-    /* Lesson Meta */
-    .mock-lesson-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.125rem;
       font-size: 0.875rem;
-      color: var(--mock-text-muted);
+      margin-bottom: 1rem;
     }
-
-    .mock-lesson-meta-item {
-      display: flex;
-      align-items: center;
-      gap: 0.4375rem;
+    .flow-step-content h3 {
+      font-size: 1.5rem;
+      margin-bottom: 0.75rem;
+      color: var(--color-heading, #1a1a2e);
     }
-
-    /* Meeting Link */
-    .mock-meeting-link {
-      display: flex;
-      align-items: center;
-      gap: 0.625rem;
-      padding: 0.8125rem 0.9375rem;
-      background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-      border: 1px solid #bbf7d0;
-      border-radius: 10px;
-      font-size: 0.8125rem;
-    }
-
-    .mock-meeting-link-url {
-      color: #15803d;
-      flex: 1;
-      font-weight: 500;
-    }
-
-    .mock-meeting-link-copy {
-      color: var(--mock-text-muted);
-      font-size: 0.75rem;
-      padding: 0.3125rem 0.625rem;
-      border: 1px solid var(--mock-border);
-      border-radius: 6px;
-      background: #ffffff;
-      font-weight: 500;
-    }
-
-    /* Modal Style */
-    .mock-modal {
-      background: var(--mock-card-bg);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
-    }
-
-    .mock-modal-header {
-      padding: 1.125rem 1.375rem;
-      border-bottom: 1px solid var(--mock-border);
-      font-weight: 600;
-      color: var(--mock-text);
-      font-size: 1.0625rem;
-    }
-
-    .mock-modal-body {
-      padding: 1.375rem;
-    }
-
-    .mock-modal-footer {
-      padding: 1rem 1.375rem;
-      border-top: 1px solid var(--mock-border);
-      background: #fafafa;
-      display: flex;
-      gap: 0.75rem;
-      justify-content: flex-end;
-    }
-
-    /* Summary Row */
-    .mock-summary-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5625rem 0;
-      font-size: 0.875rem;
-    }
-
-    .mock-summary-row:not(:last-child) {
-      border-bottom: 1px solid #f1f5f9;
-    }
-
-    .mock-summary-label {
-      color: var(--mock-text-muted);
-    }
-
-    .mock-summary-value {
-      color: var(--mock-text);
-      font-weight: 600;
-    }
-
-    /* Tabs */
-    .mock-tabs {
-      display: flex;
-      gap: 0.25rem;
-      padding: 0.3125rem;
-      background: #f1f5f9;
-      border-radius: 10px;
-      margin-bottom: 1.125rem;
-    }
-
-    .mock-tab {
-      flex: 1;
-      padding: 0.5625rem 0.75rem;
-      text-align: center;
-      font-size: 0.75rem;
-      font-weight: 500;
-      color: var(--mock-text-muted);
-      border-radius: 8px;
-      cursor: default;
-      transition: all 0.15s ease;
-    }
-
-    .mock-tab.active {
-      background: #ffffff;
-      color: var(--mock-text);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-      font-weight: 600;
-    }
-
-    /* Notes Area */
-    .mock-notes-area {
-      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-      border-radius: 10px;
-      padding: 1rem 1.125rem;
-      margin-top: 0.75rem;
-      border: 1px solid #e2e8f0;
-    }
-
-    .mock-notes-label {
-      font-size: 0.6875rem;
-      font-weight: 600;
-      color: var(--mock-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 0.5rem;
-    }
-
-    /* ============================================
-       FAQ STYLES - Premium Cards
-       ============================================ */
-    .faq-grid {
-      display: grid;
-      gap: 1.125rem;
-      max-width: 760px;
-      margin: 0 auto;
-    }
-
-    .faq-item {
-      background: #ffffff;
-      border: 1px solid var(--mock-border);
-      border-radius: 14px;
-      padding: 1.5rem 1.75rem;
-      transition: box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-
-    .faq-item:hover {
-      border-color: #d1d5db;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    }
-
-    .faq-question {
-      font-weight: 600;
-      color: var(--mock-text);
-      margin-bottom: 0.625rem;
-      font-size: 1.0625rem;
-    }
-
-    .faq-answer {
-      color: var(--mock-text-muted);
-      font-size: 1rem;
+    .flow-step-content p {
+      color: var(--color-text, #4a4a68);
       line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .flow-step-content ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .flow-step-content ul li {
+      position: relative;
+      padding-left: 1.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-text, #4a4a68);
+    }
+    .flow-step-content ul li::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0.5rem;
+      width: 6px;
+      height: 6px;
+      background: var(--color-coral, #e07a5f);
+      border-radius: 50%;
     }
 
-    /* ============================================
-       FOOTER TRUST - Refined
-       ============================================ */
-    .footer-trust {
-      text-align: center;
-      padding: 3.5rem 0;
-      background: linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%);
-      border-top: 1px solid #e5e7eb;
+    /* Capabilities grid */
+    .capabilities-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .capability-card {
+      background: white;
+      border: 1px solid var(--color-border, #e5e7eb);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .capability-card h4 {
+      font-size: 1.125rem;
+      margin-bottom: 0.5rem;
+      color: var(--color-heading, #1a1a2e);
+    }
+    .capability-card p {
+      color: var(--color-text-muted, #6b7280);
+      font-size: 0.9375rem;
+      line-height: 1.6;
     }
 
-    .footer-trust p {
-      font-size: 1.0625rem;
-      color: var(--mock-text-muted);
-      font-style: italic;
-      font-family: 'Fraunces', serif;
-      font-weight: 400;
+    /* After lesson section */
+    .after-lesson-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+      margin-top: 3rem;
     }
 
-    /* ============================================
-       RESPONSIVE - Refined Breakpoints
-       ============================================ */
-    @media (max-width: 960px) {
-      :root {
-        --section-padding: 5rem;
-      }
+    /* Dashboard preview */
+    .dashboard-preview {
+      margin-top: 3rem;
+    }
+    .dashboard-tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .dashboard-tab {
+      padding: 0.5rem 1rem;
+      background: var(--color-surface, #f3f4f6);
+      border-radius: 6px;
+      font-size: 0.875rem;
+      color: var(--color-text-muted, #6b7280);
+    }
+    .dashboard-tab.active {
+      background: var(--color-coral, #e07a5f);
+      color: white;
+    }
 
-      .step-row,
-      .step-row.reverse,
-      .capability-row,
-      .capability-row.reverse {
+    @media (max-width: 768px) {
+      .flow-step {
         grid-template-columns: 1fr;
-        gap: 2.5rem;
+        gap: 1.5rem;
       }
-
-      .step-row.reverse .step-content,
-      .step-row.reverse .step-visual,
-      .capability-row.reverse .capability-content,
-      .capability-row.reverse .capability-visual {
-        order: unset;
+      .flow-step.reverse {
+        direction: ltr;
       }
-
-      .step-content,
-      .capability-content {
-        text-align: center;
-        max-width: 560px;
-        margin: 0 auto;
-      }
-
-      .step-number {
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      .mock-time-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 640px) {
-      :root {
-        --section-padding: 4rem;
-      }
-
-      .hiw-hero-new {
-        padding: 5rem 0 3.5rem;
-      }
-
-      .hiw-section-header {
-        margin-bottom: 3rem;
-      }
-
-      .steps-grid,
-      .capabilities-list {
-        gap: 4rem;
-      }
-
-      .mock-content {
-        padding: 1.25rem;
-      }
-
-      .mock-browser-bar {
-        padding: 0.75rem 1rem;
-      }
-
-      .hero-ctas {
-        flex-direction: column;
-        align-items: center;
-        gap: 0.875rem;
-      }
-
-      .btn-secondary-outline {
-        width: 100%;
-        max-width: 280px;
-        justify-content: center;
-      }
-
-      .mock-lesson-meta {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .mock-card {
-        padding: 1.25rem;
-      }
-
-      .faq-item {
-        padding: 1.25rem 1.375rem;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .mock-time-grid {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 0.375rem;
-      }
-
-      .mock-time-slot {
-        padding: 0.5rem 0.375rem;
-        font-size: 0.75rem;
-      }
-
-      .mock-pricing-option {
-        padding: 0.75rem;
+      .after-lesson-content {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -1058,592 +205,333 @@
     </div>
   </header>
 
-  <!-- ============================================
-       HERO SECTION
-       ============================================ -->
-  <section class="hiw-hero-new">
-    <div class="hiw-container">
-      <h1>Stop scheduling chess lessons in DMs</h1>
-      <p class="hero-subtitle">
-        A professional booking page for chess coaches — confirmations, calendar + meeting links, and join-in-one-click.
-      </p>
-      <p class="hero-trust">
-        Works with Google Calendar + Meet. Prefer Zoom or Discord? Use your own link.
-      </p>
-      <div class="hero-ctas">
-        <a href="#pilot" class="btn btn-primary">Join the pilot</a>
-        <a href="#for-students" class="btn-secondary-outline">See the flow below</a>
-      </div>
+  <!-- Hero Section -->
+  <section class="hiw-hero">
+    <div class="container">
+      <h1>How <span class="highlight">ChessBooker</span> Works</h1>
+      <p>Students request lessons. You confirm or decline. Meeting links are created automatically. No more back-and-forth messages.</p>
+      <a href="#pilot" class="btn btn-primary">Join the Pilot</a>
     </div>
   </section>
 
-  <!-- ============================================
-       FOR STUDENTS SECTION
-       ============================================ -->
-  <section class="hiw-section" id="for-students">
-    <div class="hiw-container">
-      <div class="hiw-section-header">
-        <h2>For Students</h2>
+  <!-- For Students Section -->
+  <section class="flow-section" id="for-students">
+    <div class="container">
+      <div class="section-header">
+        <h2>For <span class="highlight">Students</span></h2>
         <p>A simple, professional booking experience in three steps.</p>
       </div>
 
-      <div class="steps-grid">
-
-        <!-- STEP 1: Pick a lesson length -->
-        <div class="step-row">
-          <div class="step-content">
-            <div class="step-number">1</div>
-            <h3>Pick a lesson length</h3>
-            <p>
-              Students visit your booking page and choose from the lesson durations you offer. Pricing is clear upfront — no surprises.
-            </p>
+      <div class="flow-grid">
+        <!-- Step 1 -->
+        <div class="flow-step">
+          <div class="flow-step-content">
+            <div class="flow-step-number">1</div>
+            <h3>Visit your booking page</h3>
+            <p>Each coach has a public booking page. Students see your availability, rates, and lesson options all in one place.</p>
+            <ul>
+              <li>Your profile and coaching details</li>
+              <li>Available time slots in the student's timezone</li>
+              <li>Session lengths you offer</li>
+            </ul>
           </div>
-          <div class="step-visual">
-            <!-- MOCK SCREENSHOT A: Public Booking Page -->
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/coach/miguel</div>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
               </div>
-              <div class="mock-content">
-                <div class="mock-card">
-                  <!-- Coach Profile -->
-                  <div class="mock-coach-profile">
-                    <div class="mock-coach-avatar-lg">M</div>
-                    <div class="mock-coach-name">Miguel</div>
-                    <div class="mock-coach-meta">
-                      <span class="mock-badge-gm">GM</span>
-                      <span>Spanish, English</span>
-                      <span>FIDE 2580</span>
-                    </div>
-                  </div>
-
-                  <!-- Pricing Options -->
-                  <div class="mock-label">Choose lesson length</div>
-                  <div class="mock-pricing-options">
-                    <div class="mock-pricing-option selected">
-                      <span class="duration">60 minutes</span>
-                      <span class="price">$50</span>
-                    </div>
-                    <div class="mock-pricing-option">
-                      <span class="duration">90 minutes</span>
-                      <span class="price">$70</span>
-                    </div>
-                  </div>
-
-                  <!-- Time Slots -->
-                  <div class="mock-label">Available times (EST)</div>
-                  <div class="mock-time-grid">
-                    <div class="mock-time-slot">Mon 10:00</div>
-                    <div class="mock-time-slot selected">Tue 2:00 PM</div>
-                    <div class="mock-time-slot">Tue 4:00 PM</div>
-                    <div class="mock-time-slot">Wed 11:00</div>
-                    <div class="mock-time-slot">Thu 3:00 PM</div>
-                    <div class="mock-time-slot disabled">Fri 2:00 PM</div>
-                  </div>
-
-                  <div class="mock-btn mock-btn-primary mock-btn-block">
-                    Request lesson
-                  </div>
-                </div>
-              </div>
+              <div class="placeholder-label">Screenshot: Public Booking Page</div>
+              <div class="placeholder-caption">Clean booking form with coach profile and availability</div>
             </div>
-            <p class="mock-caption">Your public booking page with pricing and availability</p>
           </div>
         </div>
 
-        <!-- STEP 2: Choose a time -->
-        <div class="step-row reverse">
-          <div class="step-content">
-            <div class="step-number">2</div>
-            <h3>Choose a time in your timezone</h3>
-            <p>
-              Times are automatically displayed in the student's timezone. They pick what works for them and submit a request. No account needed.
-            </p>
+        <!-- Step 2 -->
+        <div class="flow-step reverse">
+          <div class="flow-step-content">
+            <div class="flow-step-number">2</div>
+            <h3>Submit a lesson request</h3>
+            <p>Students pick their preferred times and submit a request. No account required. Just name, email, and timezone.</p>
+            <ul>
+              <li>Select preferred time slots</li>
+              <li>Choose session duration</li>
+              <li>Add optional notes for the coach</li>
+            </ul>
           </div>
-          <div class="step-visual">
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/coach/miguel/request</div>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
               </div>
-              <div class="mock-content">
-                <div class="mock-card">
-                  <div class="mock-flex mock-gap-md mock-mb-lg" style="padding-bottom: 1rem; border-bottom: 1px solid var(--mock-border);">
-                    <div class="mock-avatar mock-avatar-sm">M</div>
-                    <div>
-                      <div class="mock-text-heading">Lesson with Miguel</div>
-                      <div class="mock-text-sm mock-text-muted">Tue, Jan 27 &middot; 2:00 PM EST &middot; 60 min</div>
-                    </div>
-                  </div>
-
-                  <div style="margin-bottom: 1rem;">
-                    <div class="mock-label">Your name</div>
-                    <input type="text" class="mock-input" value="Alex" readonly>
-                  </div>
-
-                  <div style="margin-bottom: 1rem;">
-                    <div class="mock-label">Email</div>
-                    <input type="text" class="mock-input" value="alex@example.com" readonly>
-                  </div>
-
-                  <div style="margin-bottom: 1.25rem;">
-                    <div class="mock-label">Message (optional)</div>
-                    <input type="text" class="mock-input" value="I want to improve my endgame play" readonly>
-                  </div>
-
-                  <div class="mock-btn mock-btn-primary mock-btn-block">
-                    Send request
-                  </div>
-
-                  <p class="mock-text-xs mock-text-light" style="text-align: center; margin-top: 0.75rem;">
-                    Miguel will confirm or suggest another time
-                  </p>
-                </div>
-              </div>
+              <div class="placeholder-label">Screenshot: Request Form</div>
+              <div class="placeholder-caption">Simple form with time selection and student details</div>
             </div>
-            <p class="mock-caption">Students enter their details and submit</p>
           </div>
         </div>
 
-        <!-- STEP 3: Get confirmed + join -->
-        <div class="step-row">
-          <div class="step-content">
-            <div class="step-number">3</div>
-            <h3>Get confirmed + join</h3>
-            <p>
-              Once the coach confirms, students get an email with the lesson details and a direct link to join. One click when it's time.
-            </p>
+        <!-- Step 3 -->
+        <div class="flow-step">
+          <div class="flow-step-content">
+            <div class="flow-step-number">3</div>
+            <h3>Get confirmed and join</h3>
+            <p>Once you confirm the lesson, students receive an email with all the details and a single "Join lesson" button when it's time.</p>
+            <ul>
+              <li>Confirmation email with lesson details</li>
+              <li>Calendar invite (if you use Google Calendar)</li>
+              <li>One-click access to join the video call</li>
+            </ul>
           </div>
-          <div class="step-visual">
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/lesson/abc123</div>
+          <div class="flow-step-visual">
+            <div class="screenshot-placeholder">
+              <div class="placeholder-icon">
+                <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
               </div>
-              <div class="mock-content">
-                <div class="mock-card">
-                  <div class="mock-flex-between mock-mb-md">
-                    <div class="mock-text-heading">Your upcoming lesson</div>
-                    <span class="mock-badge mock-badge-confirmed">Confirmed</span>
-                  </div>
-
-                  <div class="mock-flex mock-gap-md mock-mb-lg">
-                    <div class="mock-avatar mock-avatar-sm">M</div>
-                    <div>
-                      <div class="mock-text-heading mock-text-sm">Miguel</div>
-                      <div class="mock-text-xs mock-text-muted">Chess Coach &middot; GM</div>
-                    </div>
-                  </div>
-
-                  <div class="mock-lesson-meta mock-mb-lg">
-                    <div class="mock-lesson-meta-item">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                      <span>Tue, Jan 27, 2025</span>
-                    </div>
-                    <div class="mock-lesson-meta-item">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <span>2:00 PM &middot; 60 min</span>
-                    </div>
-                  </div>
-
-                  <div class="mock-divider"></div>
-
-                  <div class="mock-flex mock-gap-sm">
-                    <div class="mock-btn mock-btn-success" style="flex: 1;">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                      Join lesson
-                    </div>
-                    <div class="mock-btn mock-btn-outline">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                      Calendar
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div class="placeholder-label">Screenshot: Upcoming Lessons</div>
+              <div class="placeholder-caption">Student view with "Join lesson" button</div>
             </div>
-            <p class="mock-caption">One-click join when the lesson is ready</p>
           </div>
         </div>
-
       </div>
     </div>
   </section>
 
-  <!-- ============================================
-       FOR COACHES SECTION
-       ============================================ -->
-  <section class="hiw-section alt-bg" id="for-coaches">
-    <div class="hiw-container">
-      <div class="hiw-section-header">
-        <h2>For Coaches</h2>
-        <p>Stay in control. Confirm on your terms. Meeting links handled automatically.</p>
+  <!-- For Coaches Section -->
+  <section class="flow-section alt-bg" id="for-coaches">
+    <div class="container">
+      <div class="section-header">
+        <h2>For <span class="highlight">Coaches</span></h2>
+        <p>Stay in control of your schedule. Confirm lessons on your terms.</p>
       </div>
 
-      <div class="capabilities-list">
-
-        <!-- CAPABILITY 1: Pending Requests -->
-        <div class="capability-row">
-          <div class="capability-content">
-            <h3>Review and decide on requests</h3>
-            <p>
-              When a student requests a lesson, it shows up in your dashboard. You see their details, preferred time, and any message they included.
-            </p>
-            <p>
-              Confirm if it works. Decline if it doesn't. Either way, the student gets notified automatically.
-            </p>
-          </div>
-          <div class="capability-visual">
-            <!-- MOCK SCREENSHOT B: Pending Request -->
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/dashboard/pending</div>
-              </div>
-              <div class="mock-content">
-                <div class="mock-card">
-                  <div class="mock-flex-between mock-mb-md">
-                    <span class="mock-badge mock-badge-pending">Pending request</span>
-                    <span class="mock-text-xs mock-text-light">2 hours ago</span>
-                  </div>
-
-                  <div class="mock-flex mock-gap-md mock-mb-md">
-                    <div class="mock-avatar mock-avatar-blue">A</div>
-                    <div>
-                      <div class="mock-text-heading">Alex</div>
-                      <div class="mock-text-sm mock-text-muted">alex@example.com</div>
-                    </div>
-                  </div>
-
-                  <div class="mock-lesson-meta mock-mb-md">
-                    <div class="mock-lesson-meta-item">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                      <span>Tue, Jan 27</span>
-                    </div>
-                    <div class="mock-lesson-meta-item">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <span>2:00 PM</span>
-                    </div>
-                    <div class="mock-lesson-meta-item">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <span>60 min</span>
-                    </div>
-                  </div>
-
-                  <div class="mock-notes-area mock-mb-lg">
-                    <div class="mock-notes-label">Student message</div>
-                    <div class="mock-text-sm">I want to improve my endgame play</div>
-                  </div>
-
-                  <div class="mock-flex mock-gap-sm">
-                    <div class="mock-btn mock-btn-primary" style="flex: 1;">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                      Confirm lesson
-                    </div>
-                    <div class="mock-btn mock-btn-outline-danger">
-                      <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                      Decline
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <!-- Pending Requests -->
+      <div class="flow-step" style="margin-top: 3rem;">
+        <div class="flow-step-content">
+          <h3>Review pending requests</h3>
+          <p>When a student requests a lesson, it appears in your dashboard. You decide whether to confirm or decline.</p>
+          <ul>
+            <li>See student details and requested times</li>
+            <li>Confirm with one click</li>
+            <li>Decline if the time doesn't work</li>
+            <li>Students are notified either way</li>
+          </ul>
+        </div>
+        <div class="flow-step-visual">
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
             </div>
-            <p class="mock-caption">Pending request with student info and actions</p>
+            <div class="placeholder-label">Screenshot: Confirm / Decline Request</div>
+            <div class="placeholder-caption">Pending request with student info and action buttons</div>
           </div>
         </div>
+      </div>
 
-        <!-- CAPABILITY 2: Confirm Modal + Meeting Link -->
-        <div class="capability-row reverse">
-          <div class="capability-content">
-            <h3>Meeting links — automatic or manual</h3>
-            <p>
-              When you confirm a lesson, ChessBooker can create a Google Calendar event with a Google Meet link automatically.
-            </p>
-            <p>
-              Prefer Zoom or Discord? No problem. If Google isn't connected, you'll enter your own meeting link when confirming.
-            </p>
-          </div>
-          <div class="capability-visual">
-            <!-- MOCK SCREENSHOT C: Confirm Modal with Tabs -->
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/dashboard</div>
-              </div>
-              <div class="mock-content" style="background: rgba(0,0,0,0.4); padding: 2rem;">
-                <div class="mock-modal">
-                  <div class="mock-modal-header">
-                    Confirm lesson
-                  </div>
-                  <div class="mock-modal-body">
-                    <!-- Summary -->
-                    <div class="mock-mb-lg">
-                      <div class="mock-summary-row">
-                        <span class="mock-summary-label">Student</span>
-                        <span class="mock-summary-value">Alex</span>
-                      </div>
-                      <div class="mock-summary-row">
-                        <span class="mock-summary-label">Date</span>
-                        <span class="mock-summary-value">Tue, Jan 27, 2025</span>
-                      </div>
-                      <div class="mock-summary-row">
-                        <span class="mock-summary-label">Time</span>
-                        <span class="mock-summary-value">2:00 PM &middot; 60 min</span>
-                      </div>
-                    </div>
-
-                    <!-- Tabs showing both states -->
-                    <div class="mock-tabs">
-                      <div class="mock-tab active">Google connected</div>
-                      <div class="mock-tab">Manual link</div>
-                    </div>
-
-                    <!-- Google Connected State -->
-                    <div class="mock-meeting-link">
-                      <svg class="mock-icon-lg" style="color: #10b981;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                      <span class="mock-meeting-link-url">Calendar event + Meet link will be created automatically</span>
-                    </div>
-
-                    <div class="mock-text-xs mock-text-light mock-mt-md" style="text-align: center;">
-                      Or switch to "Manual link" to use Zoom, Discord, or another platform
-                    </div>
-                  </div>
-                  <div class="mock-modal-footer">
-                    <div class="mock-btn mock-btn-outline mock-btn-sm">Cancel</div>
-                    <div class="mock-btn mock-btn-primary mock-btn-sm">Confirm lesson</div>
-                  </div>
-                </div>
-              </div>
+      <!-- Meeting Links -->
+      <div class="flow-step reverse" style="margin-top: 3rem;">
+        <div class="flow-step-content">
+          <h3>Automatic meeting links</h3>
+          <p>When you confirm a lesson, ChessBooker creates a Google Calendar event with a Google Meet link automatically. No extra steps.</p>
+          <p>Not using Google? Enter your own Zoom, Discord, or other meeting link when confirming.</p>
+          <ul>
+            <li>Google Calendar + Meet created automatically</li>
+            <li>Manual link option for Zoom, Discord, or others</li>
+            <li>Meeting link visible to both you and the student</li>
+          </ul>
+        </div>
+        <div class="flow-step-visual">
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
             </div>
-            <p class="mock-caption">Google Meet auto-created, or enter your own link</p>
+            <div class="placeholder-label">Screenshot: Calendar + Meeting Link</div>
+            <div class="placeholder-caption">Confirmed lesson with Google Meet link attached</div>
           </div>
         </div>
+      </div>
 
-        <!-- CAPABILITY 3: Upcoming Lessons -->
-        <div class="capability-row">
-          <div class="capability-content">
-            <h3>Upcoming lessons at a glance</h3>
-            <p>
-              Your dashboard shows all confirmed lessons. When it's time, click "Join lesson" to open the meeting link directly.
-            </p>
-            <p>
-              Everything in one place. No digging through emails or calendars.
-            </p>
-          </div>
-          <div class="capability-visual">
-            <!-- MOCK SCREENSHOT D: Upcoming Lessons -->
-            <div class="mock-container">
-              <div class="mock-browser-bar">
-                <div class="mock-browser-dots">
-                  <span></span><span></span><span></span>
-                </div>
-                <div class="mock-browser-url">chessbooker.com/dashboard/upcoming</div>
-              </div>
-              <div class="mock-content">
-                <!-- Lesson 1 -->
-                <div class="mock-card">
-                  <div class="mock-flex-between mock-mb-sm">
-                    <span class="mock-badge mock-badge-confirmed">Confirmed</span>
-                    <span class="mock-text-xs mock-text-light">Today</span>
-                  </div>
-
-                  <div class="mock-flex mock-gap-md mock-mb-md">
-                    <div class="mock-avatar mock-avatar-sm mock-avatar-blue">A</div>
-                    <div style="flex: 1;">
-                      <div class="mock-text-heading mock-text-sm">Alex</div>
-                      <div class="mock-text-xs mock-text-muted">alex@example.com</div>
-                    </div>
-                    <div class="mock-text-sm mock-text-muted">2:00 PM &middot; 60 min</div>
-                  </div>
-
-                  <div class="mock-meeting-link mock-mb-md">
-                    <svg class="mock-icon" style="color: #15803d;" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C6.48 0 2 4.48 2 10c0 4.42 2.87 8.17 6.84 9.49.5.09.66-.22.66-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.46-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.61.07-.61 1 .07 1.53 1.03 1.53 1.03.89 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02A9.56 9.56 0 0112 4.8c.85 0 1.71.12 2.51.34 1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.75c0 .27.16.58.67.48A10.002 10.002 0 0022 10c0-5.52-4.48-10-10-10z"/></svg>
-                    <span class="mock-meeting-link-url">meet.google.com/abc-defg-hij</span>
-                    <span class="mock-meeting-link-copy">Copy</span>
-                  </div>
-
-                  <div class="mock-btn mock-btn-success mock-btn-block">
-                    <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
-                    Join lesson
-                  </div>
-                </div>
-
-                <!-- Lesson 2 -->
-                <div class="mock-card">
-                  <div class="mock-flex-between mock-mb-sm">
-                    <span class="mock-badge mock-badge-confirmed">Confirmed</span>
-                    <span class="mock-text-xs mock-text-light">Tomorrow</span>
-                  </div>
-
-                  <div class="mock-flex mock-gap-md">
-                    <div class="mock-avatar mock-avatar-sm mock-avatar-purple">C</div>
-                    <div style="flex: 1;">
-                      <div class="mock-text-heading mock-text-sm">Chris</div>
-                      <div class="mock-text-xs mock-text-muted">chris@example.com</div>
-                    </div>
-                    <div class="mock-text-sm mock-text-muted">4:00 PM &middot; 60 min</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <p class="mock-caption">All upcoming lessons with one-click join</p>
-          </div>
+      <!-- Dashboard Overview -->
+      <div class="dashboard-preview">
+        <h3 style="text-align: center; margin-bottom: 1.5rem;">Your dashboard at a glance</h3>
+        <div class="dashboard-tabs" style="justify-content: center;">
+          <span class="dashboard-tab active">Upcoming</span>
+          <span class="dashboard-tab">Pending</span>
+          <span class="dashboard-tab">Past</span>
+          <span class="dashboard-tab">Activity</span>
         </div>
+        <div class="screenshot-placeholder">
+          <div class="placeholder-icon">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <div class="placeholder-label">Screenshot: Coach Dashboard Overview</div>
+          <div class="placeholder-caption">Tabs for Upcoming, Pending, Past lessons, and recent Activity</div>
+        </div>
+      </div>
 
+      <!-- Capabilities -->
+      <div class="capabilities-grid">
+        <div class="capability-card">
+          <h4>Upcoming lessons</h4>
+          <p>See all confirmed lessons in one place. Join with a single click when it's time.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Pending requests</h4>
+          <p>Review and respond to new lesson requests. Confirm or decline with full context.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Recent activity</h4>
+          <p>A timeline of confirmations, cancellations, and updates. Know what's happening at a glance.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Reschedule or cancel</h4>
+          <p>Plans change. Update lesson times or cancel entirely. Students are notified automatically.</p>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================================
-       AFTER THE LESSON SECTION
-       ============================================ -->
-  <section class="hiw-section" id="after-lesson">
-    <div class="hiw-container">
-      <div class="hiw-section-header">
-        <h2>After the Lesson</h2>
+  <!-- After the Lesson Section -->
+  <section class="flow-section" id="after-lesson">
+    <div class="container">
+      <div class="section-header">
+        <h2>After the <span class="highlight">Lesson</span></h2>
         <p>Help students remember what they learned.</p>
       </div>
 
-      <div class="capabilities-list">
-        <div class="capability-row">
-        <div class="capability-content">
-          <h3>Notes for you. Recaps for students.</h3>
-          <p>
-            After a lesson, add your private notes — what you covered, what to work on next, homework suggestions.
-          </p>
-          <p>
-            When you're ready, send a recap to the student with the key takeaways. They'll have a record of their progress.
-          </p>
+      <div class="after-lesson-content">
+        <div>
+          <h3>Add notes, send a recap</h3>
+          <p>After a lesson is complete, add your notes about what was covered, key takeaways, or homework for the student.</p>
+          <p>With one click, send a recap email so students have a record of their progress.</p>
+          <ul>
+            <li>Add private notes after each lesson</li>
+            <li>Send a student recap with key points</li>
+            <li>Build a history of lessons and progress</li>
+          </ul>
         </div>
-        <div class="capability-visual">
-          <!-- MOCK SCREENSHOT E: Past Lesson with Notes -->
-          <div class="mock-container">
-            <div class="mock-browser-bar">
-              <div class="mock-browser-dots">
-                <span></span><span></span><span></span>
-              </div>
-              <div class="mock-browser-url">chessbooker.com/dashboard/past</div>
+        <div>
+          <div class="screenshot-placeholder">
+            <div class="placeholder-icon">
+              <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
             </div>
-            <div class="mock-content">
-              <div class="mock-card">
-                <div class="mock-flex-between mock-mb-md">
-                  <span class="mock-badge mock-badge-completed">Completed</span>
-                  <span class="mock-text-xs mock-text-light">Jan 25, 2025</span>
-                </div>
-
-                <div class="mock-flex mock-gap-md mock-mb-lg">
-                  <div class="mock-avatar mock-avatar-sm mock-avatar-blue">A</div>
-                  <div>
-                    <div class="mock-text-heading mock-text-sm">Alex</div>
-                    <div class="mock-text-xs mock-text-muted">60 min lesson</div>
-                  </div>
-                </div>
-
-                <!-- Coach Notes -->
-                <div class="mock-mb-lg">
-                  <div class="mock-label">Your notes (private)</div>
-                  <textarea class="mock-textarea" rows="3" readonly>Covered Rook endgames — K+R vs K technique. Alex struggled with opposition but improved by end of session. Assign 5 endgame puzzles on Lichess for practice.</textarea>
-                </div>
-
-                <!-- Student Recap -->
-                <div class="mock-mb-lg">
-                  <div class="mock-label">Student recap</div>
-                  <textarea class="mock-textarea" rows="4" readonly>Hi Alex! Great session today. We focused on:
-
-• Rook endgame basics (K+R vs K)
-• Using opposition to your advantage
-
-Homework: Complete 5 endgame puzzles on Lichess. See you next week!</textarea>
-                </div>
-
-                <div class="mock-flex mock-gap-sm">
-                  <div class="mock-btn mock-btn-primary" style="flex: 1;">
-                    <svg class="mock-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Send recap to student
-                  </div>
-                </div>
-              </div>
-
-              <!-- Already sent example -->
-              <div class="mock-card">
-                <div class="mock-flex-between mock-mb-sm">
-                  <span class="mock-badge mock-badge-completed">Completed</span>
-                  <div class="mock-flex mock-gap-sm">
-                    <span class="mock-badge mock-badge-sent">
-                      <svg class="mock-icon" style="width: 12px; height: 12px; margin-right: 0.25rem;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                      Recap sent
-                    </span>
-                  </div>
-                </div>
-
-                <div class="mock-flex mock-gap-md">
-                  <div class="mock-avatar mock-avatar-sm mock-avatar-green">D</div>
-                  <div>
-                    <div class="mock-text-heading mock-text-sm">Dana</div>
-                    <div class="mock-text-xs mock-text-muted">Jan 22 &middot; 60 min</div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <div class="placeholder-label">Screenshot: Past Lessons with Notes</div>
+            <div class="placeholder-caption">Completed lesson with coach notes and "Send recap" option</div>
           </div>
-          <p class="mock-caption">Add notes and send recaps to students</p>
-        </div>
-      </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================================
-       FAQ SECTION
-       ============================================ -->
-  <section class="hiw-section alt-bg" id="faq">
-    <div class="hiw-container">
-      <div class="hiw-section-header">
-        <h2>Common Questions</h2>
-      </div>
-
-      <div class="faq-grid">
-        <div class="faq-item">
-          <div class="faq-question">Do students book exact time slots?</div>
-          <div class="faq-answer">Yes. Students see the specific times you've made available and pick one. No vague "preferred windows" — they choose a real slot.</div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-question">What if I don't use Google Calendar?</div>
-          <div class="faq-answer">No problem. When confirming a lesson, you can enter your own meeting link — Zoom, Discord, or anything else. Google Calendar is optional.</div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-question">Does ChessBooker generate a Google Meet link?</div>
-          <div class="faq-answer">Yes, when your Google account is connected. When you confirm a lesson, ChessBooker creates a calendar event with a Meet link automatically.</div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-question">How do timezones work?</div>
-          <div class="faq-answer">Students see available times in their own timezone. You set your availability in your timezone. ChessBooker handles the conversion automatically.</div>
-        </div>
-
-        <div class="faq-item">
-          <div class="faq-question">Can I send lesson recaps?</div>
-          <div class="faq-answer">Yes. After a lesson, you can write notes and send a recap email to the student with what you covered and next steps.</div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================================
-       PILOT FORM SECTION
-       ============================================ -->
+  <!-- Google Integration Section -->
+  <section class="flow-section alt-bg">
+    <div class="container">
+      <div class="section-header">
+        <h2>Google Calendar <span class="highlight">Integration</span></h2>
+        <p>Connect once. Events and meeting links are created automatically.</p>
+      </div>
+
+      <div class="capabilities-grid" style="max-width: 900px; margin: 3rem auto 0;">
+        <div class="capability-card">
+          <h4>Connect your Google account</h4>
+          <p>One-time setup from your settings. We only request calendar access, nothing else.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Events created on confirm</h4>
+          <p>When you confirm a lesson, a calendar event with Google Meet link appears in your calendar.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Updates sync automatically</h4>
+          <p>Reschedule or cancel a lesson, and the calendar event updates or removes itself.</p>
+        </div>
+        <div class="capability-card">
+          <h4>Optional, not required</h4>
+          <p>Google Calendar is helpful but not mandatory. You can use ChessBooker without it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section-hiw" id="faq-hiw">
+    <div class="container">
+      <div class="section-header">
+        <h2>Common <span class="highlight">Questions</span></h2>
+      </div>
+
+      <div class="faq-accordion">
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Is ChessBooker free during the pilot?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. The pilot is completely free. We're gathering feedback from coaches to improve the product before launch.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            What if I don't use Google Calendar?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>No problem. When confirming a lesson, you can enter your own meeting link (Zoom, Discord, or any other platform). Google Calendar integration is optional.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Can I decline a lesson request?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. You have full control over which requests you accept. If a time doesn't work or you're not available, decline the request and the student will be notified.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            How do students pay for lessons?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Currently, you handle payment collection outside of ChessBooker (PayPal, bank transfer, etc.). Integrated payments are on the roadmap.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Can students see my calendar?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>No. Students only see the availability windows you set in your schedule. Your actual Google Calendar events remain private.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            What happens if I need to reschedule or cancel?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>You can reschedule to a new time or cancel entirely from your dashboard. The student receives a notification, and your Google Calendar event updates automatically.</p>
+          </div>
+        </div>
+
+        <div class="faq-item-acc">
+          <button class="faq-question">
+            Is my Google account data secure?
+            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z"/></svg>
+          </button>
+          <div class="faq-answer">
+            <p>Yes. We only request calendar access (not email or other data). Your credentials are stored securely and you can disconnect anytime from Settings.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pilot Form Section -->
   <section class="pilot-section" id="pilot">
     <div class="container">
       <div class="section-header">
@@ -1693,18 +581,7 @@ Homework: Complete 5 endgame puzzles on Lichess. See you next week!</textarea>
     </div>
   </section>
 
-  <!-- ============================================
-       FOOTER TRUST LINE
-       ============================================ -->
-  <div class="footer-trust">
-    <div class="hiw-container">
-      <p>Built for calm scheduling — so you can focus on coaching.</p>
-    </div>
-  </div>
-
-  <!-- ============================================
-       FOOTER
-       ============================================ -->
+  <!-- Footer -->
   <footer>
     <div class="container">
       <div class="footer-content">
