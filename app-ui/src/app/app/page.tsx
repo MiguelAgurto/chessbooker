@@ -176,7 +176,17 @@ export default async function DashboardPage() {
         <UpcomingLessons lessons={upcomingLessons || []} timezone={timezone} coachSlug={coach?.slug} lastLessonDate={lastLessonDate} />
 
         {/* Pending Requests */}
-        <PendingRequests requests={pendingRequests || []} timezone={timezone} isGoogleConnected={isGoogleConnected} />
+        <PendingRequests
+          requests={pendingRequests || []}
+          timezone={timezone}
+          isGoogleConnected={isGoogleConnected}
+          paymentDefaults={{
+            default_payment_method: coach?.default_payment_method,
+            default_payment_instructions: coach?.default_payment_instructions,
+            default_payment_link: coach?.default_payment_link,
+            default_payment_due: coach?.default_payment_due,
+          }}
+        />
 
         {/* Recent Activity */}
         <RecentActivity timezone={timezone} />

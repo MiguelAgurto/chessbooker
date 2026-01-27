@@ -6,6 +6,28 @@ import { revalidatePath } from "next/cache";
 import { createCalendarEvent } from "@/lib/google/calendar";
 import { enqueueNotificationEvent } from "@/lib/notifications";
 
+export interface PaymentData {
+  payment_method?: string;
+  payment_instructions?: string;
+  payment_link?: string;
+  payment_due?: string;
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  paypal: "PayPal",
+  stripe: "Stripe",
+  bank_transfer: "Bank transfer",
+  cash: "Cash",
+  other: "Other",
+};
+
+const PAYMENT_DUE_LABELS: Record<string, string> = {
+  before_lesson: "Before the lesson",
+  at_start: "At the start of the lesson",
+  after_lesson: "After the lesson",
+  custom: "See instructions below",
+};
+
 function formatDateTimeForEmail(datetime: string, timezone: string): string {
   const date = new Date(datetime);
   return date.toLocaleString("en-US", {
@@ -33,7 +55,8 @@ export async function acceptBookingRequest(
   bookingId: string,
   selectedDateTime: string,
   durationMinutes: number,
-  manualMeetingUrl?: string
+  manualMeetingUrl?: string,
+  paymentData?: PaymentData
 ): Promise<{ success: boolean; error?: string; isOverlapError?: boolean; isInsufficientScopes?: boolean }> {
   // Validate selectedDateTime before proceeding
   if (!isValidISOTimestamp(selectedDateTime)) {
@@ -152,17 +175,27 @@ export async function acceptBookingRequest(
     console.log(`[Confirm Lesson] Using existing calendar event: eventId=${calendarEventId}, meetUrl=${meetUrl}`);
   }
 
-  // STEP 2: Update booking status to confirmed (with calendar info) in a single update
+  // STEP 2: Update booking status to confirmed (with calendar info and payment data) in a single update
+  const updateData: Record<string, unknown> = {
+    status: "confirmed",
+    scheduled_start: scheduledStart.toISOString(),
+    scheduled_end: scheduledEnd.toISOString(),
+    meeting_url: meetUrl,
+    calendar_event_id: calendarEventId,
+    calendar_provider: calendarEventId ? "google" : null,
+  };
+
+  // Add payment data if provided
+  if (paymentData) {
+    if (paymentData.payment_method) updateData.payment_method = paymentData.payment_method;
+    if (paymentData.payment_instructions) updateData.payment_instructions = paymentData.payment_instructions;
+    if (paymentData.payment_link) updateData.payment_link = paymentData.payment_link;
+    if (paymentData.payment_due) updateData.payment_due = paymentData.payment_due;
+  }
+
   const { error: updateError } = await supabase
     .from("booking_requests")
-    .update({
-      status: "confirmed",
-      scheduled_start: scheduledStart.toISOString(),
-      scheduled_end: scheduledEnd.toISOString(),
-      meeting_url: meetUrl,
-      calendar_event_id: calendarEventId,
-      calendar_provider: calendarEventId ? "google" : null,
-    })
+    .update(updateData)
     .eq("id", bookingId);
 
   if (updateError) {
@@ -216,6 +249,41 @@ Lesson details:
   if (meetUrl) {
     emailBody += `
 - Meeting link: ${meetUrl}`;
+  }
+
+  // Add payment section if any payment data is provided
+  const hasPaymentInfo = paymentData && (
+    paymentData.payment_method ||
+    paymentData.payment_link ||
+    paymentData.payment_instructions
+  );
+
+  if (hasPaymentInfo) {
+    emailBody += `
+
+Payment:`;
+
+    if (paymentData.payment_method) {
+      const methodLabel = PAYMENT_METHOD_LABELS[paymentData.payment_method] || paymentData.payment_method;
+      emailBody += `
+- Method: ${methodLabel}`;
+    }
+
+    if (paymentData.payment_due) {
+      const dueLabel = PAYMENT_DUE_LABELS[paymentData.payment_due] || paymentData.payment_due;
+      emailBody += `
+- Due: ${dueLabel}`;
+    }
+
+    if (paymentData.payment_link) {
+      emailBody += `
+- Payment link: ${paymentData.payment_link}`;
+    }
+
+    if (paymentData.payment_instructions) {
+      emailBody += `
+- Instructions: ${paymentData.payment_instructions}`;
+    }
   }
 
   emailBody += `
@@ -462,6 +530,55 @@ ${coachName}`;
   } catch (emailError) {
     console.error("Failed to send recap email:", emailError);
     return { success: false, error: "Failed to send email. Recap was saved." };
+  }
+
+  revalidatePath("/app");
+  return { success: true };
+}
+
+/**
+ * Update coach's default payment settings
+ */
+export async function updateCoachPaymentDefaults(
+  defaults: {
+    default_payment_method?: string;
+    default_payment_instructions?: string;
+    default_payment_link?: string;
+    default_payment_due?: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Not authenticated" };
+  }
+
+  const updateData: Record<string, string | null> = {};
+
+  if (defaults.default_payment_method !== undefined) {
+    updateData.default_payment_method = defaults.default_payment_method || null;
+  }
+  if (defaults.default_payment_instructions !== undefined) {
+    updateData.default_payment_instructions = defaults.default_payment_instructions || null;
+  }
+  if (defaults.default_payment_link !== undefined) {
+    updateData.default_payment_link = defaults.default_payment_link || null;
+  }
+  if (defaults.default_payment_due !== undefined) {
+    updateData.default_payment_due = defaults.default_payment_due || null;
+  }
+
+  const { error: updateError } = await supabase
+    .from("coaches")
+    .update(updateData)
+    .eq("id", user.id);
+
+  if (updateError) {
+    return { success: false, error: updateError.message };
   }
 
   revalidatePath("/app");

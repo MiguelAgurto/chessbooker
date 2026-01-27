@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDateTimeForCoach } from "@/lib/timezone";
-import { acceptBookingRequest, declineBookingRequest } from "./actions";
+import { acceptBookingRequest, declineBookingRequest, updateCoachPaymentDefaults } from "./actions";
 
 interface SlotData {
   datetime: string;
@@ -26,10 +26,25 @@ interface PendingRequest {
   reschedule_of?: string | null;
 }
 
+export interface PaymentDefaults {
+  default_payment_method?: string | null;
+  default_payment_instructions?: string | null;
+  default_payment_link?: string | null;
+  default_payment_due?: string | null;
+}
+
+export interface PaymentData {
+  payment_method?: string;
+  payment_instructions?: string;
+  payment_link?: string;
+  payment_due?: string;
+}
+
 interface PendingRequestsProps {
   requests: PendingRequest[];
   timezone: string;
   isGoogleConnected?: boolean;
+  paymentDefaults?: PaymentDefaults;
 }
 
 /**
@@ -117,10 +132,28 @@ interface ConfirmModalProps {
   request: PendingRequest;
   timezone: string;
   onClose: () => void;
-  onConfirm: (requestId: string, selectedTime: string, duration: number, manualMeetingUrl?: string) => Promise<void>;
+  onConfirm: (requestId: string, selectedTime: string, duration: number, manualMeetingUrl?: string, paymentData?: PaymentData, saveAsDefault?: boolean) => Promise<void>;
   isLoading: boolean;
   isGoogleConnected: boolean;
+  paymentDefaults?: PaymentDefaults;
 }
+
+const PAYMENT_METHODS = [
+  { value: "", label: "Select payment method..." },
+  { value: "paypal", label: "PayPal" },
+  { value: "stripe", label: "Stripe" },
+  { value: "bank_transfer", label: "Bank transfer" },
+  { value: "cash", label: "Cash" },
+  { value: "other", label: "Other" },
+];
+
+const PAYMENT_DUE_OPTIONS = [
+  { value: "", label: "When is payment due?" },
+  { value: "before_lesson", label: "Before the lesson" },
+  { value: "at_start", label: "At the start of the lesson" },
+  { value: "after_lesson", label: "After the lesson" },
+  { value: "custom", label: "Custom (see instructions)" },
+];
 
 /**
  * Validate that a string is a valid URL
@@ -142,9 +175,18 @@ function ConfirmModal({
   onConfirm,
   isLoading,
   isGoogleConnected,
+  paymentDefaults,
 }: ConfirmModalProps) {
   const [selectedTimeIndex, setSelectedTimeIndex] = useState(0);
   const [manualMeetingUrl, setManualMeetingUrl] = useState("");
+
+  // Payment fields - prefilled from coach defaults
+  const [paymentMethod, setPaymentMethod] = useState(paymentDefaults?.default_payment_method || "");
+  const [paymentDue, setPaymentDue] = useState(paymentDefaults?.default_payment_due || "");
+  const [paymentLink, setPaymentLink] = useState(paymentDefaults?.default_payment_link || "");
+  const [paymentInstructions, setPaymentInstructions] = useState(paymentDefaults?.default_payment_instructions || "");
+  const [saveAsDefault, setSaveAsDefault] = useState(false);
+  const [showPaymentSection, setShowPaymentSection] = useState(false);
 
   const times = getAvailableTimes(request);
   const isReschedule = !!request.reschedule_of;
@@ -173,7 +215,26 @@ function ConfirmModal({
     if (!isGoogleConnected && !isValidUrl(manualMeetingUrl)) return;
     const selected = times[selectedTimeIndex];
     const { datetime, duration } = getTimeData(selected);
-    await onConfirm(request.id, datetime, duration, isGoogleConnected ? undefined : manualMeetingUrl);
+
+    // Build payment data only if any payment field is filled
+    const hasPaymentData = paymentMethod || paymentDue || paymentLink || paymentInstructions;
+    const paymentData: PaymentData | undefined = hasPaymentData
+      ? {
+          payment_method: paymentMethod || undefined,
+          payment_due: paymentDue || undefined,
+          payment_link: paymentLink || undefined,
+          payment_instructions: paymentInstructions || undefined,
+        }
+      : undefined;
+
+    await onConfirm(
+      request.id,
+      datetime,
+      duration,
+      isGoogleConnected ? undefined : manualMeetingUrl,
+      paymentData,
+      saveAsDefault
+    );
   };
 
   // Determine if confirm button should be enabled
@@ -346,6 +407,113 @@ function ConfirmModal({
           </div>
         )}
 
+        {/* Payment Instructions Section */}
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowPaymentSection(!showPaymentSection)}
+            className="flex items-center gap-2 text-sm font-medium text-cb-text-secondary hover:text-cb-text transition-colors"
+          >
+            <svg
+              className={`w-4 h-4 transition-transform ${showPaymentSection ? "rotate-90" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+            Payment instructions
+            {(paymentMethod || paymentLink || paymentInstructions) && (
+              <span className="w-2 h-2 rounded-full bg-green-500" title="Payment info added" />
+            )}
+          </button>
+
+          {showPaymentSection && (
+            <div className="mt-3 p-4 bg-cb-bg rounded-lg space-y-3">
+              {/* Payment Method */}
+              <div>
+                <label htmlFor="paymentMethod" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+                  Payment method
+                </label>
+                <select
+                  id="paymentMethod"
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent bg-white"
+                >
+                  {PAYMENT_METHODS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Payment Due */}
+              <div>
+                <label htmlFor="paymentDue" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+                  Payment due
+                </label>
+                <select
+                  id="paymentDue"
+                  value={paymentDue}
+                  onChange={(e) => setPaymentDue(e.target.value)}
+                  className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent bg-white"
+                >
+                  {PAYMENT_DUE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Payment Link */}
+              <div>
+                <label htmlFor="paymentLink" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+                  Payment link (optional)
+                </label>
+                <input
+                  id="paymentLink"
+                  type="url"
+                  value={paymentLink}
+                  onChange={(e) => setPaymentLink(e.target.value)}
+                  placeholder="https://paypal.me/... or payment page URL"
+                  className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
+                />
+              </div>
+
+              {/* Payment Instructions */}
+              <div>
+                <label htmlFor="paymentInstructions" className="text-xs font-medium text-cb-text-muted mb-1.5 block">
+                  Additional instructions (optional)
+                </label>
+                <textarea
+                  id="paymentInstructions"
+                  value={paymentInstructions}
+                  onChange={(e) => setPaymentInstructions(e.target.value)}
+                  placeholder="e.g., Please include your name in the payment reference..."
+                  className="w-full px-3 py-2 text-sm border border-cb-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent resize-none"
+                  rows={2}
+                />
+              </div>
+
+              {/* Save as default checkbox */}
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={saveAsDefault}
+                  onChange={(e) => setSaveAsDefault(e.target.checked)}
+                  className="w-4 h-4 rounded border-cb-border text-coral focus:ring-coral"
+                />
+                <span className="text-xs text-cb-text-secondary">
+                  Save as my default payment method
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+
         <p className="text-xs text-cb-text-muted mb-4">
           All times are shown in your timezone. The student will receive a confirmation email.
         </p>
@@ -443,6 +611,7 @@ export default function PendingRequests({
   requests,
   timezone,
   isGoogleConnected = false,
+  paymentDefaults,
 }: PendingRequestsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
@@ -455,13 +624,25 @@ export default function PendingRequests({
     requestId: string,
     selectedTime: string,
     duration: number,
-    manualMeetingUrl?: string
+    manualMeetingUrl?: string,
+    paymentData?: PaymentData,
+    saveAsDefault?: boolean
   ) => {
     setLoading(requestId);
     setError(null);
     setIsScopeError(false);
 
-    const result = await acceptBookingRequest(requestId, selectedTime, duration, manualMeetingUrl);
+    // If saveAsDefault is checked, update coach defaults first
+    if (saveAsDefault && paymentData) {
+      await updateCoachPaymentDefaults({
+        default_payment_method: paymentData.payment_method,
+        default_payment_instructions: paymentData.payment_instructions,
+        default_payment_link: paymentData.payment_link,
+        default_payment_due: paymentData.payment_due,
+      });
+    }
+
+    const result = await acceptBookingRequest(requestId, selectedTime, duration, manualMeetingUrl, paymentData);
 
     if (!result.success) {
       // Handle overlap error specially - close modal and show message
@@ -680,6 +861,7 @@ export default function PendingRequests({
           onConfirm={handleConfirm}
           isLoading={loading === confirmModalRequest.id}
           isGoogleConnected={isGoogleConnected}
+          paymentDefaults={paymentDefaults}
         />
       )}
 
