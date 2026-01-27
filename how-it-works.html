@@ -366,6 +366,32 @@
         font-size: 0.875rem;
       }
     }
+
+    /* ============================================
+       COACH SCREENSHOT STYLES
+       ============================================ */
+    .screenshot-frame {
+      width: 100%;
+      max-width: 440px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .screenshot-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .screenshot-frame {
+        max-width: 100%;
+      }
+    }
   </style>
 </head>
 <body>
@@ -486,12 +512,8 @@
           </ul>
         </div>
         <div class="flow-step-visual">
-          <div class="screenshot-placeholder">
-            <div class="placeholder-icon">
-              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-            </div>
-            <div class="placeholder-label">Screenshot: Confirm / Decline Request</div>
-            <div class="placeholder-caption">Pending request with student info and action buttons</div>
+          <div class="screenshot-frame">
+            <img src="assets/img/pending1.png" alt="Pending request with student info and action buttons" loading="lazy">
           </div>
         </div>
       </div>
@@ -509,12 +531,8 @@
           </ul>
         </div>
         <div class="flow-step-visual">
-          <div class="screenshot-placeholder">
-            <div class="placeholder-icon">
-              <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/></svg>
-            </div>
-            <div class="placeholder-label">Screenshot: Calendar + Meeting Link</div>
-            <div class="placeholder-caption">Confirmed lesson with Google Meet link attached</div>
+          <div class="screenshot-frame">
+            <img src="assets/img/Meeting+CalendarLink.png" alt="Confirmed lesson with Google Meet link attached" loading="lazy">
           </div>
         </div>
       </div>
