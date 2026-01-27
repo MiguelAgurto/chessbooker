@@ -392,6 +392,89 @@
         max-width: 100%;
       }
     }
+
+    /* ============================================
+       DASHBOARD SWITCHER STYLES
+       ============================================ */
+    .dashboard-switcher {
+      width: 100%;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .dashboard-tabs-interactive {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .dashboard-tabs-interactive .dashboard-tab {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .dashboard-tabs-interactive .dashboard-tab:hover:not(.active) {
+      background: var(--color-border, #e5e7eb);
+    }
+
+    .dashboard-image-container {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1250 / 777;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08), 0 1px 4px rgba(0, 0, 0, 0.04);
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .dashboard-image-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .dashboard-image-container img.active {
+      opacity: 1;
+    }
+
+    .dashboard-description {
+      text-align: center;
+      margin-top: 1.5rem;
+      padding: 0 1rem;
+    }
+
+    .dashboard-description p {
+      font-size: 1rem;
+      color: var(--color-text, #4a4a68);
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+      transition: opacity 0.2s ease;
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-switcher {
+        max-width: 100%;
+      }
+
+      .dashboard-tabs-interactive {
+        gap: 0.375rem;
+      }
+
+      .dashboard-tabs-interactive .dashboard-tab {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.8125rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -540,38 +623,22 @@
       <!-- Dashboard Overview -->
       <div class="dashboard-preview">
         <h3 style="text-align: center; margin-bottom: 1.5rem;">Your dashboard at a glance</h3>
-        <div class="dashboard-tabs" style="justify-content: center;">
-          <span class="dashboard-tab active">Upcoming</span>
-          <span class="dashboard-tab">Pending</span>
-          <span class="dashboard-tab">Past</span>
-          <span class="dashboard-tab">Activity</span>
-        </div>
-        <div class="screenshot-placeholder">
-          <div class="placeholder-icon">
-            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        <div class="dashboard-switcher" id="dashboardSwitcher">
+          <div class="dashboard-tabs-interactive">
+            <span class="dashboard-tab active" data-tab="upcoming">Upcoming</span>
+            <span class="dashboard-tab" data-tab="pending">Pending</span>
+            <span class="dashboard-tab" data-tab="past">Past</span>
+            <span class="dashboard-tab" data-tab="activity">Activity</span>
           </div>
-          <div class="placeholder-label">Screenshot: Coach Dashboard Overview</div>
-          <div class="placeholder-caption">Tabs for Upcoming, Pending, Past lessons, and recent Activity</div>
-        </div>
-      </div>
-
-      <!-- Capabilities -->
-      <div class="capabilities-grid">
-        <div class="capability-card">
-          <h4>Upcoming lessons</h4>
-          <p>See all confirmed lessons in one place. Join with a single click when it's time.</p>
-        </div>
-        <div class="capability-card">
-          <h4>Pending requests</h4>
-          <p>Review and respond to new lesson requests. Confirm or decline with full context.</p>
-        </div>
-        <div class="capability-card">
-          <h4>Recent activity</h4>
-          <p>A timeline of confirmations, cancellations, and updates. Know what's happening at a glance.</p>
-        </div>
-        <div class="capability-card">
-          <h4>Reschedule or cancel</h4>
-          <p>Plans change. Update lesson times or cancel entirely. Students are notified automatically.</p>
+          <div class="dashboard-image-container">
+            <img src="/assets/img/dashboardUpcoming.png" alt="Dashboard showing upcoming lessons" data-tab="upcoming" class="active" loading="lazy">
+            <img src="/assets/img/dashboardPending.png" alt="Dashboard showing pending requests" data-tab="pending" loading="lazy">
+            <img src="/assets/img/dashboardPast.png" alt="Dashboard showing past lessons" data-tab="past" loading="lazy">
+            <img src="/assets/img/dashboardRecent.png" alt="Dashboard showing recent activity" data-tab="activity" loading="lazy">
+          </div>
+          <div class="dashboard-description">
+            <p id="dashboardDescription">See all your confirmed lessons in one place. Join sessions with a single click when it's time.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -902,6 +969,51 @@
 
       // Initialize
       goToSlide(0);
+    })();
+  </script>
+
+  <!-- Dashboard Switcher Script -->
+  <script>
+    (function() {
+      'use strict';
+
+      const switcher = document.getElementById('dashboardSwitcher');
+      if (!switcher) return;
+
+      const tabs = switcher.querySelectorAll('.dashboard-tab');
+      const images = switcher.querySelectorAll('.dashboard-image-container img');
+      const descriptionEl = document.getElementById('dashboardDescription');
+
+      const descriptions = {
+        upcoming: 'See all your confirmed lessons in one place. Join sessions with a single click when it\'s time.',
+        pending: 'Review new lesson requests with full context. Confirm or decline in seconds.',
+        past: 'Access completed lessons, student history, and notes for reflection and follow-up.',
+        activity: 'Track recent activity like new requests, confirmations, and updates at a glance.'
+      };
+
+      function switchTab(tabName) {
+        // Update tabs
+        tabs.forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Update images with fade
+        images.forEach(img => {
+          img.classList.toggle('active', img.dataset.tab === tabName);
+        });
+
+        // Update description
+        if (descriptionEl && descriptions[tabName]) {
+          descriptionEl.textContent = descriptions[tabName];
+        }
+      }
+
+      // Add click listeners to tabs
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          switchTab(tab.dataset.tab);
+        });
+      });
     })();
   </script>
 
